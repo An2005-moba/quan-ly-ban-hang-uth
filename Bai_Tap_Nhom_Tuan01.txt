@@ -1,0 +1,38 @@
+Bài tập tuần 1
+
+Thành viên nhóm:
+    MSSV	     Tên
+095205002743    Võ Anh Quốc
+095205008890    Hồng Trung Kiên
+094205003956    Nguyễn Trường An
+096205004957    Phan Quốc Huy
+
+1. Chọn đề tài
+Tên đề tài: Ứng dụng Quản Lý Bán Hàng - Kho Hàng 
+Lý do chọn đề tài: Việc quản lý bán hàng và tồn kho bằng phương pháp thủ công (sổ sách, Excel) đang là vấn đề phổ biến tại các cửa hàng vừa và nhỏ. Phương pháp này tiềm ẩn nhiều rủi ro như sai sót trong kiểm kê, thất thoát hàng hóa, và tốn nhiều thời gian xử lý giao dịch. Đồ án nhằm mục tiêu xây dựng một ứng dụng tin học hóa toàn diện, giúp các cửa hàng này tự động hóa quy trình bán hàng, tránh sai sót trong quản lý tồn kho, đồng thời cung cấp các báo cáo chính xác để chủ cửa hàng có cơ sở ra quyết định kinh doanh hiệu quả hơn.
+2. Ý Tưởng và Thiết Kế Giao Diện Cơ Bản
+Ứng dụng được thiết kế xoay quanh hai nhóm chức năng cốt lõi nhằm phục vụ các đối tượng người dùng khác nhau:
+A. Nhóm Chức năng Bán Hàng (Point of Sale - POS)
+Mục tiêu: Hỗ trợ nhân viên bán hàng thực hiện giao dịch nhanh chóng và chính xác.
+Ý tưởng giao diện: Màn hình POS được thiết kế trực quan, mô phỏng quầy thanh toán siêu thị, bao gồm:
+Giỏ hàng hiển thị rõ ràng thông tin sản phẩm, số lượng, giá.
+Tích hợp các phương thức thanh toán nhanh (tiền mặt, chuyển khoản, thẻ).
+B. Nhóm Chức năng Quản Lý (Backend)
+Mục tiêu: Hỗ trợ chủ cửa hàng/kế toán/nhân viên kho nắm bắt và kiểm soát toàn bộ tình hình kinh doanh, hàng hóa.
+Ý tưởng giao diện: Dashboard (Bảng điều khiển) Trực quan: Hiển thị tóm tắt các chỉ số quan trọng như Doanh thu (theo ngày/tuần/tháng), Tồn kho cảnh báo, Đơn hàng gần đây, và Lợi nhuận.
+3. Nghiên cứu
+Nghiên cứu thực tế: nhiều cửa hàng nhỏ đang quản lý bằng sổ sách hoặc Excel → dễ nhầm lẫn.
+Tham khảo các hệ thống POS hiện có (KiotViet, Sapo, Loyverse) → rút gọn và phù hợp cho đồ án.
+Xác định công nghệ: Mobile App, sử dụng cơ sở dữ liệu để lưu thông tin sản phẩm, khách hàng, hóa đơn.
+4. Phân tích
+Đối tượng sử dụng: Chủ cửa hàng, nhân viên bán hàng, nhân viên kho, kế toán.
+Vấn đề cần giải quyết:
+Sai sót trong quản lý kho.
+Thất thoát hàng hóa.
+Thời gian xử lý đơn hàng lâu.
+Thiếu báo cáo chi tiết để quản lý.
+Giải pháp:
+Quản lý sản phẩm, kho, hóa đơn tự động.
+Giao diện POS trực quan, nhanh.
+Báo cáo doanh thu & lợi nhuận rõ ràng.
+Quản lý khách hàng (CRM cơ bản).
