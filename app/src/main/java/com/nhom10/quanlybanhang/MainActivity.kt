@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 // Import màn hình LoginScreen bạn vừa tạo
 import com.nhom10.quanlybanhang.ui.screens.auth.LoginScreen
 import com.nhom10.quanlybanhang.ui.screens.auth.RegisterScreen
+import com.nhom10.quanlybanhang.ui.screens.home.HomeScreen
 // Import theme của bạn
 import com.nhom10.quanlybanhang.ui.theme.QuanLyBanHangTheme // (Tên theme này có thể khác)
 
@@ -23,7 +24,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    RegisterScreen()
+                    HomeScreen()
                 }
             }
         }
