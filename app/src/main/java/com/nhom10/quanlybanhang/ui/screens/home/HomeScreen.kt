@@ -57,7 +57,10 @@ fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
                         else -> "Bán hàng"
                     },
                     showShoppingCart = (selectedItemIndex == 0),
-                    appBlueColor = appBlueColor
+                    appBlueColor = appBlueColor,
+                    navController = navController
+
+
                 )
             }
         },
@@ -253,12 +256,12 @@ private fun FilterButtonContent(text: String, modifier: Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DefaultTopBar(title: String, showShoppingCart: Boolean, appBlueColor: Color) {
+private fun DefaultTopBar(title: String, showShoppingCart: Boolean, appBlueColor: Color,navController: NavController) {
     CenterAlignedTopAppBar(
         title = { Text(title, fontWeight = FontWeight.Bold) },
         actions = {
             if (showShoppingCart) {
-                IconButton(onClick = { /* TODO */ }) {
+                IconButton(onClick = { navController.navigate(Routes.CART)}) {
                     Icon(Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng", tint = Color.White)
                 }
             }
