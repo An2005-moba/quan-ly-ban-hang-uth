@@ -2,6 +2,7 @@ package com.nhom10.quanlybanhang.ui.screens.cart
 
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -75,7 +76,9 @@ fun CartScreen(
                 tonalElevation = 8.dp
             ) {
                 Button(
-                    onClick = { /* TODO: Xử lý thanh toán */ },
+                    // === THAY ĐỔI Ở ĐÂY ===
+                    onClick = { navController.navigate(Routes.PAYMENT) }, // Sửa từ /* TODO */
+                    // ======================
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -111,7 +114,7 @@ fun CartScreen(
                 ) {
                     OrderInfoSection()
                     Divider(modifier = Modifier.padding(horizontal = 16.dp))
-                    ProductListSection()
+                    ProductListSection(navController = navController)
                 }
 
                 // --- Khối 2: Tóm tắt thanh toán ---
@@ -158,22 +161,40 @@ private fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-private fun ProductListSection() {
+private fun ProductListSection(navController: NavController) { // <-- Thêm NavController
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        ProductItem(title = "Tôm", subtitle = "100.000 x 1kg", total = "100.000")
-        ProductItem(title = "Cá", subtitle = "50.000 x 1kg", total = "50.000")
-        ProductItem(title = "Cua", subtitle = "150.000 x 1kg", total = "150.000")
+        ProductItem(
+            title = "Tôm",
+            subtitle = "100.000 x 1kg",
+            total = "100.000",
+            onClick = { navController.navigate(Routes.EDIT_ORDER_ITEM) } // <-- Thêm onClick
+        )
+        ProductItem(
+            title = "Cá",
+            subtitle = "50.000 x 1kg",
+            total = "50.000",
+            onClick = { navController.navigate(Routes.EDIT_ORDER_ITEM) } // <-- Thêm onClick
+        )
+        ProductItem(
+            title = "Cua",
+            subtitle = "150.000 x 1kg",
+            total = "150.000",
+            onClick = { navController.navigate(Routes.EDIT_ORDER_ITEM) } // <-- Thêm onClick
+        )
     }
 }
 
 @Composable
-private fun ProductItem(title: String, subtitle: String, total: String) {
+private fun ProductItem(title: String, subtitle: String, total: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         verticalAlignment = Alignment.Top
+
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(

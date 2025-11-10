@@ -13,9 +13,16 @@ import com.nhom10.quanlybanhang.ui.screens.language.LanguageScreen
 import com.nhom10.quanlybanhang.ui.screens.productsetup.ProductSetupScreen
 import com.nhom10.quanlybanhang.ui.screens.addproduct.AddProductScreen
 import com.nhom10.quanlybanhang.ui.screens.cart.CartScreen
+import com.nhom10.quanlybanhang.ui.screens.cart.EditOrderItemScreen
 import com.nhom10.quanlybanhang.ui.screens.customer.SelectCustomerScreen
 import com.nhom10.quanlybanhang.ui.screens.customer.AddCustomerScreen
 import com.nhom10.quanlybanhang.ui.screens.customer.AddOrderItemScreen
+import com.nhom10.quanlybanhang.ui.screens.payment.InvoiceScreen
+import com.nhom10.quanlybanhang.ui.screens.payment.PaymentScreen
+import com.nhom10.quanlybanhang.ui.screens.payment.BankPaymentScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+
 object Routes {
     const val HOME = "home_screen"
     const val SETTINGS = "settings_screen"
@@ -29,7 +36,16 @@ object Routes {
     const val SELECT_CUSTOMER = "select_customer_screen"
     const val ADD_CUSTOMER = "add_customer_screen"
     const val ADD_ORDER_ITEM = "add_order_item_screen"
+    const val EDIT_ORDER_ITEM = "edit_order_item_screen"
+    const val PAYMENT = "payment_screen"
+    const val BANK_PAYMENT = "bank_payment_screen"
 
+    // === SỬA ĐỔI ROUTE INVOICE ===
+    // 1. Định nghĩa route với tham số
+    const val INVOICE = "invoice_screen/{khachTra}/{tienThua}"
+
+    // 2. Tạo một hàm trợ giúp để điều hướng dễ hơn
+    fun invoiceRoute(khachTra: String, tienThua: String) = "invoice_screen/$khachTra/$tienThua"
 }
 
 @Composable
@@ -81,7 +97,34 @@ fun AppNavigation() {
         composable(Routes.ADD_ORDER_ITEM) {
             AddOrderItemScreen(navController = navController)
         }
+        composable(Routes.EDIT_ORDER_ITEM) {
+            EditOrderItemScreen(navController = navController)
+        }
+        composable(Routes.PAYMENT) {
+            PaymentScreen(navController = navController)
+        }
+        // === SỬA ĐỔI COMPOSABLE INVOICE ===
+        composable(
+            route = Routes.INVOICE, // Dùng route đã định nghĩa
+            arguments = listOf( // Khai báo các tham số
+                navArgument("khachTra") { type = NavType.StringType },
+                navArgument("tienThua") { type = NavType.StringType }
+            )
+        ) { navBackStackEntry ->
+            // Lấy tham số ra từ navBackStackEntry
+            val khachTra = navBackStackEntry.arguments?.getString("khachTra") ?: "0"
+            val tienThua = navBackStackEntry.arguments?.getString("tienThua") ?: "0"
 
+            // Truyền tham số vào InvoiceScreen
+            InvoiceScreen(
+                navController = navController,
+                khachTra = khachTra,
+                tienThua = tienThua
+            )
+        }
+        composable(Routes.BANK_PAYMENT) {
+            BankPaymentScreen(navController = navController)
+        }
 
     }
 }
