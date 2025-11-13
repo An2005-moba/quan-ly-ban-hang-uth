@@ -11,5 +11,6 @@ data class Product(
     val giaNhap: Double = 0.0,
     val donViTinh: String = "Kg",
     val apDungThue: Boolean = true,
-    val ghiChu: String = ""
+    val ghiChu: String = "",
+    val imageUrl: String = ""
 )

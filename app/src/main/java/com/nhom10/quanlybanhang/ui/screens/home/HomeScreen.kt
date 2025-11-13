@@ -26,7 +26,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.service.ProductViewModel
-
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import coil.compose.AsyncImage
 import androidx.compose.foundation.lazy.LazyColumn // Thêm import
 import androidx.compose.foundation.lazy.items // Thêm import
 
@@ -184,6 +187,7 @@ fun ProductListForHome(
     products: List<Product>,
     onProductClick: (Product) -> Unit
 ) {
+    val placeholderPainter = rememberVectorPainter(image = Icons.Default.Fastfood)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -201,10 +205,16 @@ fun ProductListForHome(
                     modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Default.Fastfood, // Tạm dùng icon này
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp).padding(end = 8.dp)
+                    AsyncImage(
+                        model = product.imageUrl, // Lấy URL từ product
+                        contentDescription = product.tenMatHang,
+                        placeholder = placeholderPainter, // Icon giữ chỗ
+                        error = placeholderPainter,       // Icon khi lỗi
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape) // Bo tròn ảnh
+                            .padding(end = 8.dp),
+                        contentScale = ContentScale.Crop // Cắt ảnh vừa khung
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(product.tenMatHang, fontWeight = FontWeight.Bold)

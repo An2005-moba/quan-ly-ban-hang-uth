@@ -6,11 +6,13 @@ import com.google.android.gms.tasks.Tasks // THÊM IMPORT NÀY
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import android.net.Uri
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.tasks.await
 
 class ProductRepositoryImpl : ProductRepository {
 
-    // SỬA DÒNG NÀY:
-    // private val db = Firebase.firestore (Đây là KTX)
+    private val storage = FirebaseStorage.getInstance()
     private val db = FirebaseFirestore.getInstance() // Đây là Java SDK
 
     override fun getProducts(): Flow<List<Product>> = callbackFlow {
@@ -37,12 +39,24 @@ class ProductRepositoryImpl : ProductRepository {
 
     override suspend fun addProduct(product: Product) {
         try {
-            // SỬA DÒNG NÀY:
-            // db.collection("products").add(product).await() (Đây là KTX)
             Tasks.await(db.collection("products").add(product)) // Đây là Java SDK
         } catch (e: Exception) {
-            // Xử lý lỗi (ví dụ: throw exception)
             throw e
+        }
+    }
+    override suspend fun uploadImage(imageUri: Uri, tenFile: String): String {
+        return try {
+            // Tạo tham chiếu đến "product_images/ten_file.jpg"
+            val storageRef = storage.reference.child("product_images/$tenFile")
+
+            // Tải file lên
+            storageRef.putFile(imageUri).await()
+
+            // Lấy URL tải về
+            val downloadUrl = storageRef.downloadUrl.await().toString()
+            downloadUrl
+        } catch (e: Exception) {
+            throw e // Ném lỗi để ViewModel xử lý
         }
     }
 }

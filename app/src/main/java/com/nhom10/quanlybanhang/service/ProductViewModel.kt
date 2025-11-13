@@ -6,10 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nhom10.quanlybanhang.data.ProductRepository // Import
 import com.nhom10.quanlybanhang.model.Product
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.net.Uri
+import java.util.UUID
 
 class ProductViewModel(
     private val repository: ProductRepository // Nhận Repository
@@ -36,14 +40,20 @@ class ProductViewModel(
     }
 
     // 2. Hàm thêm (ghi) sản phẩm mới
-    fun addProduct(product: Product, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-        viewModelScope.launch {
+    fun addProduct(
+        product: Product,
+        imageUri: Uri?,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.addProduct(product)
-                onSuccess()
+                // Đưa callback về Main thread
+                withContext(Dispatchers.Main) { onSuccess() }
             } catch (e: Exception) {
                 Log.w(TAG, "Lỗi khi thêm sản phẩm", e)
-                onFailure(e)
+                withContext(Dispatchers.Main) { onFailure(e) }
             }
         }
     }

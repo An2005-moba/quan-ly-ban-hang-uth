@@ -23,7 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.service.ProductViewModel
-
+import android.net.Uri // <-- Thêm
+import androidx.activity.compose.rememberLauncherForActivityResult // <-- Thêm
+import androidx.activity.result.contract.ActivityResultContracts // <-- Thêm
+import androidx.compose.ui.layout.ContentScale // <-- Thêm
+import coil.compose.AsyncImage
 
 import android.widget.Toast
 
@@ -53,6 +57,12 @@ fun AddProductScreen(
     var donViTinh by remember { mutableStateOf("Kg") }
     var apDungThue by remember { mutableStateOf(true) }
     var ghiChu by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        imageUri = uri // Cập nhật state khi chọn ảnh
+    }
 
     Scaffold(
         // === 1. TOP BAR (Có nút Quay lại và nút Lưu) ===
@@ -90,6 +100,7 @@ fun AddProductScreen(
                         // 3. Gọi ViewModel để lưu
                         productViewModel.addProduct(
                             product = newProduct,
+                            imageUri = imageUri,
                             onSuccess = {
                                 // Khi thành công, quay về
                                 Toast.makeText(context, "Thêm thành công!", Toast.LENGTH_SHORT).show()
@@ -98,6 +109,7 @@ fun AddProductScreen(
                             onFailure = { e ->
                                 // Báo lỗi
                                 Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+
                             }
                         )
                     }) {
@@ -118,10 +130,10 @@ fun AddProductScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(Color(0xFFF0F2F5)) // Nền xám nhạt
-                    .verticalScroll(rememberScrollState()) // Cho phép cuộn
+                    .background(Color(0xFFF0F2F5))
+                    .verticalScroll(rememberScrollState())
             ) {
-                // --- Khối 1: Upload ảnh ---
+                // --- Khối 1: Upload ảnh (ĐÃ SỬA) ---
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -133,16 +145,34 @@ fun AddProductScreen(
                             .size(120.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(Color.LightGray.copy(alpha = 0.5f))
-                            .clickable { /* TODO: Mở thư viện ảnh */ },
+                            .clickable {
+                                // MỞ TRÌNH CHỌN ẢNH
+                                imagePickerLauncher.launch(
+                                    androidx.activity.result.PickVisualMediaRequest(
+                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                    )
+                                )
+                            },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Image,
-                            contentDescription = "Thêm ảnh",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(40.dp)
-                        )
-                        // TODO: Dùng AsyncImage của Coil để hiển thị ảnh đã chọn
+                        // SỬA LẠI:
+                        if (imageUri == null) {
+                            // Nếu chưa chọn ảnh, hiện Icon
+                            Icon(
+                                imageVector = Icons.Default.Image,
+                                contentDescription = "Thêm ảnh",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(40.dp)
+                            )
+                        } else {
+                            // Nếu đã chọn ảnh, hiển thị ảnh
+                            AsyncImage(
+                                model = imageUri,
+                                contentDescription = "Ảnh đã chọn",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop // Cắt ảnh vừa khung
+                            )
+                        }
                     }
                 }
 
