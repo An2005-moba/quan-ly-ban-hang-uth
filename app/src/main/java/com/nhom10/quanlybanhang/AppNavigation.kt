@@ -23,18 +23,13 @@ import com.nhom10.quanlybanhang.ui.screens.customer.AddOrderItemScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.InvoiceScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.PaymentScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.BankPaymentScreen
-<<<<<<< HEAD
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nhom10.quanlybanhang.data.ProductRepositoryImpl
 import com.nhom10.quanlybanhang.service.ProductViewModel
 import com.nhom10.quanlybanhang.service.ProductViewModelFactory
-=======
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
 import com.nhom10.quanlybanhang.ui.screens.history.BillDetailScreen
-
->>>>>>> 332889864d79590b003ab57ae88d9ed4073b3211
 object Routes {
     const val HOME = "home_screen"
     const val SETTINGS = "settings_screen"
