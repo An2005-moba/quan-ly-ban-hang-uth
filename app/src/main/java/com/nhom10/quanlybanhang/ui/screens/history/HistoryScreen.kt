@@ -28,41 +28,44 @@ fun HistoryScreen(navController: NavController) {
     val appBlue = Color(0xFF3388FF)
     val grayBackground = Color(0xFFF0F2F5)
 
-    var fromDate by remember { mutableStateOf("25/9/2025") }
-    var toDate by remember { mutableStateOf("29/9/2025") }
+    // 🔹 Ngày mặc định
+    var fromDate by remember { mutableStateOf("25/09/2025") }
+    var toDate by remember { mutableStateOf("29/09/2025") }
 
+    // 🔹 Dữ liệu giả
     val allTransactions = remember {
         mutableStateListOf(
             TransactionWithProducts(
-                "DH:25013", "29/9/2025", "20:40", "Khách lẻ", 120000.0,
+                "DH:25013", "29/09/2025", "20:40", "Khách lẻ", 120000.0,
                 listOf(ProductItem("SP01","Sản phẩm A",120000.0,100000.0,1,"Cái",false,""))
             ),
             TransactionWithProducts(
-                "DH:25012", "29/9/2025", "19:00", "Khách lẻ", 150000.0,
+                "DH:25012", "28/09/2025", "19:00", "Khách lẻ", 150000.0,
                 listOf(ProductItem("SP02","Sản phẩm B",150000.0,120000.0,1,"Cái",false,""))
             ),
             TransactionWithProducts(
-                "DH:25011", "29/9/2025", "18:00", "Khách lẻ", 1000000.0,
+                "DH:25011", "27/09/2025", "18:00", "Khách lẻ", 1000000.0,
                 listOf(ProductItem("SP03","Sản phẩm C",1000000.0,800000.0,1,"Cái",true,""))
             ),
             TransactionWithProducts(
-                "DH:25010", "28/9/2025", "15:00", "Khách lẻ", 1500000.0,
+                "DH:25010", "25/09/2025", "15:00", "Khách lẻ", 1500000.0,
                 listOf(ProductItem("SP04","Sản phẩm D",1500000.0,1200000.0,1,"Cái",true,""))
             ),
         )
     }
 
+    // 🔹 Lưu trữ kết quả lọc
     var filteredTransactions by remember { mutableStateOf(allTransactions.groupBy { it.date }) }
 
     fun filterTransactions() {
-        val dateFormatter = SimpleDateFormat("dd/M/yyyy", Locale.getDefault())
+        val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val start = try { dateFormatter.parse(fromDate) } catch (e: Exception) { null }
         val end = try { dateFormatter.parse(toDate) } catch (e: Exception) { null }
         if (start == null || end == null) return
 
         filteredTransactions = allTransactions.filter {
             val tDate = dateFormatter.parse(it.date)
-            (tDate.after(start) || tDate == start) && (tDate.before(end) || tDate == end)
+            tDate != null && !tDate.before(start) && !tDate.after(end)
         }.groupBy { it.date }
     }
 
@@ -75,7 +78,7 @@ fun HistoryScreen(navController: NavController) {
                 .background(grayBackground)
                 .padding(paddingValues)
         ) {
-            // --- Filter Card ---
+            // --- 🔹 Filter Card ---
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,10 +121,13 @@ fun HistoryScreen(navController: NavController) {
 @Composable
 fun DateInputBox(label: String, date: String, modifier: Modifier, appBlue: Color, onDateSelected: (String) -> Unit) {
     var showPicker by remember { mutableStateOf(false) }
-    Box(modifier = modifier
-        .background(Color.White, RoundedCornerShape(4.dp))
-        .clickable { showPicker = true }
-        .padding(vertical = 8.dp, horizontal = 12.dp)
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
+
+    Box(
+        modifier = modifier
+            .background(Color.White, RoundedCornerShape(4.dp))
+            .clickable { showPicker = true }
+            .padding(vertical = 8.dp, horizontal = 12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(date, color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Medium)
@@ -129,14 +135,14 @@ fun DateInputBox(label: String, date: String, modifier: Modifier, appBlue: Color
             Icon(Icons.Default.CalendarToday, contentDescription = label, tint = Color.Gray, modifier = Modifier.size(20.dp))
         }
     }
+
     if (showPicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
         DatePickerDialog(
             onDismissRequest = { showPicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     val millis = datePickerState.selectedDateMillis ?: return@TextButton
-                    val formatted = SimpleDateFormat("dd/M/yyyy", Locale.getDefault()).format(Date(millis))
+                    val formatted = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(millis))
                     onDateSelected(formatted)
                     showPicker = false
                 }) { Text("Chọn", color = appBlue) }
