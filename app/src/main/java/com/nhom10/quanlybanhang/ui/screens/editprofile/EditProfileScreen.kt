@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang.ui.screens.editprofile // Đảm bảo tên gói đúng
+package com.nhom10.quanlybanhang.ui.screens.editprofile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,7 +21,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage // Nhớ import Coil
+import coil.compose.AsyncImage
+// --- THÊM 2 IMPORT NÀY ---
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+
 
 /**
  * Màn hình Chỉnh sửa thông tin cá nhân
@@ -29,7 +33,7 @@ import coil.compose.AsyncImage // Nhớ import Coil
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
-    onBackClicked: () -> Unit // Hàm để xử lý quay lại
+    navController: NavController // <-- SỬA LẠI: NHẬN NAVCONTROLLER
 ) {
     val appBlueColor = Color(0xFF0088FF)
 
@@ -41,7 +45,8 @@ fun EditProfileScreen(
                     Text("Chỉnh sửa thông tin cá nhân", fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClicked) { // Nhấn vào đây để quay lại
+                    // SỬA LẠI: Dùng navController để quay lại
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Quay lại"
@@ -111,7 +116,6 @@ fun EditProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Mục 4: Nút Đăng xuất
-                // (Tôi dùng Button nhưng style cho nó giống Card)
                 Button(
                     onClick = { /* TODO: Xử lý đăng xuất */ },
                     colors = ButtonDefaults.buttonColors(
@@ -129,7 +133,7 @@ fun EditProfileScreen(
                     ) {
                         Text(
                             "Đăng xuất",
-                            color = Color.Black, // Bạn có thể đổi thành Color.Red
+                            color = Color.Black,
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -147,7 +151,6 @@ fun EditProfileScreen(
 private fun EditProfileItem(
     title: String,
     onClick: () -> Unit,
-    // 'trailingContent' là phần bên phải (ảnh, chữ, mũi tên)
     trailingContent: @Composable RowScope.() -> Unit
 ) {
     Card(
@@ -159,7 +162,7 @@ private fun EditProfileItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), // Giảm padding dọc
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -167,7 +170,6 @@ private fun EditProfileItem(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
-            // Hàng phụ cho nội dung bên phải
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -181,5 +183,5 @@ private fun EditProfileItem(
 @Preview(showBackground = true)
 @Composable
 fun EditProfileScreenPreview() {
-    EditProfileScreen(onBackClicked = {})
+    EditProfileScreen(navController = rememberNavController())
 }

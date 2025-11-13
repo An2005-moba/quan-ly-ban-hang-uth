@@ -9,7 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 fun EditProductScreen(navController: NavController) {
     val product = navController.previousBackStackEntry
         ?.savedStateHandle
-        ?.get<ProductItem>("product") // Lấy sản phẩm thật từ ProductSetupScreen
+        ?.get<ProductItem>("product")
 
     if (product != null) {
         BaseProductScreen(

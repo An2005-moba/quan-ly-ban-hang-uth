@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang // Đảm bảo đây là tên gói gốc của bạn
+package com.nhom10.quanlybanhang
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
@@ -6,6 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.nhom10.quanlybanhang.ui.screens.auth.LoginScreen
+import com.nhom10.quanlybanhang.ui.screens.auth.RegisterScreen
+import com.nhom10.quanlybanhang.ui.screens.auth.ForgotPasswordScreen
 import com.nhom10.quanlybanhang.ui.screens.home.HomeScreen
 import com.nhom10.quanlybanhang.ui.screens.settings.SettingsScreen
 import com.nhom10.quanlybanhang.ui.screens.editprofile.EditProfileScreen
@@ -23,14 +26,17 @@ import com.nhom10.quanlybanhang.ui.screens.customer.AddOrderItemScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.InvoiceScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.PaymentScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.BankPaymentScreen
-import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nhom10.quanlybanhang.data.ProductRepositoryImpl
 import com.nhom10.quanlybanhang.service.ProductViewModel
 import com.nhom10.quanlybanhang.service.ProductViewModelFactory
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
 import com.nhom10.quanlybanhang.ui.screens.history.BillDetailScreen
+
 object Routes {
+    const val LOGIN = "login_screen"
+    const val REGISTER = "register_screen"
+    const val FORGOT_PASSWORD = "forgot_password_screen"
     const val HOME = "home_screen"
     const val SETTINGS = "settings_screen"
     const val EDIT_PROFILE = "edit_profile_screen"
@@ -49,8 +55,6 @@ object Routes {
     const val BANK_PAYMENT = "bank_payment_screen"
     const val HISTORY = "history_screen"
     const val BILL = "bill_screen"
-
-    // === ROUTE INVOICE ===
     const val INVOICE = "invoice_screen/{khachTra}/{tienThua}"
     fun invoiceRoute(khachTra: String, tienThua: String) = "invoice_screen/$khachTra/$tienThua"
 }
@@ -58,29 +62,43 @@ object Routes {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    // 1. Tạo Repository (Lớp Data) 1 lần duy nhất
     val productRepository = ProductRepositoryImpl()
-
-    // 2. Tạo Factory cho ViewModel
     val productViewModelFactory = ProductViewModelFactory(productRepository)
-
-    // 3. Tạo ViewModel (Lớp Service/Logic) 1 lần duy nhất
     val productViewModel: ProductViewModel = viewModel(
         factory = productViewModelFactory
     )
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+
+    // === BƯỚC 1: SỬA ĐIỂM BẮT ĐẦU ===
+    NavHost(navController = navController, startDestination = Routes.LOGIN) { // <-- Đổi HOME thành LOGIN
+
+        // === BƯỚC 2: THÊM 3 "PHÒNG" AUTH ===
+        composable(Routes.LOGIN) {
+            LoginScreen(navController = navController)
+        }
+        composable(Routes.REGISTER) {
+            RegisterScreen(navController = navController)
+        }
+        composable(Routes.FORGOT_PASSWORD) {
+            ForgotPasswordScreen(navController = navController)
+        }
+
+        // === CÁC PHÒNG CŨ (Giữ nguyên) ===
         composable(Routes.HOME) {
             HomeScreen(navController = navController, productViewModel = productViewModel)
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(navController = navController)
         }
+
+        // === BƯỚC 3: SỬA LỖI "ỐNG NƯỚC" ===
         composable(Routes.EDIT_PROFILE) {
-            EditProfileScreen(onBackClicked = { navController.popBackStack() })
+            EditProfileScreen(navController = navController) // <-- Sửa lại
         }
         composable(Routes.PASSWORD) {
-            PasswordScreen(navController = navController)
+            PasswordScreen(navController = navController) // <-- Sửa lại
         }
+
+        // (Tất cả các composable khác giữ nguyên)
         composable(Routes.CHANGE_PASSWORD) {
             ChangePasswordScreen(navController = navController)
         }
