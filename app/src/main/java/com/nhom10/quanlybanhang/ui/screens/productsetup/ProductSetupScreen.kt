@@ -9,10 +9,7 @@ import androidx.compose.material.icons.Icons
 // Import các icon bạn cần
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Laptop
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Smartphone
-import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.filled.Fastfood // Dùng icon này cho "Cá"
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,25 +23,31 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
 
+import com.nhom10.quanlybanhang.service.ProductViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductSetupScreen(
-    navController: NavController
+    navController: NavController,
+    productViewModel: ProductViewModel // Sửa: Nhận ViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     var searchQuery by remember { mutableStateOf("") }
     val lightGrayBorder = Color.Black.copy(alpha = 0.2f)
 
-    // Dữ liệu mẫu cho danh sách
-    val sampleProducts = listOf(
-        ProductItem(Icons.Default.Smartphone, "Điện thoại", "Giá: 5.000 - Còn: 100 cái"),
-        ProductItem(Icons.Default.Laptop, "Laptop", "Giá: 20.000.000 - Còn: 98 cái"),
-        ProductItem(Icons.Default.Watch, "Đồng hồ", "Giá: 1.000.000 - Còn: 95 cái"),
-        ProductItem(Icons.Default.Fastfood, "Cá", "Giá: 100.000 - Còn: 3kg") // Dùng icon giữ chỗ
-    )
+    // Sửa: Lấy danh sách từ ViewModel
+    val productList by productViewModel.products.collectAsState()
+
+    // Sửa: Tải dữ liệu khi màn hình khởi chạy
+    LaunchedEffect(key1 = true) {
+        productViewModel.loadProducts()
+    }
+
+    // Xóa: Dữ liệu mẫu
+    // val sampleProducts = listOf(...)
 
     Scaffold(
-        // === 1. TOP BAR (Có nút Quay lại và nút Cộng) ===
+        // === 1. TOP BAR (Giữ nguyên) ===
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -76,6 +79,7 @@ fun ProductSetupScreen(
                     .padding(paddingValues)
                     .background(Color(0xFFF0F2F5))
             ) {
+                // Thanh tìm kiếm (Giữ nguyên)
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -92,15 +96,24 @@ fun ProductSetupScreen(
                         focusedBorderColor = appBlueColor
                     )
                 )
+
+                // Sửa: Dùng productList từ ViewModel
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(1.dp) // Ngăn cách mỏng
                 ) {
-                    items(sampleProducts) { product ->
+                    // Lọc danh sách dựa trên tìm kiếm (ví dụ)
+                    val filteredList = productList.filter {
+                        it.tenMatHang.contains(searchQuery, ignoreCase = true)
+                    }
+
+                    items(filteredList) { product ->
+                        val details = "Giá: ${product.giaBan} - Còn: ${product.soLuong} ${product.donViTinh}"
+
                         ProductListItem(
-                            icon = product.icon,
-                            title = product.title,
-                            details = product.details,
+                            icon = Icons.Default.Fastfood, // Tạm dùng 1 icon
+                            title = product.tenMatHang,
+                            details = details,
                             onClick = { /* TODO: Mở trang chi tiết mặt hàng */ }
                         )
                     }
@@ -110,8 +123,7 @@ fun ProductSetupScreen(
     )
 }
 
-// Data class để chứa thông tin item
-private data class ProductItem(val icon: ImageVector, val title: String, val details: String)
+// Xóa: Data class ProductItem (vì đã dùng Product model)
 
 /**
  * Composable phụ trợ cho một item trong danh sách
@@ -141,8 +153,13 @@ private fun ProductListItem(
     )
 }
 
+
+
 @Preview(showBackground = true)
 @Composable
 fun ProductSetupScreenPreview() {
-    ProductSetupScreen(navController = rememberNavController())
+    ProductSetupScreen(
+        navController = rememberNavController(),
+        productViewModel = TODO(),
+    )
 }

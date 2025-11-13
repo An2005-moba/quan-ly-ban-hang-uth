@@ -1,12 +1,10 @@
 package com.nhom10.quanlybanhang.ui.screens.home
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -27,15 +25,33 @@ import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.service.ProductViewModel
+
+import androidx.compose.foundation.lazy.LazyColumn // Thêm import
+import androidx.compose.foundation.lazy.items // Thêm import
+
+import com.nhom10.quanlybanhang.model.Product // Thêm import
+
 
 // Dữ liệu các mục trong thanh Bottom Nav
 data class BottomNavItem(val label: String, val icon: ImageVector)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
+fun HomeScreen(
+    navController: NavController,
+    productViewModel: ProductViewModel // Sửa: Nhận ViewModel
+) {
     val appBlueColor = Color(0xFF0088FF)
     var selectedItemIndex by rememberSaveable { mutableStateOf(0) }
+
+    // Sửa: Lấy danh sách từ ViewModel
+    val productList by productViewModel.products.collectAsState()
+
+    // Sửa: Tải dữ liệu khi màn hình khởi chạy
+    LaunchedEffect(key1 = true) {
+        productViewModel.loadProducts()
+    }
 
     val bottomNavItems = listOf(
         BottomNavItem("Trang chủ", Icons.Default.Home),
@@ -45,7 +61,7 @@ fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
     )
 
     Scaffold(
-        // === 1. TOP BAR ===
+        // === 1. TOP BAR (Giữ nguyên) ===
         topBar = {
             when (selectedItemIndex) {
                 1 -> ReportTopBar(appBlueColor = appBlueColor)
@@ -59,13 +75,11 @@ fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
                     showShoppingCart = (selectedItemIndex == 0),
                     appBlueColor = appBlueColor,
                     navController = navController
-
-
                 )
             }
         },
 
-        // === 2. NÚT DẤU CỘNG (FAB) ===
+        // === 2. NÚT DẤU CỘNG (FAB) (Giữ nguyên) ===
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate(Routes.PRODUCT_SETUP) },
@@ -84,6 +98,8 @@ fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
+
+        // === 3. BOTTOM BAR (Giữ nguyên) ===
         bottomBar = {
             BottomAppBar(
                 modifier = Modifier.height(85.dp),
@@ -133,7 +149,7 @@ fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
             }
         },
 
-        // === 4. NỘI DUNG CHÍNH (ĐÃ SỬA CASE 3) ===
+        // === 4. NỘI DUNG CHÍNH (SỬA CASE 0) ===
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -143,13 +159,15 @@ fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
                 when (selectedItemIndex) {
                     0 -> {
                         SearchSection(appBlueColor = appBlueColor)
-                        Box(Modifier.fillMaxSize(), Alignment.Center) {
-                            Text("Nội dung Trang chủ")
-                        }
+
+                        // Sửa: Hiển thị danh sách sản phẩm
+                        ProductListForHome(
+                            products = productList,
+                            onProductClick = { /* TODO: Xử lý thêm vào giỏ hàng */ }
+                        )
                     }
                     1 -> ReportScreen()
                     2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
-                    // TRUYỀN NAVCONTROLLER VÀO ACCOUNTSCREEN
                     3 -> AccountScreen(navController = navController)
                 }
             }
@@ -157,7 +175,49 @@ fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
     )
 }
 
-// ... (Hàm AccountTopBar) ...
+// Thêm: Composable mới để hiển thị danh sách
+@Composable
+fun ProductListForHome(
+    products: List<Product>,
+    onProductClick: (Product) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(products) { product ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onProductClick(product) },
+                elevation = CardDefaults.cardElevation(2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Fastfood, // Tạm dùng icon này
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp).padding(end = 8.dp)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(product.tenMatHang, fontWeight = FontWeight.Bold)
+                        Text("Còn: ${product.soLuong} ${product.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text("${product.giaBan}đ", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+
+// ... (Tất cả các hàm private khác giữ nguyên) ...
+
+// ... (AccountTopBar) ...
 @Composable
 private fun AccountTopBar(appBlueColor: Color) {
     val photoUrl = "URL_ANH_DAI_DIEN_CUA_BAN_TU_FIREBASE"
@@ -203,9 +263,6 @@ private fun AccountTopBar(appBlueColor: Color) {
         }
     }
 }
-
-// ... (Tất cả các hàm private khác: BottomBarItem, ReportTopBar, FilterButtonContent, DefaultTopBar, SearchSection) ...
-// (Tôi sẽ rút gọn chúng ở đây để tiết kiệm diện tích, nhưng bạn hãy giữ nguyên chúng trong code của mình)
 @Composable
 private fun BottomBarItem(item: BottomNavItem, isSelected: Boolean, selectedColor: Color, onClick: () -> Unit) {
     val color = if (isSelected) selectedColor else Color.Gray
@@ -296,6 +353,8 @@ private fun SearchSection(appBlueColor: Color) {
         )
     )
 }
+
+
 
 @Preview(showBackground = true)
 @Composable

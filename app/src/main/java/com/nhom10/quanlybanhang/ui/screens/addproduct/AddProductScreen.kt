@@ -1,6 +1,5 @@
 package com.nhom10.quanlybanhang.ui.screens.addproduct // Đảm bảo tên gói đúng
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,13 +16,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.nhom10.quanlybanhang.service.ProductViewModel
+
+
+import android.widget.Toast
+
+import androidx.compose.ui.platform.LocalContext // Thêm import
+import com.nhom10.quanlybanhang.Routes
+
+import com.nhom10.quanlybanhang.model.Product // Thêm import
 
 /**
  * Màn hình Thêm mặt hàng mới
@@ -31,9 +37,11 @@ import androidx.navigation.compose.rememberNavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductScreen(
-    navController: NavController
+    navController: NavController,
+    productViewModel: ProductViewModel // Sửa: Nhận ViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
+    val context = LocalContext.current // Thêm: Để dùng Toast
 
     // Biến state cho các trường
     var tenMatHang by remember { mutableStateOf("") }
@@ -59,7 +67,39 @@ fun AddProductScreen(
                 },
                 actions = {
                     // Nút "Lưu"
-                    TextButton(onClick = { /* TODO: Xử lý Lưu */ }) {
+                    TextButton(  onClick = { navController.navigate(Routes.HOME)
+
+                        // 1. Chuyển đổi kiểu dữ liệu
+                        val soLuongDouble = soLuong.toDoubleOrNull() ?: 0.0
+                        val giaBanDouble = giaBan.replace(".", "").toDoubleOrNull() ?: 0.0
+                        val giaNhapDouble = giaNhap.replace(".", "").toDoubleOrNull() ?: 0.0
+
+                        // 2. Tạo đối tượng Product
+                        val newProduct = Product(
+                            tenMatHang = tenMatHang,
+                            maMatHang = maMatHang,
+                            soLuong = soLuongDouble,
+                            giaBan = giaBanDouble,
+                            giaNhap = giaNhapDouble,
+                            donViTinh = donViTinh,
+                            apDungThue = apDungThue,
+                            ghiChu = ghiChu
+                        )
+
+                        // 3. Gọi ViewModel để lưu
+                        productViewModel.addProduct(
+                            product = newProduct,
+                            onSuccess = {
+                                // Khi thành công, quay về
+                                Toast.makeText(context, "Thêm thành công!", Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
+                            },
+                            onFailure = { e ->
+                                // Báo lỗi
+                                Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    }) {
                         Text("Lưu", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
@@ -71,7 +111,7 @@ fun AddProductScreen(
             )
         },
 
-        // === 2. NỘI DUNG CHÍNH ===
+        // === 2. NỘI DUNG CHÍNH (Giữ nguyên) ===
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -234,8 +274,12 @@ private fun InfoRowWithSwitch(
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun AddProductScreenPreview() {
-    AddProductScreen(navController = rememberNavController())
+    AddProductScreen(
+        navController = rememberNavController(),
+        productViewModel = TODO(),
+    )
 }

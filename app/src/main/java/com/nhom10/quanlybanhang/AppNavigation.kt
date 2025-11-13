@@ -22,7 +22,10 @@ import com.nhom10.quanlybanhang.ui.screens.payment.PaymentScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.BankPaymentScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.nhom10.quanlybanhang.data.ProductRepositoryImpl
+import com.nhom10.quanlybanhang.service.ProductViewModel
+import com.nhom10.quanlybanhang.service.ProductViewModelFactory
 object Routes {
     const val HOME = "home_screen"
     const val SETTINGS = "settings_screen"
@@ -51,9 +54,19 @@ object Routes {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    // 1. Tạo Repository (Lớp Data) 1 lần duy nhất
+    val productRepository = ProductRepositoryImpl()
+
+    // 2. Tạo Factory cho ViewModel
+    val productViewModelFactory = ProductViewModelFactory(productRepository)
+
+    // 3. Tạo ViewModel (Lớp Service/Logic) 1 lần duy nhất
+    val productViewModel: ProductViewModel = viewModel(
+        factory = productViewModelFactory
+    )
     NavHost(navController = navController, startDestination = Routes.HOME) {
         composable(Routes.HOME) {
-            HomeScreen(navController = navController)
+            HomeScreen(navController = navController, productViewModel = productViewModel)
         }
 
         composable(Routes.SETTINGS) {
@@ -79,11 +92,11 @@ fun AppNavigation() {
         }
 
         composable(Routes.PRODUCT_SETUP) {
-            ProductSetupScreen(navController = navController)
+            ProductSetupScreen(navController = navController, productViewModel = productViewModel)
         }
 
         composable(Routes.ADD_PRODUCT) {
-            AddProductScreen(navController = navController)
+            AddProductScreen(navController = navController, productViewModel = productViewModel)
         }
         composable(Routes.CART) {
             CartScreen(navController = navController)
