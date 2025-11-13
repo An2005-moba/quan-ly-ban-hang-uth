@@ -1,5 +1,6 @@
-package com.nhom10.quanlybanhang.ui.screens.addproduct // Đảm bảo tên gói đúng
+package com.nhom10.quanlybanhang.ui.screens.addproduct
 
+<<<<<<< HEAD
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,12 +31,15 @@ import androidx.compose.ui.platform.LocalContext // Thêm import
 import com.nhom10.quanlybanhang.Routes
 
 import com.nhom10.quanlybanhang.model.Product // Thêm import
+=======
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
+import com.google.firebase.firestore.FirebaseFirestore
+import com.nhom10.quanlybanhang.model.ProductItem
+>>>>>>> 332889864d79590b003ab57ae88d9ed4073b3211
 
-/**
- * Màn hình Thêm mặt hàng mới
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
+<<<<<<< HEAD
 fun AddProductScreen(
     navController: NavController,
     productViewModel: ProductViewModel // Sửa: Nhận ViewModel
@@ -283,3 +287,16 @@ fun AddProductScreenPreview() {
         productViewModel = TODO(),
     )
 }
+=======
+fun AddProductScreen(navController: NavController) {
+    BaseProductScreen(
+        navController = navController,
+        screenTitle = "Thêm mặt hàng",
+        initialProductData = null,
+        onSave = { product ->
+            println("AddProductScreen: $product")
+            navController.popBackStack()
+        }
+    )
+}
+>>>>>>> 332889864d79590b003ab57ae88d9ed4073b3211

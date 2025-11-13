@@ -25,12 +25,16 @@ import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
+<<<<<<< HEAD
 import com.nhom10.quanlybanhang.service.ProductViewModel
 
 import androidx.compose.foundation.lazy.LazyColumn // Thêm import
 import androidx.compose.foundation.lazy.items // Thêm import
 
 import com.nhom10.quanlybanhang.model.Product // Thêm import
+=======
+import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
+>>>>>>> 332889864d79590b003ab57ae88d9ed4073b3211
 
 
 // Dữ liệu các mục trong thanh Bottom Nav
@@ -167,7 +171,12 @@ fun HomeScreen(
                         )
                     }
                     1 -> ReportScreen()
+<<<<<<< HEAD
                     2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
+=======
+                    2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { HistoryScreen(navController = navController) }
+                    // TRUYỀN NAVCONTROLLER VÀO ACCOUNTSCREEN
+>>>>>>> 332889864d79590b003ab57ae88d9ed4073b3211
                     3 -> AccountScreen(navController = navController)
                 }
             }

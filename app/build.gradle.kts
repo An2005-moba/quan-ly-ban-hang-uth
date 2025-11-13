@@ -1,8 +1,13 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+<<<<<<< HEAD
     alias(libs.plugins.google.gms.google.services)
+=======
+    id("kotlin-parcelize")
+>>>>>>> 332889864d79590b003ab57ae88d9ed4073b3211
 }
 
 android {
@@ -60,8 +65,13 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+<<<<<<< HEAD
     implementation("com.google.firebase:firebase-firestore:25.0.0")
     implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // Thêm Firebase Bill of Materials
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // Thư viện cho ViewModel
+=======
+    implementation("com.google.firebase:firebase-firestore-ktx:24.6.1")
+    implementation("com.google.firebase:firebase-auth-ktx:22.2.0")
+>>>>>>> 332889864d79590b003ab57ae88d9ed4073b3211
 
 }
