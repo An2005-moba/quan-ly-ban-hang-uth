@@ -27,6 +27,8 @@ import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
+
 
 // Dữ liệu các mục trong thanh Bottom Nav
 data class BottomNavItem(val label: String, val icon: ImageVector)
@@ -148,7 +150,7 @@ fun HomeScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
                         }
                     }
                     1 -> ReportScreen()
-                    2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
+                    2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { HistoryScreen(navController = navController) }
                     // TRUYỀN NAVCONTROLLER VÀO ACCOUNTSCREEN
                     3 -> AccountScreen(navController = navController)
                 }

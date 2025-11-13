@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang.ui.screens.productsetup // Đảm bảo tên gói đúng
+package com.nhom10.quanlybanhang.ui.screens.productsetup
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -6,50 +6,53 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-// Import các icon bạn cần
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Laptop
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Smartphone
-import androidx.compose.material.icons.filled.Watch
-import androidx.compose.material.icons.filled.Fastfood // Dùng icon này cho "Cá"
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.model.ProductItem
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductSetupScreen(
-    navController: NavController
-) {
+fun ProductSetupScreen(navController: NavController) {
     val appBlueColor = Color(0xFF0088FF)
     var searchQuery by remember { mutableStateOf("") }
     val lightGrayBorder = Color.Black.copy(alpha = 0.2f)
 
-    // Dữ liệu mẫu cho danh sách
+    // Danh sách mẫu
     val sampleProducts = listOf(
-        ProductItem(Icons.Default.Smartphone, "Điện thoại", "Giá: 5.000 - Còn: 100 cái"),
-        ProductItem(Icons.Default.Laptop, "Laptop", "Giá: 20.000.000 - Còn: 98 cái"),
-        ProductItem(Icons.Default.Watch, "Đồng hồ", "Giá: 1.000.000 - Còn: 95 cái"),
-        ProductItem(Icons.Default.Fastfood, "Cá", "Giá: 100.000 - Còn: 3kg") // Dùng icon giữ chỗ
+        ProductItem(id = "1", name = "Điện thoại", price = 5000.0, quantity = 100, unit = "Cái"),
+        ProductItem(id = "2", name = "Laptop", price = 20000000.0, quantity = 98, unit = "Cái"),
+        ProductItem(id = "3", name = "Đồng hồ", price = 1000000.0, quantity = 95, unit = "Cái"),
+        ProductItem(id = "4", name = "Cá", price = 100000.0, quantity = 3, unit = "Kg")
     )
 
+
+
+
+    // Map tên sản phẩm -> icon
+    fun getProductIcon(name: String): ImageVector = when {
+        name.contains("Điện thoại") -> Icons.Default.Smartphone
+        name.contains("Laptop") -> Icons.Default.Laptop
+        name.contains("Đồng hồ") -> Icons.Default.Watch
+        name.contains("Cá") -> Icons.Default.Fastfood
+        else -> Icons.Default.Add
+    }
+
     Scaffold(
-        // === 1. TOP BAR (Có nút Quay lại và nút Cộng) ===
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text("Thiết lập mặt hàng", fontWeight = FontWeight.Bold)
-                },
+                title = { Text("Thiết lập mặt hàng", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, "Quay lại")
@@ -68,7 +71,6 @@ fun ProductSetupScreen(
                 )
             )
         },
-
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -94,14 +96,16 @@ fun ProductSetupScreen(
                 )
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(1.dp) // Ngăn cách mỏng
+                    verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     items(sampleProducts) { product ->
                         ProductListItem(
-                            icon = product.icon,
-                            title = product.title,
-                            details = product.details,
-                            onClick = { /* TODO: Mở trang chi tiết mặt hàng */ }
+                            icon = getProductIcon(product.name),
+                            title = product.name,
+                            details = "Giá: ${product.price} - Còn: ${product.quantity} ${product.unit}",
+                            onClick = { navController.currentBackStackEntry?.savedStateHandle?.set("product", product)
+                                navController.navigate(Routes.EDIT_PRODUCT)
+                            }
                         )
                     }
                 }
@@ -110,12 +114,6 @@ fun ProductSetupScreen(
     )
 }
 
-// Data class để chứa thông tin item
-private data class ProductItem(val icon: ImageVector, val title: String, val details: String)
-
-/**
- * Composable phụ trợ cho một item trong danh sách
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProductListItem(
@@ -129,15 +127,11 @@ private fun ProductListItem(
             .background(Color.White)
             .clickable { onClick() },
         leadingContent = {
-            Icon(
-                icon,
-                contentDescription = null,
-                modifier = Modifier.padding(start = 8.dp)
-            )
+            Icon(icon, contentDescription = null, modifier = Modifier.padding(start = 8.dp))
         },
         headlineContent = { Text(title, fontWeight = FontWeight.Bold) },
         supportingContent = { Text(details) },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent) // Nền trong suốt
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
 }
 
