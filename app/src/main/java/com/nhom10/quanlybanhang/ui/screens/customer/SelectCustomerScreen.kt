@@ -1,5 +1,11 @@
 package com.nhom10.quanlybanhang.ui.screens.customer
 
+// --- THÊM CÁC IMPORT NÀY ---
+import com.nhom10.quanlybanhang.model.Customer // SỬA: Import model thật
+import com.nhom10.quanlybanhang.service.CustomerViewModel
+import com.nhom10.quanlybanhang.service.OrderViewModel
+// -----------------------------
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,34 +36,42 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.nhom10.quanlybanhang.Routes
 
-// Data class mẫu
-data class Customer(
-    val id: Int,
-    val name: String,
-    val phone: String?,
-    val avatarUrl: String? = null
-)
+// XÓA: Data class mẫu (đã dùng model thật)
+// data class Customer(...)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectCustomerScreen(
-    navController: NavController
+    navController: NavController,
+    customerViewModel: CustomerViewModel, // THÊM: Nhận CustomerViewModel
+    orderViewModel: OrderViewModel      // THÊM: Nhận OrderViewModel (để lưu lựa chọn)
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val scaffoldBgColor = Color(0xFFF0F2F5) // Màu nền xám nhạt
     var searchQuery by remember { mutableStateOf("") }
     val lightGrayBorder = Color.Black.copy(alpha = 0.2f)
 
-    // Dữ liệu mẫu
-    val customers = listOf(
-        Customer(0, "Khác lẻ", null),
-        Customer(1, "Nguyễn Văn Bóp", "0999999", "URL_AVATAR_BOP") // Thay URL thật
-    )
-    var selectedCustomerId by remember { mutableStateOf(0) } // "Khác lẻ" được chọn mặc định
+    // SỬA: Lấy dữ liệu từ ViewModel
+    val customersFromDb by customerViewModel.customers.collectAsState()
+
+    // THÊM: Tạo danh sách khách hàng đầy đủ (bao gồm "Khách lẻ")
+    val customers = remember(customersFromDb) {
+        listOf(
+            Customer(id = "khach_le", tenKhachHang = "Khách lẻ", soDienThoai = "") // ID đặc biệt
+        ) + customersFromDb
+    }
+
+    // SỬA: Lấy khách hàng đang được chọn từ OrderViewModel
+    val selectedCustomer by orderViewModel.selectedCustomer.collectAsState()
+    val selectedCustomerId = selectedCustomer?.id ?: "khach_le" // Mặc định là "Khách lẻ"
+
+    // XÓA: Dữ liệu mẫu
+    // val customers = listOf(...)
+    // var selectedCustomerId by remember { mutableStateOf(0) }
 
     Scaffold(
         containerColor = scaffoldBgColor,
-        // === 1. TOP BAR ===
+        // === 1. TOP BAR (Giữ nguyên) ===
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -89,7 +103,7 @@ fun SelectCustomerScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // --- Thanh tìm kiếm ---
+                // --- Thanh tìm kiếm (Giữ nguyên) ---
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -112,11 +126,21 @@ fun SelectCustomerScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(1.dp) // Ngăn cách mỏng
                 ) {
-                    items(customers) { customer ->
+                    // SỬA: Lọc danh sách customers (thay vì dữ liệu mẫu)
+                    val filteredList = customers.filter {
+                        it.tenKhachHang.contains(searchQuery, ignoreCase = true) ||
+                                it.soDienThoai.contains(searchQuery, ignoreCase = true) // SỬA: dùng soDienThoai
+                    }
+
+                    items(filteredList) { customer ->
                         CustomerListItem(
                             customer = customer,
                             isSelected = customer.id == selectedCustomerId,
-                            onClick = { selectedCustomerId = customer.id }
+                            onClick = {
+                                // SỬA: Cập nhật ViewModel và quay lại
+                                orderViewModel.selectCustomer(customer)
+                                navController.popBackStack()
+                            }
                         )
                     }
                 }
@@ -127,7 +151,7 @@ fun SelectCustomerScreen(
 
 @Composable
 private fun CustomerListItem(
-    customer: Customer,
+    customer: Customer, // SỬA: Đã dùng model thật
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -138,17 +162,17 @@ private fun CustomerListItem(
         modifier = Modifier
             .background(Color.White)
             .clickable { onClick() },
-        headlineContent = { Text(customer.name) },
+        headlineContent = { Text(customer.tenKhachHang) }, // SỬA: Dùng tenKhachHang
         supportingContent = {
-            if (customer.phone != null) {
-                Text(customer.phone)
+            if (customer.soDienThoai.isNotEmpty()) { // SỬA: Dùng soDienThoai
+                Text(customer.soDienThoai)
             }
         },
         leadingContent = {
-            if (customer.avatarUrl != null) {
+            if (customer.avatarUrl.isNotEmpty()) { // SỬA: Dùng avatarUrl
                 AsyncImage(
                     model = customer.avatarUrl,
-                    contentDescription = customer.name,
+                    contentDescription = customer.tenKhachHang,
                     placeholder = placeholderPainter,
                     error = placeholderPainter,
                     modifier = Modifier
@@ -189,8 +213,3 @@ private fun CustomerListItem(
 }
 
 
-@Preview(showBackground = true)
-@Composable
-fun SelectCustomerScreenPreview() {
-    SelectCustomerScreen(navController = rememberNavController())
-}

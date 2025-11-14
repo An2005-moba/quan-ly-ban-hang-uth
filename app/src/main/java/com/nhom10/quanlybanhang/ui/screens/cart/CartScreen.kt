@@ -1,5 +1,13 @@
 package com.nhom10.quanlybanhang.ui.screens.cart
 
+// --- THÊM CÁC IMPORT NÀY ---
+import android.widget.Toast
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import com.nhom10.quanlybanhang.model.OrderItem
+import com.nhom10.quanlybanhang.service.OrderViewModel
+// -----------------------------
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
+import java.text.DecimalFormat
 
 /**
  * Màn hình Đơn hàng (Giỏ hàng)
@@ -29,10 +38,17 @@ import com.nhom10.quanlybanhang.Routes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
-    navController: NavController
+    navController: NavController,
+    orderViewModel: OrderViewModel // THÊM: Nhận OrderViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val scaffoldBgColor = Color(0xFFF0F2F5) // Màu nền xám nhạt
+    val context = LocalContext.current // THÊM: Để dùng Toast
+
+    // THÊM: Lấy dữ liệu từ ViewModel
+    val cartItems by orderViewModel.cartItems.collectAsState()
+    val selectedCustomer by orderViewModel.selectedCustomer.collectAsState()
+    val totalAmount = orderViewModel.calculateTotal() // Tính tổng
 
     Scaffold(
         containerColor = scaffoldBgColor,
@@ -52,12 +68,16 @@ fun CartScreen(
                 },
                 actions = {
                     IconButton(onClick = { navController.navigate(Routes.ADD_ORDER_ITEM) }) {
-                        Icon(Icons.Default.CalendarToday, "thêm item")
+                        Icon(Icons.Default.CalendarToday, "thêm item") // Icon này nên là Add
                     }
                     IconButton(onClick = { navController.navigate(Routes.SELECT_CUSTOMER) }) {
                         Icon(Icons.Default.Person, "Khách hàng")
                     }
-                    IconButton(onClick = { /* TODO: Xử lý xóa */ }) {
+                    IconButton(onClick = {
+                        // SỬA: Xóa giỏ hàng
+                        orderViewModel.clearCart()
+                        Toast.makeText(context, "Đã xóa giỏ hàng", Toast.LENGTH_SHORT).show()
+                    }) {
                         Icon(Icons.Default.Delete, "Xóa")
                     }
                 },
@@ -76,14 +96,28 @@ fun CartScreen(
                 tonalElevation = 8.dp
             ) {
                 Button(
-                    // === THAY ĐỔI Ở ĐÂY ===
-                    onClick = { navController.navigate(Routes.PAYMENT) }, // Sửa từ /* TODO */
+                    // === SỬA LOGIC Ở ĐÂY ===
+                    onClick = {
+                        // 1. Gọi ViewModel để lưu đơn hàng lên Firebase
+                        orderViewModel.checkout(
+                            onSuccess = {
+                                // 2. Nếu lưu thành công, mới chuyển sang màn hình Thanh toán
+                                Toast.makeText(context, "Tạo đơn hàng thành công!", Toast.LENGTH_SHORT).show()
+                                navController.navigate(Routes.PAYMENT)
+                            },
+                            onFailure = { e ->
+                                // 3. Nếu lỗi, thông báo
+                                Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    },
                     // ======================
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = appBlueColor),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    enabled = cartItems.isNotEmpty() // THÊM: Chỉ bật khi có hàng
                 ) {
                     Text(
                         text = "Thanh toán",
@@ -112,13 +146,24 @@ fun CartScreen(
                         .clip(RoundedCornerShape(12.dp))
                         .background(Color.White)
                 ) {
-                    OrderInfoSection()
+                    // SỬA: Truyền dữ liệu động
+                    OrderInfoSection(
+                        orderId = "Đơn hàng mới", // Tạm
+                        customerName = selectedCustomer?.tenKhachHang ?: "Chưa chọn"
+                    )
                     Divider(modifier = Modifier.padding(horizontal = 16.dp))
-                    ProductListSection(navController = navController)
+                    // SỬA: Truyền dữ liệu động
+                    ProductListSection(
+                        navController = navController,
+                        items = cartItems
+                    )
                 }
 
                 // --- Khối 2: Tóm tắt thanh toán ---
-                SummarySection()
+                // SỬA: Truyền dữ liệu động
+                SummarySection(
+                    totalAmount = totalAmount
+                )
 
                 Spacer(modifier = Modifier.height(0.dp)) // Spacer đẩy bottom
             }
@@ -126,16 +171,19 @@ fun CartScreen(
     )
 }
 
-// --- CÁC COMPOSABLE PHỤ TRỢ ---
+// --- CÁC COMPOSABLE PHỤ TRỢ (ĐÃ SỬA) ---
 
 @Composable
-private fun OrderInfoSection() {
+private fun OrderInfoSection(
+    orderId: String, // SỬA: Nhận tham số
+    customerName: String // SỬA: Nhận tham số
+) {
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        InfoRow(label = "Đơn hàng", value = "DH.3636")
-        InfoRow(label = "Khách hàng", value = "Tú")
+        InfoRow(label = "Đơn hàng", value = orderId)
+        InfoRow(label = "Khách hàng", value = customerName)
     }
 }
 
@@ -148,12 +196,12 @@ private fun InfoRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            color = Color.Black // "Đơn hàng", "Khách hàng"
+            color = Color.Black
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            color = Color.Black, // "DH.3636", "Tú"
+            color = Color.Black,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)
         )
@@ -161,29 +209,40 @@ private fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-private fun ProductListSection(navController: NavController) { // <-- Thêm NavController
+private fun ProductListSection(
+    navController: NavController,
+    items: List<OrderItem> // SỬA: Nhận danh sách OrderItem
+) {
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        ProductItem(
-            title = "Tôm",
-            subtitle = "100.000 x 1kg",
-            total = "100.000",
-            onClick = { navController.navigate(Routes.EDIT_ORDER_ITEM) } // <-- Thêm onClick
-        )
-        ProductItem(
-            title = "Cá",
-            subtitle = "50.000 x 1kg",
-            total = "50.000",
-            onClick = { navController.navigate(Routes.EDIT_ORDER_ITEM) } // <-- Thêm onClick
-        )
-        ProductItem(
-            title = "Cua",
-            subtitle = "150.000 x 1kg",
-            total = "150.000",
-            onClick = { navController.navigate(Routes.EDIT_ORDER_ITEM) } // <-- Thêm onClick
-        )
+        // SỬA: Kiểm tra giỏ hàng trống
+        if (items.isEmpty()) {
+            Text(
+                text = "Chưa có sản phẩm nào",
+                color = Color.Gray,
+                modifier = Modifier.padding(vertical = 16.dp).align(Alignment.CenterHorizontally)
+            )
+        } else {
+            // SỬA: Dùng vòng lặp
+            items.forEach { item ->
+                val formatter = DecimalFormat("#,###")
+                val giaBanFormatted = formatter.format(item.giaBan)
+                val totalFormatted = formatter.format(item.giaBan * item.soLuong)
+
+                ProductItem(
+                    title = item.tenMatHang,
+                    subtitle = "$giaBanFormatted x ${item.soLuong} ${item.donViTinh}",
+                    total = totalFormatted,
+                    onClick = {
+                        // TODO: Chuyển item ID sang EditOrderItemScreen
+                        // Tạm thời chỉ điều hướng
+                        navController.navigate(Routes.EDIT_ORDER_ITEM)
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -200,7 +259,7 @@ private fun ProductItem(title: String, subtitle: String, total: String, onClick:
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Normal // Chữ "Tôm", "Cá", "Cua" không bold
+                fontWeight = FontWeight.Normal
             )
             Text(
                 text = subtitle,
@@ -211,13 +270,15 @@ private fun ProductItem(title: String, subtitle: String, total: String, onClick:
         Text(
             text = total,
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Normal // Giá tiền cũng không bold
+            fontWeight = FontWeight.Normal
         )
     }
 }
 
 @Composable
-private fun SummarySection() {
+private fun SummarySection(
+    totalAmount: Double // SỬA: Nhận tổng tiền
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -232,7 +293,11 @@ private fun SummarySection() {
         SummaryRow(label = "Ghi chú", value = null, checked = true) // Không có giá trị
         SummaryRow(label = "Thuế", value = "0", checked = true)
         Divider(modifier = Modifier.padding(vertical = 8.dp))
-        SummaryTotalRow(label = "Tổng tiền", total = "300.000")
+
+        // SỬA: Hiển thị tổng tiền động
+        val formatter = DecimalFormat("#,###")
+        val totalFormatted = formatter.format(totalAmount)
+        SummaryTotalRow(label = "Tổng tiền", total = totalFormatted)
     }
 }
 
@@ -277,15 +342,9 @@ private fun SummaryTotalRow(label: String, total: String) {
             text = total,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.Black, // Tổng tiền màu đen
+            color = Color.Black,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CartScreenPreview() {
-    CartScreen(navController = rememberNavController())
 }

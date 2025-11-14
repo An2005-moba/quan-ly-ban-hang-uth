@@ -1,0 +1,13 @@
+package com.nhom10.quanlybanhang.model
+
+import com.google.firebase.firestore.DocumentId
+
+data class Customer(
+    @DocumentId val id: String = "",
+    val tenKhachHang: String = "",
+    val soDienThoai: String = "",
+    val diaChi: String = "",
+    val ghiChu: String = "",
+    val avatarUrl: String = ""
+    // Thêm các trường khác nếu cần
+)

@@ -1,5 +1,12 @@
 package com.nhom10.quanlybanhang.ui.screens.customer
 
+// --- CÁC IMPORT BỊ THIẾU ---
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.nhom10.quanlybanhang.model.Customer
+import com.nhom10.quanlybanhang.service.CustomerViewModel
+// -------------------------
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,7 +31,8 @@ import androidx.navigation.compose.rememberNavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCustomerScreen(
-    navController: NavController
+    navController: NavController,
+    customerViewModel: CustomerViewModel // SỬA: Nhận ViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val scaffoldBgColor = Color(0xFFF0F2F5) // Màu nền xám nhạt
@@ -32,9 +40,11 @@ fun AddCustomerScreen(
 
     // Biến state cho các trường
     var tenKhachHang by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") } // Đây là SĐT
     var diaChi by remember { mutableStateOf("") }
     var ghiChu by remember { mutableStateOf("") }
+
+    val context = LocalContext.current // THÊM
 
     Scaffold(
         containerColor = scaffoldBgColor,
@@ -50,7 +60,32 @@ fun AddCustomerScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { /* TODO: Xử lý Lưu khách hàng */ }) {
+                    TextButton(onClick = {
+                        // SỬA: Logic nút Lưu
+                        if (tenKhachHang.isBlank() || email.isBlank()) {
+                            Toast.makeText(context, "Tên và SĐT là bắt buộc", Toast.LENGTH_SHORT).show()
+                            return@TextButton
+                        }
+
+                        val newCustomer = Customer(
+                            tenKhachHang = tenKhachHang,
+                            soDienThoai = email, // Giả sử email là SĐT
+                            diaChi = diaChi,
+                            ghiChu = ghiChu
+                            // Bạn có thể thêm logic upload ảnh và lấy avatarUrl ở đây
+                        )
+
+                        customerViewModel.addCustomer(
+                            customer = newCustomer,
+                            onSuccess = {
+                                Toast.makeText(context, "Thêm thành công!", Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
+                            },
+                            onFailure = { e ->
+                                Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }) {
                         Text("Lưu", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
@@ -101,7 +136,7 @@ fun AddCustomerScreen(
                 CustomTextField(
                     value = email,
                     onValueChange = { email = it },
-                    placeholder = "Số điện thoaị",
+                    placeholder = "Số điện thoại", // SỬA: Đổi placeholder
                     backgroundColor = textFieldBgColor
                 )
                 CustomTextField(
@@ -151,8 +186,3 @@ private fun CustomTextField(
     )
 }
 
-@Preview(showBackground = true)
-@Composable
-fun AddCustomerScreenPreview() {
-    AddCustomerScreen(navController = rememberNavController())
-}
