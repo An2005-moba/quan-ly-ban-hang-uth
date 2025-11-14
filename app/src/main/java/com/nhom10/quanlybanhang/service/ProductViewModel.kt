@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.net.Uri
-import java.util.UUID
+import java.util.UUID // <-- THÊM IMPORT NÀY
 
 class ProductViewModel(
     private val repository: ProductRepository // Nhận Repository
@@ -24,7 +24,7 @@ class ProductViewModel(
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products = _products.asStateFlow()
 
-    // 1. Hàm lắng nghe (đọc) dữ liệu
+    // 1. Hàm lắng nghe (đọc) dữ liệu (Giữ nguyên)
     fun loadProducts() {
         viewModelScope.launch {
             repository.getProducts() // Gọi từ repository
@@ -39,17 +39,17 @@ class ProductViewModel(
         }
     }
 
-    // 2. Hàm thêm (ghi) sản phẩm mới
+    // 2. Hàm thêm (ghi) sản phẩm mới (THAY ĐỔI HOÀN TOÀN)
     fun addProduct(
-        product: Product,
-        imageUri: Uri?,
+        product: Product, // Chỉ nhận Product (đã có imageData)
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // Chỉ cần gọi addProduct
                 repository.addProduct(product)
-                // Đưa callback về Main thread
+
                 withContext(Dispatchers.Main) { onSuccess() }
             } catch (e: Exception) {
                 Log.w(TAG, "Lỗi khi thêm sản phẩm", e)

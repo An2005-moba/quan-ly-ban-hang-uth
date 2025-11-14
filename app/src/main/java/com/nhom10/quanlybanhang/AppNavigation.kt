@@ -69,7 +69,7 @@ fun AppNavigation() {
     )
 
     // === BƯỚC 1: SỬA ĐIỂM BẮT ĐẦU ===
-    NavHost(navController = navController, startDestination = Routes.HOME) { // <-- Đổi HOME thành LOGIN
+    NavHost(navController = navController, startDestination = Routes.LOGIN) { // <-- Đổi HOME thành LOGIN
 
         // === BƯỚC 2: THÊM 3 "PHÒNG" AUTH ===
         composable(Routes.LOGIN) {

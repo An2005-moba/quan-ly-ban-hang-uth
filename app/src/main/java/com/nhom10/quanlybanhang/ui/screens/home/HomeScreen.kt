@@ -26,12 +26,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.service.ProductViewModel
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+
 import coil.compose.AsyncImage
+import androidx.compose.foundation.Image
+
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.compose.foundation.lazy.LazyColumn // Thêm import
 import androidx.compose.foundation.lazy.items // Thêm import
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 
 import com.nhom10.quanlybanhang.model.Product // Thêm import
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
@@ -44,7 +48,7 @@ data class BottomNavItem(val label: String, val icon: ImageVector)
 @Composable
 fun HomeScreen(
     navController: NavController,
-    productViewModel: ProductViewModel // Sửa: Nhận ViewModel
+    productViewModel: ProductViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     var selectedItemIndex by rememberSaveable { mutableStateOf(0) }
@@ -171,9 +175,8 @@ fun HomeScreen(
                         )
                     }
                     1 -> ReportScreen()
-                    2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
-                    2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { HistoryScreen(navController = navController) }
-                    // TRUYỀN NAVCONTROLLER VÀO ACCOUNTSCREEN
+                    // 2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
+                    2 -> HistoryScreen(navController = navController)
                     3 -> AccountScreen(navController = navController)
                 }
             }
@@ -205,17 +208,42 @@ fun ProductListForHome(
                     modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AsyncImage(
-                        model = product.imageUrl, // Lấy URL từ product
-                        contentDescription = product.tenMatHang,
-                        placeholder = placeholderPainter, // Icon giữ chỗ
-                        error = placeholderPainter,       // Icon khi lỗi
+                    // === LOGIC HIỂN THỊ ẢNH THAY ĐỔI TẠI ĐÂY ===
+                    val imageBitmap = remember(product.imageData) {
+                        base64ToImageBitmap(product.imageData)
+                    }
+
+                    Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .clip(CircleShape) // Bo tròn ảnh
-                            .padding(end = 8.dp),
-                        contentScale = ContentScale.Crop // Cắt ảnh vừa khung
-                    )
+                            .clip(CircleShape)
+                            .background(Color.LightGray.copy(alpha = 0.5f))
+                        // Xóa padding(end = 8.dp) ở đây
+                        ,
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (imageBitmap != null) {
+                            Image(
+                                bitmap = imageBitmap,
+                                contentDescription = product.tenMatHang,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                                // XÓA placeholder VÀ error Ở ĐÂY
+                            )
+                        } else {
+                            // Hiển thị Icon placeholder nếu không có ảnh
+                            Icon(
+                                painter = placeholderPainter,
+                                contentDescription = "Placeholder",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    // Thêm Spacer ở đây
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // ==========================================
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(product.tenMatHang, fontWeight = FontWeight.Bold)
                         Text("Còn: ${product.soLuong} ${product.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
@@ -227,6 +255,16 @@ fun ProductListForHome(
     }
 }
 
+private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
+    if (base64String.isEmpty()) return null
+    return try {
+        val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size).asImageBitmap()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
 
 // ... (Tất cả các hàm private khác giữ nguyên) ...
 

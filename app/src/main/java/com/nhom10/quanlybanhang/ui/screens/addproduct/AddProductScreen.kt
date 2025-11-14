@@ -28,16 +28,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult // <-- Thêm
 import androidx.activity.result.contract.ActivityResultContracts // <-- Thêm
 import androidx.compose.ui.layout.ContentScale // <-- Thêm
 import coil.compose.AsyncImage
-
+import android.util.Base64
 import android.widget.Toast
 
 import androidx.compose.ui.platform.LocalContext // Thêm import
-import com.nhom10.quanlybanhang.Routes
-
 import com.nhom10.quanlybanhang.model.Product // Thêm import
 import androidx.compose.runtime.Composable
-import com.google.firebase.firestore.FirebaseFirestore
-import com.nhom10.quanlybanhang.model.ProductItem
+import android.content.Context
+
+import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,61 +57,74 @@ fun AddProductScreen(
     var apDungThue by remember { mutableStateOf(true) }
     var ghiChu by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var donViExpanded by remember { mutableStateOf(false) }
+    val donViOptions = listOf("Cái", "Chai", "Đôi", "Hộp", "Kg", "Lọ", "Thùng")
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
-        imageUri = uri // Cập nhật state khi chọn ảnh
+        imageUri = uri
     }
 
     Scaffold(
-        // === 1. TOP BAR (Có nút Quay lại và nút Lưu) ===
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text("Thêm mặt hàng", fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) { // Quay lại
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, "Quay lại")
                     }
                 },
                 actions = {
-                    // Nút "Lưu"
-                    TextButton(  onClick = { navController.navigate(Routes.HOME)
+                    TextButton(
+                        onClick = {
+                            // === THAY ĐỔI LOGIC LƯU TẠI ĐÂY ===
 
-                        // 1. Chuyển đổi kiểu dữ liệu
-                        val soLuongDouble = soLuong.toDoubleOrNull() ?: 0.0
-                        val giaBanDouble = giaBan.replace(".", "").toDoubleOrNull() ?: 0.0
-                        val giaNhapDouble = giaNhap.replace(".", "").toDoubleOrNull() ?: 0.0
-
-                        // 2. Tạo đối tượng Product
-                        val newProduct = Product(
-                            tenMatHang = tenMatHang,
-                            maMatHang = maMatHang,
-                            soLuong = soLuongDouble,
-                            giaBan = giaBanDouble,
-                            giaNhap = giaNhapDouble,
-                            donViTinh = donViTinh,
-                            apDungThue = apDungThue,
-                            ghiChu = ghiChu
-                        )
-
-                        // 3. Gọi ViewModel để lưu
-                        productViewModel.addProduct(
-                            product = newProduct,
-                            imageUri = imageUri,
-                            onSuccess = {
-                                // Khi thành công, quay về
-                                Toast.makeText(context, "Thêm thành công!", Toast.LENGTH_SHORT).show()
-                                navController.popBackStack()
-                            },
-                            onFailure = { e ->
-                                // Báo lỗi
-                                Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
-
+                            // 1. Chuyển đổi Uri sang Base64
+                            val imageDataString = if (imageUri != null) {
+                                uriToBase64(context, imageUri!!)
+                            } else {
+                                ""
                             }
-                        )
-                    }) {
+
+                            // Kiểm tra nếu Base64 quá lớn (Cảnh báo)
+                            if (imageDataString.length * 2 > 800_000) { // Ước tính ~800KB
+                                Toast.makeText(context, "Cảnh báo: Ảnh quá lớn!", Toast.LENGTH_LONG).show()
+                                // Bạn có thể return@TextButton ở đây nếu muốn chặn
+                            }
+
+                            // 2. Chuyển đổi kiểu dữ liệu
+                            val soLuongDouble = soLuong.toDoubleOrNull() ?: 0.0
+                            val giaBanDouble = giaBan.replace(".", "").toDoubleOrNull() ?: 0.0
+                            val giaNhapDouble = giaNhap.replace(".", "").toDoubleOrNull() ?: 0.0
+
+                            // 3. Tạo đối tượng Product với imageData
+                            val newProduct = Product(
+                                tenMatHang = tenMatHang,
+                                maMatHang = maMatHang,
+                                soLuong = soLuongDouble,
+                                giaBan = giaBanDouble,
+                                giaNhap = giaNhapDouble,
+                                donViTinh = donViTinh,
+                                apDungThue = apDungThue,
+                                ghiChu = ghiChu,
+                                imageData = imageDataString // <-- GÁN BASE64 VÀO ĐÂY
+                            )
+
+                            // 4. Gọi ViewModel để lưu (Hàm đã được đơn giản hóa)
+                            productViewModel.addProduct(
+                                product = newProduct, // Chỉ cần truyền product
+                                onSuccess = {
+                                    Toast.makeText(context, "Thêm thành công!", Toast.LENGTH_SHORT).show()
+                                    navController.popBackStack()
+                                },
+                                onFailure = { e ->
+                                    Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        }) {
                         Text("Lưu", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
@@ -194,11 +206,36 @@ fun AddProductScreen(
                     Divider()
 
                     // Mục "Đơn vị tính" (có mũi tên)
-                    InfoRowWithNavigation(
-                        label = "Đơn vị tính",
-                        value = donViTinh,
-                        onClick = { /* TODO: Mở dialog chọn đơn vị */ }
-                    )
+                    Box {
+                        // Đây là hàng clickable
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { donViExpanded = true } // Nhấn để MỞ
+                                .padding(vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Đơn vị tính", modifier = Modifier.weight(1f))
+                            Text(donViTinh, color = Color.Gray)
+                            Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
+                        }
+
+                        // Đây là DropdownMenu (sẽ hiện lên)
+                        DropdownMenu(
+                            expanded = donViExpanded,
+                            onDismissRequest = { donViExpanded = false } // Nhấn bên ngoài để ĐÓNG
+                        ) {
+                            donViOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        donViTinh = option // Cập nhật state
+                                        donViExpanded = false // Đóng menu
+                                    }
+                                )
+                            }
+                        }
+                    }
                     Divider()
 
                     // Mục "Áp dụng thuế" (có Switch)
@@ -231,7 +268,21 @@ fun AddProductScreen(
         }
     )
 }
-
+private fun uriToBase64(context: Context, uri: Uri): String {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val outputStream = ByteArrayOutputStream()
+        inputStream?.use { input ->
+            outputStream.use { output ->
+                input.copyTo(output)
+            }
+        }
+        Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        "" // Trả về rỗng nếu có lỗi
+    }
+}
 /**
  * Composable phụ trợ cho một hàng nhập liệu (TextField không viền)
  */
@@ -260,24 +311,6 @@ private fun InfoTextField(
 /**
  * Composable phụ trợ cho một hàng có chữ và mũi tên (như Đơn vị tính)
  */
-@Composable
-private fun InfoRowWithNavigation(
-    label: String,
-    value: String,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 16.dp), // Padding giống TextField
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, modifier = Modifier.weight(1f))
-        Text(value, color = Color.Gray)
-        Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
-    }
-}
 
 /**
  * Composable phụ trợ cho một hàng có chữ và Switch (như Áp dụng thuế)
