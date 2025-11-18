@@ -6,11 +6,13 @@ import kotlinx.coroutines.tasks.await
 
 class OrderRepositoryImpl : OrderRepository {
     private val db = FirebaseFirestore.getInstance()
-    private val orderCollection = db.collection("orders")
 
-    override suspend fun saveOrder(order: Order): Result<Unit> {
+    override suspend fun saveOrder(userId: String, order: Order): Result<Unit> {
         return try {
-            orderCollection.add(order).await()
+            // SỬA: Đường dẫn lưu vào sub-collection
+            val collectionPath = db.collection("users").document(userId).collection("orders")
+
+            collectionPath.add(order).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

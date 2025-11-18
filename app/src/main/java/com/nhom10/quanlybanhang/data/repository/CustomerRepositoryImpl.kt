@@ -1,5 +1,6 @@
 package com.nhom10.quanlybanhang.data.repository
 
+import com.google.android.gms.tasks.Tasks // Thêm import này nếu lỗi Tasks
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.nhom10.quanlybanhang.model.Customer
@@ -11,10 +12,12 @@ import kotlinx.coroutines.tasks.await
 class CustomerRepositoryImpl : CustomerRepository {
 
     private val db = FirebaseFirestore.getInstance()
-    private val customerCollection = db.collection("customers")
 
-    override fun getCustomers(): Flow<List<Customer>> = callbackFlow {
-        val listener = customerCollection
+    // SỬA: Lấy danh sách từ sub-collection
+    override fun getCustomers(userId: String): Flow<List<Customer>> = callbackFlow {
+        val collectionPath = db.collection("users").document(userId).collection("customers")
+
+        val listener = collectionPath
             .orderBy("tenKhachHang", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -29,11 +32,12 @@ class CustomerRepositoryImpl : CustomerRepository {
         awaitClose { listener.remove() }
     }
 
-    override suspend fun addCustomer(customer: Customer) {
+    // SỬA: Thêm vào sub-collection
+    override suspend fun addCustomer(userId: String, customer: Customer) {
         try {
-            // Nếu dùng @DocumentId, Firestore sẽ tự gán ID
-            // Nếu bạn muốn ID tùy chỉnh, hãy dùng .document(id).set(customer)
-            customerCollection.add(customer).await()
+            val collectionPath = db.collection("users").document(userId).collection("customers")
+            // Dùng Tasks.await hoặc .await() (kotlinx-coroutines-play-services)
+            collectionPath.add(customer).await()
         } catch (e: Exception) {
             throw e
         }

@@ -4,11 +4,9 @@ import com.nhom10.quanlybanhang.model.Customer
 import kotlinx.coroutines.flow.Flow
 
 interface CustomerRepository {
-    // Lấy danh sách khách hàng (real-time)
-    fun getCustomers(): Flow<List<Customer>>
+    // SỬA: Thêm userId để biết lấy khách của ai
+    fun getCustomers(userId: String): Flow<List<Customer>>
 
-    // Thêm khách hàng mới
-    suspend fun addCustomer(customer: Customer)
-
-    // (Bạn có thể thêm suspend fun updateCustomer, deleteCustomer sau)
+    // SỬA: Thêm userId để biết thêm vào danh sách của ai
+    suspend fun addCustomer(userId: String, customer: Customer)
 }

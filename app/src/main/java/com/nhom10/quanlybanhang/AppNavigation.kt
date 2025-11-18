@@ -61,7 +61,7 @@ object Routes {
     const val BANK_PAYMENT = "bank_payment_screen"
     const val HISTORY = "history_screen"
     const val BILL = "bill_screen"
-    const val INVOICE = "invoice_screen/{khachTra}/{tienThua}"
+    const val INVOICE = "invoice_screen}"
     fun invoiceRoute(khachTra: String, tienThua: String) = "invoice_screen/$khachTra/$tienThua"
 
 
@@ -172,22 +172,15 @@ fun AppNavigation() {
             EditOrderItemScreen(navController = navController)
         }
         composable(Routes.PAYMENT) {
-            PaymentScreen(navController = navController)
-        }
-        composable(
-            route = Routes.INVOICE,
-            arguments = listOf(
-                navArgument("khachTra") { type = NavType.StringType },
-                navArgument("tienThua") { type = NavType.StringType }
+            PaymentScreen(
+                navController = navController,
+                orderViewModel = orderViewModel // <-- Thêm dòng này
             )
-        ) { navBackStackEntry ->
-            val khachTra = navBackStackEntry.arguments?.getString("khachTra") ?: "0"
-            val tienThua = navBackStackEntry.arguments?.getString("tienThua") ?: "0"
-
+        }
+        composable(Routes.INVOICE) {
             InvoiceScreen(
                 navController = navController,
-                khachTra = khachTra,
-                tienThua = tienThua
+                orderViewModel = orderViewModel // <-- Thêm dòng này
             )
         }
         composable(Routes.BANK_PAYMENT) {

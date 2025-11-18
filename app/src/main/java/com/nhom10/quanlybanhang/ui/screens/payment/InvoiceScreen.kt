@@ -1,5 +1,6 @@
-package com.nhom10.quanlybanhang.ui.screens.payment // Nằm chung gói payment
+package com.nhom10.quanlybanhang.ui.screens.payment
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,42 +13,51 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.service.OrderViewModel
+import java.text.DecimalFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvoiceScreen(
     navController: NavController,
-    khachTra: String, // Tham số nhận từ PaymentScreen
-    tienThua: String  // Tham số nhận từ PaymentScreen
+    orderViewModel: OrderViewModel // Nhận ViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
-    val scaffoldBgColor = Color(0xFFF0F2F5) // Nền xám nhạt
+    val context = LocalContext.current
 
-    // Biến state cho hộp thoại
-    var showProDialog by remember { mutableStateOf(false) }
+    // Lấy dữ liệu từ ViewModel
+    val cartItems by orderViewModel.cartItems.collectAsState()
+    val selectedCustomer by orderViewModel.selectedCustomer.collectAsState()
+    val totalAmount by orderViewModel.totalAmount.collectAsState()
+    val cashGiven by orderViewModel.cashGiven.collectAsState()
+    val changeAmount by orderViewModel.changeAmount.collectAsState()
+    val discountPercent by orderViewModel.discountPercent.collectAsState()
+    val surcharge by orderViewModel.surcharge.collectAsState()
+    val currentOrderId by orderViewModel.currentOrderId.collectAsState() // Lấy mã đơn hàng
+
+    val formatter = DecimalFormat("#,###")
+    val dateNow = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
 
     Scaffold(
-        containerColor = scaffoldBgColor, // Nền xám nhạt cho toàn màn hình
-
-        // === 1. TOP BAR (ĐÃ SỬA) ===
+        containerColor = Color(0xFFF0F2F5),
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text("Hóa đơn", fontWeight = FontWeight.Bold)
-                },
+                title = { Text("Hóa đơn", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) { // Nút quay lại
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, "Quay lại")
                     }
                 },
-                // Bỏ `actions` (nút Sửa) ở đây
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = appBlueColor,
                     titleContentColor = Color.White,
@@ -55,233 +65,108 @@ fun InvoiceScreen(
                 )
             )
         },
-
-        // === 2. BOTTOM BAR (ĐÃ THÊM LẠI) ===
         bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White, // Nền trắng
-                tonalElevation = 8.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Nút Xong
+            BottomAppBar(containerColor = Color.White, tonalElevation = 8.dp) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Nút Xong -> LƯU DB
                     Button(
                         onClick = {
-                            // Quay về màn hình Home
-                            navController.popBackStack(Routes.HOME, inclusive = false)
+                            orderViewModel.saveOrderToFirebase(
+                                onSuccess = {
+                                    Toast.makeText(context, "Đã lưu hóa đơn!", Toast.LENGTH_SHORT).show()
+                                    // Quay về trang chủ (Xóa hết stack về Home)
+                                    navController.popBackStack(Routes.HOME, inclusive = false)
+                                },
+                                onFailure = { e ->
+                                    Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                            )
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.LightGray.copy(alpha = 0.7f)
-                        ),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray.copy(alpha = 0.5f)),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Xong", color = Color.Black, modifier = Modifier.padding(vertical = 8.dp))
+                        Text("Xong", color = Color.Black)
                     }
-                    // Nút In hóa đơn
+                    // Nút In hóa đơn (Giả lập)
                     Button(
-                        onClick = { showProDialog = true }, // Mở hộp thoại
+                        onClick = { /* Logic in ấn */ },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = appBlueColor),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("In hóa đơn", modifier = Modifier.padding(vertical = 8.dp))
+                        Text("In hóa đơn")
                     }
                 }
             }
         },
-
-        // === 3. NỘI DUNG CHÍNH ===
         content = { paddingValues ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues) // Padding từ Scaffold
+                    .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
             ) {
-                // --- Khối 1: Thông tin chung & Sản phẩm (Dữ liệu cứng) ---
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(top = 16.dp) // Thêm padding để không dính sát TopBar
-                ) {
-                    InvoiceInfoSection()
-                    Divider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
-                    ProductListSection()
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                Column(Modifier.background(Color.White).padding(16.dp)) {
+                    // Thông tin chung
+                    InfoRow("Đơn hàng", currentOrderId)
+                    InfoRow("Thời gian", dateNow)
+                    InfoRow("Khách hàng", selectedCustomer?.tenKhachHang ?: "Khách lẻ")
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Divider(Modifier.padding(vertical = 16.dp))
 
-                // --- Khối 2: Tóm tắt thanh toán (Dữ liệu động) ---
-                InvoiceSummarySection(
-                    khachTra = khachTra,
-                    tienThua = tienThua
-                )
-            }
-
-            // === HỘP THOẠI NÂNG CẤP PRO ===
-            if (showProDialog) {
-                AlertDialog(
-                    onDismissRequest = { showProDialog = false }, // Sửa lỗi
-                    title = { Text("Thông báo") },
-                    text = { Text("Bạn hãy nâng cấp ứng dụng Pro để có thể in hóa đơn.") },
-                    confirmButton = {
-                        TextButton(
-                            onClick = { showProDialog = false }
-                        ) {
-                            Text("Đã hiểu")
+                    // Danh sách món
+                    cartItems.forEach { item ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                            Column(Modifier.weight(1f)) {
+                                Text(item.tenMatHang, fontWeight = FontWeight.Bold)
+                                Text("${formatter.format(item.giaBan)} x ${item.soLuong} ${item.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text(formatter.format(item.giaBan * item.soLuong))
                         }
                     }
-                )
+
+                    Divider(Modifier.padding(vertical = 16.dp))
+
+                    // --- TÍNH TOÁN (Thêm đoạn này để sửa lỗi Unresolved reference) ---
+
+                    // 1. Tính tổng tiền hàng (trước khi trừ chiết khấu)
+                    val itemsTotal = cartItems.sumOf { it.giaBan * it.soLuong }
+
+                    // 2. Tính số tiền được giảm (để hiển thị)
+                    val discountAmount = itemsTotal * (discountPercent / 100)
+
+                    // -------------------------------------------------------------
+
+                    // Tổng kết
+                    InfoRow("Chiết khấu (${discountPercent}%)", formatter.format(discountAmount))
+                    InfoRow("Phụ phí", formatter.format(surcharge))
+                    InfoRow("Thuế", "0")
+
+                    Divider(Modifier.padding(vertical = 8.dp))
+
+                    InfoRow("Khách trả", formatter.format(cashGiven))
+                    InfoRow("Tiền thừa", formatter.format(changeAmount))
+
+                    Divider(Modifier.padding(vertical = 16.dp))
+
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Tổng tiền", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(formatter.format(totalAmount), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                }
             }
         }
     )
-}
-
-// (Tất cả các Composable phụ trợ )
-
-@Composable
-private fun InvoiceInfoSection() {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp), // Chỉ padding ngang
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        InfoRow(label = "Đơn hàng", value = "DH.3636")
-        InfoRow(label = "Thời gian", value = "02/10/2025 23:00")
-        InfoRow(label = "Khách hàng", value = "Tú")
-    }
-}
-
-@Composable
-private fun ProductListSection() {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp), // Chỉ padding ngang
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        ProductItem(title = "Tôm", subtitle = "100.000 x 1kg", total = "100.000")
-        ProductItem(title = "Cá", subtitle = "50.000 x 1kg", total = "50.000")
-        ProductItem(title = "Cua", subtitle = "150.000 x 1kg", total = "150.000")
-    }
-}
-
-@Composable
-private fun InvoiceSummarySection(
-    khachTra: String,
-    tienThua: String
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp) // Để cách lề
-            .background(Color.White)
-            .padding(16.dp), // Padding bên trong
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        SummaryRow(label = "Chiết khấu", value = "0")
-        SummaryRow(label = "Thuế", value = "0")
-        SummaryRow(label = "Khách trả", value = khachTra) // <-- Dữ liệu động
-        SummaryRow(label = "Tiền thừa", value = tienThua) // <-- Dữ liệu động
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
-        SummaryTotalRow(label = "Tổng tiền", total = "300.000") // Dữ liệu cứng
-    }
 }
 
 @Composable
 private fun InfoRow(label: String, value: String) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.Black
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.Black,
-            textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f)
-        )
+        Text(label, modifier = Modifier.weight(1f))
+        Text(value, textAlign = TextAlign.End)
     }
-}
-
-@Composable
-private fun ProductItem(title: String, subtitle: String, total: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
-        }
-        Text(
-            text = total,
-            style = MaterialTheme.typography.bodyLarge
-        )
-    }
-}
-
-@Composable
-private fun SummaryRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodyLarge, color = Color.Black)
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun SummaryTotalRow(label: String, total: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = total,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black,
-            textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun InvoiceScreenPreview() {
-    InvoiceScreen(
-        navController = rememberNavController(),
-        khachTra = "600.000",
-        tienThua = "300.000"
-    )
 }

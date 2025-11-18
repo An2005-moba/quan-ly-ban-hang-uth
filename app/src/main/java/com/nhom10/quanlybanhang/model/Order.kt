@@ -17,12 +17,18 @@ data class OrderItem(
 data class Order(
     @DocumentId val id: String = "",
     val customerId: String = "", // ID từ Customer
+    val tenDonHang: String = "",
     val customerName: String = "", // Tên khách hàng
     val items: List<OrderItem> = emptyList(), // Danh sách các mục hàng
     val tongTien: Double = 0.0,
     val chietKhau: Double = 0.0,
     val phuPhi: Double = 0.0,
     val thue: Double = 0.0,
+    // --- THÊM CÁC TRƯỜNG NÀY ---
+    val ghiChu: String = "",      // Lưu ghi chú
+    val khachTra: Double = 0.0,   // Lưu tiền khách đưa
+    val tienThua: Double = 0.0,
     @ServerTimestamp val ngayTao: Date? = null,
-    val status: String = "Hoàn thành" // (ví dụ: Hoàn thành, Đã hủy)
+    val status: String = "Hoàn thành", // (ví dụ: Hoàn thành, Đã hủy)
+    val userId: String = ""
 )
