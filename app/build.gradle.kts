@@ -1,4 +1,3 @@
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -53,7 +52,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.firebase.storage)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -61,20 +61,26 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Thư viện bổ trợ
     implementation("androidx.compose.material:material-icons-extended")
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+    // --- PHẦN FIREBASE & GOOGLE (ĐÃ SỬA LỖI XUNG ĐỘT) ---
+
+    // 1. Firebase BOM (Quản lý phiên bản chung)
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+
+    // 2. Các dịch vụ Firebase (Không cần ghi phiên bản vì đã có BOM)
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
-<<<<<<< HEAD
-    implementation("com.google.android.gms:play-services-auth:21.2.0")
-=======
     implementation("com.google.firebase:firebase-storage")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
-    implementation("com.google.firebase:firebase-storage-ktx")
 
->>>>>>> 40f6ddaa8c3295e3e640be940beb4c1878c84ff0
+    // 3. Google Sign In (Cần thiết cho đăng nhập Google)
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
 
+    // 4. Coroutines hỗ trợ Firebase (await())
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 }
