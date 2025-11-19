@@ -5,7 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack // <-- THÊM IMPORT NÀY
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,49 +16,40 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.service.OrderViewModel
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentScreen(
-    navController: NavController
+    navController: NavController,
+    orderViewModel: OrderViewModel // Nhận ViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val scaffoldBgColor = Color(0xFFF0F2F5)
 
-    var khachTraInput by remember { mutableStateOf("0") }
+    // Lấy tổng tiền từ ViewModel
+    val totalAmount by orderViewModel.totalAmount.collectAsState()
 
-    // === LOGIC TÍNH TOÁN ===
-    val tongHoaDon = 300000.0
-    val khachTraDouble = khachTraInput.toDoubleOrNull() ?: 0.0
-    val chenhLech = khachTraDouble - tongHoaDon
+    // State nhập liệu (String để dễ xử lý thêm số 0)
+    var inputString by remember { mutableStateOf("") }
 
-    val (nhanHienThi, soTienHienThi) = if (chenhLech >= 0) {
-        "Tiền thừa:" to chenhLech
-    } else {
-        "Khách thiếu:" to -chenhLech
-    }
+    // Tính toán
+    val cashGiven = inputString.toDoubleOrNull() ?: 0.0
+    val remaining = totalAmount - cashGiven
+    val change = cashGiven - totalAmount
 
     val formatter = DecimalFormat("#,###")
-    val khachTraFormatted = formatter.format(khachTraDouble.toLong())
-    val soTienHienThiFormatted = formatter.format(soTienHienThi.toLong())
-    // =================================
 
     Scaffold(
-        containerColor = Color.White,
-
-        // === SỬA TẠI ĐÂY: THÊM LẠI TOPBAR ===
+        containerColor = scaffoldBgColor,
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text("Thành tiền", fontWeight = FontWeight.Bold)
-                },
+                title = { Text("Thành tiền", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, "Quay lại")
@@ -71,219 +62,148 @@ fun PaymentScreen(
                 )
             )
         },
-        // ===================================
-
         bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp
-            ) {
+            BottomAppBar(containerColor = Color.White, tonalElevation = 8.dp) {
                 Button(
                     onClick = {
-                        navController.navigate(
-                            Routes.invoiceRoute(
-                                khachTra = khachTraFormatted,
-                                tienThua = soTienHienThiFormatted
-                            )
-                        )
+                        // 1. Lưu số tiền khách trả vào ViewModel
+                        orderViewModel.updateCashGiven(cashGiven)
+                        // 2. Chuyển sang màn hình Hóa đơn
+                        navController.navigate(Routes.INVOICE)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = appBlueColor),
                     shape = RoundedCornerShape(8.dp),
-                    enabled = chenhLech >= 0
+                    // Chỉ cho thanh toán nếu khách trả đủ
+                    enabled = remaining <= 0
                 ) {
                     Text(
                         text = "Thanh toán",
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
                     )
                 }
             }
         },
         content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                // ... (TabRow)
-                TabRow(
-                    selectedTabIndex = 0, // "Tiền mặt" (index 0) luôn được chọn
-                    containerColor = Color.White,
-                    contentColor = appBlueColor,
-                    indicator = {}
-                ) {
-                    // Tab "Tiền Mặt"
+            Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                // Tab Tiền mặt / Ngân hàng (Giữ nguyên UI)
+                Row(Modifier.fillMaxWidth().background(Color.White)) {
                     PaymentTab(
                         text = "Tiền Mặt",
-                        isSelected = true, // Luôn được chọn
-                        onClick = { /* Không làm gì */ }
+                        isSelected = true,
+                        modifier = Modifier.weight(1f), // Đặt weight ở đây
+                        onClick = {}
                     )
-                    // Tab "Ngân hàng" (hoạt động như nút điều hướng)
                     PaymentTab(
                         text = "Ngân hàng",
-                        isSelected = false, // Không bao giờ được chọn
-                        onClick = { navController.navigate(Routes.BANK_PAYMENT) } // Chuyển màn hình
+                        isSelected = false,
+                        modifier = Modifier.weight(1f), // Đặt weight ở đây
+                        onClick = { navController.navigate(Routes.BANK_PAYMENT) }
                     )
                 }
-                // ... (Phần hiển thị tiền)
+
+                // Phần hiển thị số tiền
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(16.dp),
+                    modifier = Modifier.weight(1f).padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text("Khách trả:")
+                    Text("Khách trả:", fontSize = 16.sp)
                     Text(
-                        text = khachTraFormatted,
-                        style = MaterialTheme.typography.displayMedium,
+                        text = if (inputString.isEmpty()) "0" else formatter.format(cashGiven),
+                        fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.End,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Text("$nhanHienThi $soTienHienThiFormatted")
+
+                    if (remaining > 0) {
+                        Text("Khách thiếu: ${formatter.format(remaining)}", color = Color.Red)
+                    } else {
+                        Text("Tiền thừa: ${formatter.format(change)}", color = appBlueColor, fontWeight = FontWeight.Bold)
+                    }
                 }
-                // ... (CalculatorPad)
+
+                // Bàn phím số
                 CalculatorPad(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(scaffoldBgColor),
                     onNumberClick = { num ->
-                        if (khachTraInput == "0") khachTraInput = num else khachTraInput += num
+                        if (inputString.length < 12) { // Giới hạn độ dài
+                            inputString = if (inputString == "0") num else inputString + num
+                        }
                     },
                     onBackspace = {
-                        khachTraInput =
-                            if (khachTraInput.length > 1) khachTraInput.dropLast(1) else "0"
+                        if (inputString.isNotEmpty()) {
+                            inputString = inputString.dropLast(1)
+                        }
                     },
-                    onClear = { khachTraInput = "0" }
+                    onClear = { inputString = "" }
                 )
             }
         }
     )
 }
 
-// ... (Tất cả Composable phụ trợ PaymentTab, CalculatorPad, CalculatorButton giữ nguyên) ...
 @Composable
-private fun PaymentTab(
+fun PaymentTab(
     text: String,
     isSelected: Boolean,
+    modifier: Modifier = Modifier, // Nhận modifier từ ngoài
     onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) Color.White else Color(0xFFF0F2F5)
-    val textColor = if (isSelected) Color.Black else Color.Gray
-
-    Tab(
-        selected = isSelected,
-        onClick = onClick,
-        modifier = Modifier.background(bgColor)
+    Column(
+        modifier = modifier // Dùng modifier được truyền vào
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = text,
-            color = textColor,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 16.dp)
+            text,
+            modifier = Modifier.padding(16.dp),
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) Color(0xFF0088FF) else Color.Gray
         )
+        if (isSelected) Divider(color = Color(0xFF0088FF), thickness = 2.dp)
     }
 }
 
 @Composable
-private fun CalculatorPad(
-    modifier: Modifier = Modifier,
-    onNumberClick: (String) -> Unit,
-    onBackspace: () -> Unit,
-    onClear: () -> Unit
-) {
-    val buttonModifier = Modifier
-        .padding(4.dp)
-        .aspectRatio(1.5f)
-        .clip(RoundedCornerShape(8.dp))
-        .background(Color.White)
+fun CalculatorPad(onNumberClick: (String) -> Unit, onBackspace: () -> Unit, onClear: () -> Unit) {
+    val buttons = listOf(
+        listOf("7", "8", "9"),
+        listOf("4", "5", "6"),
+        listOf("1", "2", "3"),
+        listOf("C", "0", "backspace")
+    )
 
-    Column(
-        modifier = modifier.padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                text = "7",
-                onClick = { onNumberClick("7") })
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                text = "8",
-                onClick = { onNumberClick("8") })
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                text = "9",
-                onClick = { onNumberClick("9") })
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                text = "4",
-                onClick = { onNumberClick("4") })
-            CalculatorButton(
-                modifier = buttonModifier.weight(1F),
-                text = "5",
-                onClick = { onNumberClick("5") })
-            CalculatorButton(
-                modifier = buttonModifier.weight(1F),
-                text = "6",
-                onClick = { onNumberClick("6") })
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                text = "1",
-                onClick = { onNumberClick("1") })
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                text = "2",
-                onClick = { onNumberClick("2") })
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                text = "3",
-                onClick = { onNumberClick("3") })
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CalculatorButton(modifier = buttonModifier.weight(1f), text = "C", onClick = onClear)
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                text = "0",
-                onClick = { onNumberClick("0") })
-            CalculatorButton(
-                modifier = buttonModifier.weight(1f),
-                icon = Icons.Default.Backspace,
-                onClick = onBackspace
-            )
+    Column(Modifier.background(Color.White).padding(8.dp)) {
+        buttons.forEach { row ->
+            Row(Modifier.fillMaxWidth().weight(1f, false)) {
+                row.forEach { key ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1.5f)
+                            .padding(4.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF5F5F5))
+                            .clickable {
+                                when (key) {
+                                    "C" -> onClear()
+                                    "backspace" -> onBackspace()
+                                    else -> onNumberClick(key)
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (key == "backspace") {
+                            Icon(Icons.Default.Backspace, contentDescription = null)
+                        } else {
+                            Text(key, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
         }
     }
-}
-
-@Composable
-private fun CalculatorButton(
-    modifier: Modifier = Modifier,
-    text: String? = null,
-    icon: ImageVector? = null,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = modifier.clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        if (text != null) {
-            Text(text, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-        } else if (icon != null) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
-        }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun PaymentScreenPreview() {
-    PaymentScreen(navController = rememberNavController())
 }

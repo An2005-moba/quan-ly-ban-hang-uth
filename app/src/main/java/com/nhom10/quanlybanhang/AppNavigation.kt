@@ -28,6 +28,12 @@ import com.nhom10.quanlybanhang.ui.screens.payment.PaymentScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.BankPaymentScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nhom10.quanlybanhang.data.ProductRepositoryImpl
+import com.nhom10.quanlybanhang.data.repository.CustomerRepositoryImpl
+import com.nhom10.quanlybanhang.data.repository.OrderRepositoryImpl
+import com.nhom10.quanlybanhang.service.CustomerViewModel
+import com.nhom10.quanlybanhang.service.CustomerViewModelFactory
+import com.nhom10.quanlybanhang.service.OrderViewModel
+import com.nhom10.quanlybanhang.service.OrderViewModelFactory
 import com.nhom10.quanlybanhang.service.ProductViewModel
 import com.nhom10.quanlybanhang.service.ProductViewModelFactory
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
@@ -55,23 +61,41 @@ object Routes {
     const val BANK_PAYMENT = "bank_payment_screen"
     const val HISTORY = "history_screen"
     const val BILL = "bill_screen"
-    const val INVOICE = "invoice_screen/{khachTra}/{tienThua}"
+    const val INVOICE = "invoice_screen}"
     fun invoiceRoute(khachTra: String, tienThua: String) = "invoice_screen/$khachTra/$tienThua"
+
+
 }
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+
+    // --- SỬA LỖI 1: DI CHUYỂN TẤT CẢ VIEWMODEL VÀO ĐÂY ---
     val productRepository = ProductRepositoryImpl()
     val productViewModelFactory = ProductViewModelFactory(productRepository)
     val productViewModel: ProductViewModel = viewModel(
         factory = productViewModelFactory
     )
 
-    // === BƯỚC 1: SỬA ĐIỂM BẮT ĐẦU ===
-    NavHost(navController = navController, startDestination = Routes.LOGIN) { // <-- Đổi HOME thành LOGIN
+    val customerRepository = CustomerRepositoryImpl()
+    val customerViewModelFactory = CustomerViewModelFactory(customerRepository)
+    val customerViewModel: CustomerViewModel = viewModel(
+        factory = customerViewModelFactory
+    )
 
-        // === BƯỚC 2: THÊM 3 "PHÒNG" AUTH ===
+    val orderRepository = OrderRepositoryImpl()
+    val orderViewModelFactory = OrderViewModelFactory(orderRepository)
+    val orderViewModel: OrderViewModel = viewModel(
+        factory = orderViewModelFactory
+    )
+    // ----------------------------------------------------
+
+
+    NavHost(navController = navController, startDestination = Routes.LOGIN) {
+
+        // ... (Các routes từ LOGIN đến PRODUCT_SETUP vẫn giữ nguyên) ...
+
         composable(Routes.LOGIN) {
             LoginScreen(navController = navController)
         }
@@ -81,24 +105,18 @@ fun AppNavigation() {
         composable(Routes.FORGOT_PASSWORD) {
             ForgotPasswordScreen(navController = navController)
         }
-
-        // === CÁC PHÒNG CŨ (Giữ nguyên) ===
         composable(Routes.HOME) {
             HomeScreen(navController = navController, productViewModel = productViewModel)
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(navController = navController)
         }
-
-        // === BƯỚC 3: SỬA LỖI "ỐNG NƯỚC" ===
         composable(Routes.EDIT_PROFILE) {
-            EditProfileScreen(navController = navController) // <-- Sửa lại
+            EditProfileScreen(navController = navController)
         }
         composable(Routes.PASSWORD) {
-            PasswordScreen(navController = navController) // <-- Sửa lại
+            PasswordScreen(navController = navController)
         }
-
-        // (Tất cả các composable khác giữ nguyên)
         composable(Routes.CHANGE_PASSWORD) {
             ChangePasswordScreen(navController = navController)
         }
@@ -114,38 +132,55 @@ fun AppNavigation() {
         composable(Routes.EDIT_PRODUCT) {
             EditProductScreen(navController = navController)
         }
+
+        // --- CÁC ROUTE ĐÃ SỬA ---
+
         composable(Routes.CART) {
-            CartScreen(navController = navController)
+            CartScreen(
+                navController = navController,
+                orderViewModel = orderViewModel // Giờ đã hoạt động
+            )
         }
         composable(Routes.SELECT_CUSTOMER) {
-            SelectCustomerScreen(navController = navController)
+            SelectCustomerScreen(
+                navController = navController,
+                customerViewModel = customerViewModel, // Giờ đã hoạt động
+                orderViewModel = orderViewModel // Giờ đã hoạt động
+            )
         }
+
+        // SỬA LỖI 2: Xóa orderViewModel vì AddCustomerScreen không cần
         composable(Routes.ADD_CUSTOMER) {
-            AddCustomerScreen(navController = navController)
+            AddCustomerScreen(
+                navController = navController,
+                customerViewModel = customerViewModel
+            )
         }
+
+        // SỬA LỖI 3: Thêm các ViewModel bị thiếu
         composable(Routes.ADD_ORDER_ITEM) {
-            AddOrderItemScreen(navController = navController)
+            AddOrderItemScreen(
+                navController = navController,
+                productViewModel = productViewModel,
+                orderViewModel = orderViewModel
+            )
         }
+
+        // ... (Các routes còn lại giữ nguyên) ...
+
         composable(Routes.EDIT_ORDER_ITEM) {
             EditOrderItemScreen(navController = navController)
         }
         composable(Routes.PAYMENT) {
-            PaymentScreen(navController = navController)
-        }
-        composable(
-            route = Routes.INVOICE,
-            arguments = listOf(
-                navArgument("khachTra") { type = NavType.StringType },
-                navArgument("tienThua") { type = NavType.StringType }
+            PaymentScreen(
+                navController = navController,
+                orderViewModel = orderViewModel // <-- Thêm dòng này
             )
-        ) { navBackStackEntry ->
-            val khachTra = navBackStackEntry.arguments?.getString("khachTra") ?: "0"
-            val tienThua = navBackStackEntry.arguments?.getString("tienThua") ?: "0"
-
+        }
+        composable(Routes.INVOICE) {
             InvoiceScreen(
                 navController = navController,
-                khachTra = khachTra,
-                tienThua = tienThua
+                orderViewModel = orderViewModel // <-- Thêm dòng này
             )
         }
         composable(Routes.BANK_PAYMENT) {

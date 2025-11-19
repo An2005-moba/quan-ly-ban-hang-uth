@@ -23,7 +23,17 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.service.ProductViewModel // Thêm import
-
+import android.graphics.BitmapFactory
+import android.util.Base64
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.ContentScale
+import com.nhom10.quanlybanhang.model.Product
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductSetupScreen(
@@ -101,18 +111,15 @@ fun ProductSetupScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(1.dp) // Ngăn cách mỏng
                 ) {
-                    // Lọc danh sách dựa trên tìm kiếm (ví dụ)
+
                     val filteredList = productList.filter {
                         it.tenMatHang.contains(searchQuery, ignoreCase = true)
                     }
 
+                    // === SỬA LẠI CHỖ NÀY ===
                     items(filteredList) { product ->
-                        val details = "Giá: ${product.giaBan} - Còn: ${product.soLuong} ${product.donViTinh}"
-
-                        ProductListItem(
-                            icon = Icons.Default.Fastfood, // Tạm dùng 1 icon
-                            title = product.tenMatHang,
-                            details = details,
+                        ProductListItem( // Truyền cả đối tượng product
+                            product = product,
                             onClick = { /* TODO: Mở trang chi tiết mặt hàng */ }
                         )
                     }
@@ -130,26 +137,65 @@ fun ProductSetupScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProductListItem(
-    icon: ImageVector,
-    title: String,
-    details: String,
+    product: Product, // Nhận cả đối tượng Product
     onClick: () -> Unit
 ) {
+    val placeholderPainter = rememberVectorPainter(image = Icons.Default.Fastfood)
+
     ListItem(
         modifier = Modifier
             .background(Color.White)
             .clickable { onClick() },
         leadingContent = {
-            Icon(
-                icon,
-                contentDescription = null,
-                modifier = Modifier.padding(start = 8.dp)
-            )
+            // === LOGIC HIỂN THỊ ẢNH (COPY TỪ HOME) ===
+            val imageBitmap = remember(product.imageData) {
+                base64ToImageBitmap(product.imageData)
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (imageBitmap != null) {
+                    Image(
+                        bitmap = imageBitmap,
+                        contentDescription = product.tenMatHang,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        painter = placeholderPainter,
+                        contentDescription = "Placeholder",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            // ==========================================
         },
-        headlineContent = { Text(title, fontWeight = FontWeight.Bold) },
-        supportingContent = { Text(details) },
+        headlineContent = { Text(product.tenMatHang, fontWeight = FontWeight.Bold) },
+        supportingContent = {
+            val details = "Giá: ${product.giaBan} - Còn: ${product.soLuong} ${product.donViTinh}"
+            Text(details)
+        },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent) // Nền trong suốt
     )
+}
+
+// === THÊM HÀM NÀY (COPY TỪ HOME) ===
+private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
+    if (base64String.isEmpty()) return null
+    return try {
+        val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size).asImageBitmap()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 }
 
 @Preview(showBackground = true)

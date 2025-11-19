@@ -1,4 +1,11 @@
 package com.nhom10.quanlybanhang.ui.screens.customer
+
+// --- THÊM CÁC IMPORT NÀY ---
+import com.nhom10.quanlybanhang.model.Product
+import com.nhom10.quanlybanhang.service.OrderViewModel
+import com.nhom10.quanlybanhang.service.ProductViewModel
+// -----------------------------
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,25 +25,27 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 
-// Data class để chứa thông tin item (Giống hệt ProductSetupScreen)
-private data class ProductItem(val icon: ImageVector, val title: String, val details: String)
+// XÓA: Data class mẫu (sẽ dùng model/Product.kt)
+// private data class ProductItem(...)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddOrderItemScreen(
-    navController: NavController
+    navController: NavController,
+    productViewModel: ProductViewModel, // THÊM: Nhận ProductViewModel
+    orderViewModel: OrderViewModel      // THÊM: Nhận OrderViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val scaffoldBgColor = Color(0xFFF0F2F5)
     var searchQuery by remember { mutableStateOf("") }
     val lightGrayBorder = Color.Black.copy(alpha = 0.2f)
 
-    // Dữ liệu mẫu (Giống ProductSetupScreen)
-    val sampleProducts = listOf(
-        ProductItem(Icons.Default.Smartphone, "Điện thoại", "Giá: 5.000 - Còn: 100 cái"),
-        ProductItem(Icons.Default.Laptop, "Laptop", "Giá: 20.000.000 - Còn: 98 cái"),
-        ProductItem(Icons.Default.Watch, "Đồng hồ", "Giá: 1.000.000 - Còn: 95 cái")
-    )
+    // SỬA: Lấy dữ liệu từ ViewModel
+    val productList by productViewModel.products.collectAsState()
+    val cartItems by orderViewModel.cartItems.collectAsState()
+
+    // XÓA: Dữ liệu mẫu
+    // val sampleProducts = listOf(...)
 
     Scaffold(
         containerColor = scaffoldBgColor,
@@ -51,10 +60,14 @@ fun AddOrderItemScreen(
                     // Icon Giỏ hàng với Badge
                     BadgedBox(
                         badge = {
-                            Badge(
-                                containerColor = Color.Red,
-                                contentColor = Color.White
-                            ) { Text("2") }
+                            // SỬA: Badge động
+                            val count = cartItems.sumOf { it.soLuong }
+                            if (count > 0) {
+                                Badge(
+                                    containerColor = Color.Red,
+                                    contentColor = Color.White
+                                ) { Text(count.toString()) }
+                            }
                         },
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
@@ -107,12 +120,22 @@ fun AddOrderItemScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
-                    items(sampleProducts) { product ->
+                    // SỬA: Dùng productList từ ViewModel
+                    val filteredList = productList.filter {
+                        it.tenMatHang.contains(searchQuery, ignoreCase = true)
+                    }
+
+                    items(filteredList) { product ->
+                        val details = "Giá: ${product.giaBan} - Còn: ${product.soLuong} ${product.donViTinh}"
+
                         ProductListItem(
-                            icon = product.icon,
-                            title = product.title,
-                            details = product.details,
-                            onClick = { /* TODO: Xử lý thêm mặt hàng này vào giỏ */ }
+                            icon = Icons.Default.Fastfood, // Tạm dùng 1 icon
+                            title = product.tenMatHang,
+                            details = details,
+                            onClick = {
+                                // SỬA: Xử lý thêm mặt hàng vào giỏ
+                                orderViewModel.addProductToCart(product)
+                            }
                         )
                     }
                 }
@@ -150,8 +173,3 @@ private fun ProductListItem(
     Divider() // Thêm đường kẻ
 }
 
-@Preview(showBackground = true)
-@Composable
-fun AddOrderItemScreenPreview() {
-    AddOrderItemScreen(navController = rememberNavController())
-}
