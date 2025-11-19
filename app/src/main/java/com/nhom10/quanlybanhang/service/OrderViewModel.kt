@@ -4,91 +4,65 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.nhom10.quanlybanhang.data.repository.OrderRepository
-import com.nhom10.quanlybanhang.model.Customer
-import com.nhom10.quanlybanhang.model.Order
-import com.nhom10.quanlybanhang.model.OrderItem
-import com.nhom10.quanlybanhang.model.Product
+import com.nhom10.quanlybanhang.model.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
 
-    // --- 1. CÁC STATE (TRẠNG THÁI) ---
-
-    // Auth để lấy ID người dùng
+    // --- 1. STATE ---
     private val auth = FirebaseAuth.getInstance()
     private val currentUserId: String? get() = auth.currentUser?.uid
 
-    // Khách hàng
     private val _selectedCustomer = MutableStateFlow<Customer?>(null)
     val selectedCustomer = _selectedCustomer.asStateFlow()
 
-    // Giỏ hàng
     private val _cartItems = MutableStateFlow<List<OrderItem>>(emptyList())
     val cartItems = _cartItems.asStateFlow()
 
-    // Chiết khấu (%)
     private val _discountPercent = MutableStateFlow(0.0)
     val discountPercent = _discountPercent.asStateFlow()
 
-    // Phụ phí
     private val _surcharge = MutableStateFlow(0.0)
     val surcharge = _surcharge.asStateFlow()
 
-    // Ghi chú
     private val _note = MutableStateFlow("")
     val note = _note.asStateFlow()
 
-    // Thuế
     private val _isTaxEnabled = MutableStateFlow(false)
     val isTaxEnabled = _isTaxEnabled.asStateFlow()
 
-    // Mã đơn hàng
     private val _currentOrderId = MutableStateFlow(generateOrderId())
     val currentOrderId = _currentOrderId.asStateFlow()
 
-    // Tiền khách đưa
     private val _cashGiven = MutableStateFlow(0.0)
     val cashGiven = _cashGiven.asStateFlow()
 
-    // --- 2. LOGIC TÍNH TOÁN TỰ ĐỘNG ---
+    private val _orderHistory = MutableStateFlow<List<Order>>(emptyList())
+    val orderHistory = _orderHistory.asStateFlow()
 
-    // Tổng tiền (Reactive)
+    // --- 2. LOGIC ---
     val totalAmount: StateFlow<Double> = combine(
-        _cartItems,
-        _discountPercent,
-        _surcharge,
-        _isTaxEnabled
-    ) { items, discountVal, surchargeVal, isTax ->
+        _cartItems, _discountPercent, _surcharge, _isTaxEnabled
+    ) { items, discount, surcharge, _ ->
         val itemsTotal = items.sumOf { it.giaBan * it.soLuong }
-        val discountAmount = itemsTotal * (discountVal / 100)
-        var subTotal = itemsTotal - discountAmount + surchargeVal
-        if (subTotal < 0) subTotal = 0.0
-        subTotal // (Nếu muốn tính thuế thì nhân thêm ở đây)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0.0
-    )
+        val discountAmount = itemsTotal * (discount / 100)
+        maxOf(0.0, itemsTotal - discountAmount + surcharge)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // Tiền thừa (Reactive)
-    val changeAmount: StateFlow<Double> = combine(
-        _cashGiven,
-        totalAmount
-    ) { cash, total ->
+    val changeAmount: StateFlow<Double> = combine(_cashGiven, totalAmount) { cash, total ->
         cash - total
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0.0
-    )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // --- 3. KHỞI TẠO & HELPER ---
+    // --- 3. INIT ---
     init {
         _selectedCustomer.value = Customer(id = "khach_le", tenKhachHang = "Khách lẻ")
+
+        // [FIX QUAN TRỌNG] Tải lịch sử đơn hàng ngay khi ViewModel khởi động.
+        // Điều này đảm bảo màn hình History có dữ liệu cũ ngay cả khi chưa mua đơn mới.
+        loadOrderHistory()
     }
 
     private fun generateOrderId(): String {
@@ -96,35 +70,17 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
         return "DH.${sdf.format(Date())}"
     }
 
-    // --- 4. CÁC HÀM CẬP NHẬT DỮ LIỆU ---
-
-    fun selectCustomer(customer: Customer) {
-        _selectedCustomer.value = customer
-    }
-
-    fun updateDiscount(percent: Double) {
-        _discountPercent.value = if (percent > 100.0) 100.0 else percent
-    }
-
-    fun updateSurcharge(value: Double) {
-        _surcharge.value = value
-    }
-
-    fun updateNote(value: String) {
-        _note.value = value
-    }
-
-    fun updateCashGiven(amount: Double) {
-        _cashGiven.value = amount
-    }
-
-    fun toggleTax(isEnabled: Boolean) {
-        _isTaxEnabled.value = isEnabled
-    }
+    // --- 4. ACTIONS ---
+    fun selectCustomer(customer: Customer) { _selectedCustomer.value = customer }
+    fun updateDiscount(percent: Double) { _discountPercent.value = percent.coerceAtMost(100.0) }
+    fun updateSurcharge(value: Double) { _surcharge.value = value }
+    fun updateNote(value: String) { _note.value = value }
+    fun updateCashGiven(amount: Double) { _cashGiven.value = amount }
+    fun toggleTax(isEnabled: Boolean) { _isTaxEnabled.value = isEnabled }
 
     fun addProductToCart(product: Product) {
-        val existingItem = _cartItems.value.find { it.productId == product.documentId }
-        if (existingItem != null) {
+        val existing = _cartItems.value.find { it.productId == product.documentId }
+        if (existing != null) {
             _cartItems.update { list ->
                 list.map { if (it.productId == product.documentId) it.copy(soLuong = it.soLuong + 1) else it }
             }
@@ -136,38 +92,26 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
                 soLuong = 1,
                 donViTinh = product.donViTinh
             )
-            _cartItems.update { list -> list + newItem }
+            _cartItems.update { it + newItem }
         }
     }
 
     fun removeProductFromCart(productId: String) {
-        _cartItems.update { list -> list.filterNot { it.productId == productId } }
+        _cartItems.update { it.filterNot { item -> item.productId == productId } }
     }
 
     fun updateProductQuantity(productId: String, newQuantity: Int) {
-        if (newQuantity <= 0) {
-            removeProductFromCart(productId)
-            return
-        }
-        _cartItems.update { list ->
-            list.map { if (it.productId == productId) it.copy(soLuong = newQuantity) else it }
-        }
+        if (newQuantity <= 0) { removeProductFromCart(productId); return }
+        _cartItems.update { it.map { if (it.productId == productId) it.copy(soLuong = newQuantity) else it } }
     }
 
-    // --- 5. LƯU TRỮ VÀ RESET ---
-
-    // Hàm này dùng ở màn hình InvoiceScreen khi bấm "Xong"
+    // --- 5. SAVE & RESET ---
     fun saveOrderToFirebase(onSuccess: () -> Unit, onFailure: (Throwable) -> Unit) {
-        val userId = currentUserId
-        if (userId == null) {
-            onFailure(Exception("Chưa đăng nhập"))
-            return
-        }
-
+        val userId = currentUserId ?: return onFailure(Exception("Chưa đăng nhập"))
         val items = _cartItems.value
         if (items.isEmpty()) return
 
-        val finalOrder = Order(
+        val order = Order(
             id = _currentOrderId.value,
             tenDonHang = _currentOrderId.value,
             customerId = _selectedCustomer.value?.id ?: "",
@@ -179,16 +123,23 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
             ghiChu = _note.value,
             khachTra = _cashGiven.value,
             tienThua = changeAmount.value,
-            userId = userId // Quan trọng: Lưu ID người dùng tạo đơn
+            userId = userId,
+            date = System.currentTimeMillis()
         )
 
         viewModelScope.launch {
-            val result = repository.saveOrder(userId, finalOrder)
+            val result = repository.saveOrder(userId, order)
             result.onSuccess {
+                // Cập nhật ngay danh sách orderHistory để hiển thị HistoryScreen (Optimistic Update)
+                // Vì chúng ta cập nhật ở đây, đơn hàng mới sẽ hiện ngay lập tức.
+                _orderHistory.update { currentList ->
+                    (listOf(order) + currentList).sortedByDescending { it.date }
+                }
+
                 clearCart()
                 onSuccess()
             }
-            result.onFailure { e -> onFailure(e) }
+            result.onFailure { onFailure(it) }
         }
     }
 
@@ -199,9 +150,16 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
         _note.value = ""
         _isTaxEnabled.value = false
         _cashGiven.value = 0.0
-        // Reset khách hàng
         _selectedCustomer.value = Customer(id = "khach_le", tenKhachHang = "Khách lẻ")
-        // Tạo mã đơn mới
         _currentOrderId.value = generateOrderId()
+    }
+
+    fun loadOrderHistory() {
+        val userId = currentUserId ?: return
+        viewModelScope.launch {
+            repository.getOrders(userId).onSuccess {
+                _orderHistory.value = it.sortedByDescending { order -> order.date }
+            }
+        }
     }
 }

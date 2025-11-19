@@ -26,6 +26,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.service.ProductViewModel
+import com.nhom10.quanlybanhang.service.OrderViewModel
 
 import coil.compose.AsyncImage
 import androidx.compose.foundation.Image
@@ -48,7 +49,8 @@ data class BottomNavItem(val label: String, val icon: ImageVector)
 @Composable
 fun HomeScreen(
     navController: NavController,
-    productViewModel: ProductViewModel
+    productViewModel: ProductViewModel,
+    orderViewModel: OrderViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     var selectedItemIndex by rememberSaveable { mutableStateOf(0) }
@@ -176,7 +178,8 @@ fun HomeScreen(
                     }
                     1 -> ReportScreen()
                     // 2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
-                    2 -> HistoryScreen(navController = navController)
+                    2 -> HistoryScreen(navController = navController,
+                        orderViewModel = orderViewModel)
                     3 -> AccountScreen(navController = navController)
                 }
             }

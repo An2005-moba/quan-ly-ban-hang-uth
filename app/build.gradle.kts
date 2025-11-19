@@ -83,4 +83,6 @@ dependencies {
 
     // 4. Coroutines hỗ trợ Firebase (await())
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("com.google.firebase:firebase-database-ktx:20.3.2")
+
 }
