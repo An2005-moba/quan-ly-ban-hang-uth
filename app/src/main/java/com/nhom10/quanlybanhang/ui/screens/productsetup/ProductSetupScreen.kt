@@ -116,7 +116,6 @@ fun ProductSetupScreen(
                         it.tenMatHang.contains(searchQuery, ignoreCase = true)
                     }
 
-                    // === SỬA LẠI CHỖ NÀY ===
                     items(filteredList) { product ->
                         ProductListItem( // Truyền cả đối tượng product
                             product = product,

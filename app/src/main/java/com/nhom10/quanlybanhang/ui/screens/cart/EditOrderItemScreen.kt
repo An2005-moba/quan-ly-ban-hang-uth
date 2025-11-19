@@ -175,10 +175,3 @@ private fun InfoTextField(
         keyboardOptions = keyboardOptions
     )
 }
-
-
-@Preview(showBackground = true)
-@Composable
-fun EditOrderItemScreenPreview() {
-    EditOrderItemScreen(navController = rememberNavController())
-}
