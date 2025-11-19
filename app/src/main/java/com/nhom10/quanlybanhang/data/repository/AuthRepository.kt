@@ -14,4 +14,6 @@ interface AuthRepository {
         email: String,
         ngaySinh: String
     ): Result<Unit>
+
+    suspend fun signInWithGoogle(idToken: String): Result<FirebaseUser>
 }

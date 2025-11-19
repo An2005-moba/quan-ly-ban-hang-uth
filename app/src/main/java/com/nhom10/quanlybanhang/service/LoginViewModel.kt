@@ -53,4 +53,19 @@ class LoginViewModel : ViewModel() {
     fun resetLoginResult() {
         _uiState.value = _uiState.value.copy(loginResult = null)
     }
+
+    fun loginWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _uiState.value = LoginUiState(isLoading = true)
+
+            val result = authRepo.signInWithGoogle(idToken)
+
+            result.onSuccess { user ->
+                _uiState.value = LoginUiState(loginResult = "Đăng nhập thành công!")
+            }
+            result.onFailure { e ->
+                _uiState.value = LoginUiState(loginResult = "Lỗi Google: ${e.message}")
+            }
+        }
+    }
 }

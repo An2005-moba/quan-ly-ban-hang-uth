@@ -90,4 +90,36 @@ class AuthViewModel : ViewModel() {
     fun resetRegistrationResult() {
         _uiState.value = _uiState.value.copy(registrationResult = null)
     }
+
+    fun registerWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _uiState.value = RegisterUiState(isLoading = true)
+
+            val result = authRepo.signInWithGoogle(idToken)
+
+            result.onSuccess { user ->
+                val userId = user.uid
+                val email = user.email ?: ""
+                val name = user.displayName ?: "Người dùng Google"
+                val saveResult = authRepo.saveUserDetails(
+                    userId = userId,
+                    hoTen = name,
+                    email = email,
+                    ngaySinh = ""
+                )
+
+                saveResult.onSuccess {
+                    _uiState.value = RegisterUiState(registrationResult = "Đăng ký thành công!")
+                }
+                saveResult.onFailure {
+                    // Nếu lưu DB thất bại thì vẫn coi như đăng ký thành công (vì Auth đã xong)
+                    _uiState.value = RegisterUiState(registrationResult = "Đăng ký thành công!")
+                }
+            }
+
+            result.onFailure { e ->
+                _uiState.value = RegisterUiState(registrationResult = "Lỗi Google: ${e.message}")
+            }
+        }
+    }
 }

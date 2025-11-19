@@ -1,6 +1,5 @@
 package com.nhom10.quanlybanhang.ui.screens.editprofile
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,34 +17,34 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext // <-- Cần Import này
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-// --- THÊM 2 IMPORT NÀY ---
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import com.google.android.gms.auth.api.signin.GoogleSignIn // <-- Cần Import này
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions // <-- Cần Import này
+import com.google.firebase.auth.FirebaseAuth
+import com.nhom10.quanlybanhang.Routes
 
-
-/**
- * Màn hình Chỉnh sửa thông tin cá nhân
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
-    navController: NavController // <-- SỬA LẠI: NHẬN NAVCONTROLLER
+    navController: NavController
 ) {
     val appBlueColor = Color(0xFF0088FF)
+    val auth = FirebaseAuth.getInstance()
+    val context = LocalContext.current // <-- Lấy context để dùng cho Google
 
     Scaffold(
-        // === 1. TOP BAR (CÓ NÚT QUAY LẠI) ===
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text("Chỉnh sửa thông tin cá nhân", fontWeight = FontWeight.Bold)
                 },
                 navigationIcon = {
-                    // SỬA LẠI: Dùng navController để quay lại
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
@@ -60,28 +59,24 @@ fun EditProfileScreen(
                 )
             )
         },
-
-        // === 2. NỘI DUNG CHÍNH ===
         content = { paddingValues ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(Color(0xFFF0F2F5)) // Màu nền xám nhạt
+                    .background(Color(0xFFF0F2F5))
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // --- Dữ liệu mẫu (sẽ lấy từ ViewModel) ---
                 val photoUrl = "URL_ANH_DAI_DIEN_CUA_BAN_TU_FIREBASE"
                 val userName = "Võ Anh Quốc"
                 val gender = "Nam"
                 val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
 
-                // Mục 1: Ảnh đại diện
                 EditProfileItem(
                     title = "Ảnh đại diện",
                     onClick = { /* TODO: Mở trình chọn ảnh */ }
-                ) { // Đây là phần nội dung bên phải
+                ) {
                     AsyncImage(
                         model = photoUrl,
                         contentDescription = "Avatar",
@@ -95,7 +90,6 @@ fun EditProfileScreen(
                     Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
                 }
 
-                // Mục 2: Tên tài khoản
                 EditProfileItem(
                     title = "Tên tài khoản",
                     onClick = { /* TODO: Mở dialog sửa tên */ }
@@ -104,7 +98,6 @@ fun EditProfileScreen(
                     Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
                 }
 
-                // Mục 3: Giới tính
                 EditProfileItem(
                     title = "Giới tính",
                     onClick = { /* TODO: Mở dialog chọn giới tính */ }
@@ -115,9 +108,25 @@ fun EditProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Mục 4: Nút Đăng xuất
+                // --- NÚT ĐĂNG XUẤT (ĐÃ NÂNG CẤP) ---
                 Button(
-                    onClick = { /* TODO: Xử lý đăng xuất */ },
+                    onClick = {
+                        // 1. Đăng xuất Firebase
+                        auth.signOut()
+
+                        // 2. Đăng xuất Google Client (Để lần sau nó hỏi lại tài khoản)
+                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+                        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+
+                        googleSignInClient.signOut().addOnCompleteListener {
+                            // 3. Chuyển về màn hình Login và xóa lịch sử
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(0) {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White
                     ),
@@ -143,9 +152,6 @@ fun EditProfileScreen(
     )
 }
 
-/**
- * Composable phụ trợ cho một mục tùy chọn
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditProfileItem(
