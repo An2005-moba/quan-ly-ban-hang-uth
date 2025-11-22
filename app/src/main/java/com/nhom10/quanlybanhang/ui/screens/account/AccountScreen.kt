@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang.ui.screens.account // Đảm bảo tên gói đúng
+package com.nhom10.quanlybanhang.ui.screens.account
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,12 +16,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-// === THÊM IMPORT CHO NAVCONTROLLER VÀ ROUTES ===
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
 
 @Composable
-fun AccountScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
+fun AccountScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -29,7 +29,6 @@ fun AccountScreen(navController: NavController) { // <-- NHẬN NAVCONTROLLER
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
         AccountOptionItem(
             icon = Icons.Default.Edit,
             text = "Chỉnh sửa thông tin cá nhân",
@@ -91,6 +90,5 @@ private fun AccountOptionItem(
 @Preview(showBackground = true)
 @Composable
 fun AccountScreenPreview() {
-    // Sửa Preview để nó hoạt động
-    // AccountScreen(navController = rememberNavController())
+    AccountScreen(navController = rememberNavController())
 }

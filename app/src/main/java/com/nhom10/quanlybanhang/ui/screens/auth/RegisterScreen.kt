@@ -2,10 +2,10 @@ package com.nhom10.quanlybanhang.ui.screens.auth
 
 import android.app.Activity
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult // <-- THÊM
-import androidx.activity.result.contract.ActivityResultContracts // <-- THÊM
-import androidx.compose.foundation.BorderStroke // <-- THÊM
-import androidx.compose.foundation.Image // <-- THÊM
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource // <-- THÊM
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -33,10 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.google.android.gms.auth.api.signin.GoogleSignIn // <-- THÊM
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions // <-- THÊM
-import com.google.android.gms.common.api.ApiException // <-- THÊM
-import com.nhom10.quanlybanhang.R // <-- THÊM (Import R)
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.nhom10.quanlybanhang.R
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.service.AuthViewModel
 import java.text.SimpleDateFormat
@@ -49,28 +49,24 @@ fun RegisterScreen(
     navController: NavController,
     authViewModel: AuthViewModel = viewModel()
 ) {
-
-    // --- Biến State ---
+    // --- State ---
     var hoTen by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var ngaySinh by rememberSaveable { mutableStateOf("") }
     var matKhau by rememberSaveable { mutableStateOf("") }
     var xacNhanMatKhau by rememberSaveable { mutableStateOf("") }
-
     var matKhauAn by remember { mutableStateOf(true) }
     var xacNhanMatKhauAn by remember { mutableStateOf(true) }
-
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
     val context = LocalContext.current
     val uiState by authViewModel.uiState.collectAsState()
     val errorColor = MaterialTheme.colorScheme.error
-
     val borderColor = Color(0xFF0088FF)
     val unfocusedBorderColor = Color.Black.copy(alpha = 0.2f)
 
-    // --- 1. CẤU HÌNH GOOGLE SIGN IN ---
+    // Cấu hình Google
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.default_web_client_id))
@@ -79,7 +75,6 @@ fun RegisterScreen(
     }
     val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
 
-    // --- 2. TẠO BỆ PHÓNG (LAUNCHER) CHO GOOGLE ---
     val googleAuthLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -87,7 +82,6 @@ fun RegisterScreen(
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)!!
-                // GỌI HÀM MỚI TRONG VIEWMODEL
                 authViewModel.registerWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
                 Toast.makeText(context, "Lỗi Google: ${e.message}", Toast.LENGTH_LONG).show()
@@ -117,80 +111,51 @@ fun RegisterScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Text(
-            text = "Đăng ký tài khoản",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        Text("Đăng ký tài khoản", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(32.dp))
-
-        // ... (Các ô nhập liệu Họ Tên, Email, Ngày sinh, Mật khẩu... GIỮ NGUYÊN) ...
         OutlinedTextField(
-            value = hoTen,
-            onValueChange = { hoTen = it },
-            label = { Text("Họ Tên") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            colors = customTextFieldColors,
-            isError = uiState.hoTenError != null,
-            supportingText = { if (uiState.hoTenError != null) Text(uiState.hoTenError!!, color = errorColor) }
+            value = hoTen, onValueChange = { hoTen = it }, label = { Text("Họ Tên") }, modifier = Modifier.fillMaxWidth(), singleLine = true, colors = customTextFieldColors,
+            isError = uiState.hoTenError != null, supportingText = { if (uiState.hoTenError != null) Text(uiState.hoTenError!!, color = errorColor) }
         )
         Spacer(modifier = Modifier.height(8.dp))
-
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            singleLine = true,
-            colors = customTextFieldColors,
-            isError = uiState.emailError != null,
-            supportingText = { if (uiState.emailError != null) Text(uiState.emailError!!, color = errorColor) }
+            value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), singleLine = true, colors = customTextFieldColors,
+            isError = uiState.emailError != null, supportingText = { if (uiState.emailError != null) Text(uiState.emailError!!, color = errorColor) }
         )
-        Spacer(modifier = Modifier.height(8.dp))
 
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = ngaySinh,
+                onValueChange = { ngaySinh = it },
+                label = { Text("Ngày sinh") },
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(Icons.Default.CalendarToday, "Chọn ngày sinh")
+                    }
+                },
+                singleLine = true,
+                colors = customTextFieldColors,
+                isError = uiState.ngaySinhError != null,
+                supportingText = { if (uiState.ngaySinhError != null) Text(uiState.ngaySinhError!!, color = errorColor) }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
-            value = ngaySinh,
-            onValueChange = { },
-            readOnly = true,
-            label = { Text("Ngày sinh") },
-            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-            trailingIcon = { IconButton(onClick = { showDatePicker = true }) { Icon(Icons.Default.CalendarToday, "Ngày sinh") } },
-            singleLine = true,
-            colors = customTextFieldColors,
-            isError = uiState.ngaySinhError != null,
-            supportingText = { if (uiState.ngaySinhError != null) Text(uiState.ngaySinhError!!, color = errorColor) }
+            value = matKhau, onValueChange = { matKhau = it }, label = { Text("Mật khẩu") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+            visualTransformation = if (matKhauAn) PasswordVisualTransformation() else VisualTransformation.None, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = { IconButton(onClick = { matKhauAn = !matKhauAn }) { Icon(if (matKhauAn) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Ẩn/Hiện") } }, colors = customTextFieldColors,
+            isError = uiState.matKhauError != null, supportingText = { if (uiState.matKhauError != null) Text(uiState.matKhauError!!, color = errorColor) }
         )
-        Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = matKhau,
-            onValueChange = { matKhau = it },
-            label = { Text("Mật khẩu") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = if (matKhauAn) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = { IconButton(onClick = { matKhauAn = !matKhauAn }) { Icon(if (matKhauAn) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Ẩn/Hiện") } },
-            colors = customTextFieldColors,
-            isError = uiState.matKhauError != null,
-            supportingText = { if (uiState.matKhauError != null) Text(uiState.matKhauError!!, color = errorColor) }
-        )
         Spacer(modifier = Modifier.height(8.dp))
-
         OutlinedTextField(
-            value = xacNhanMatKhau,
-            onValueChange = { xacNhanMatKhau = it },
-            label = { Text("Xác nhận mật khẩu") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = if (xacNhanMatKhauAn) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = { IconButton(onClick = { xacNhanMatKhauAn = !xacNhanMatKhauAn }) { Icon(if (xacNhanMatKhauAn) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Ẩn/Hiện") } },
-            colors = customTextFieldColors,
-            isError = uiState.xacNhanMatKhauError != null,
-            supportingText = { if (uiState.xacNhanMatKhauError != null) Text(uiState.xacNhanMatKhauError!!, color = errorColor) }
+            value = xacNhanMatKhau, onValueChange = { xacNhanMatKhau = it }, label = { Text("Xác nhận mật khẩu") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+            visualTransformation = if (xacNhanMatKhauAn) PasswordVisualTransformation() else VisualTransformation.None, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = { IconButton(onClick = { xacNhanMatKhauAn = !xacNhanMatKhauAn }) { Icon(if (xacNhanMatKhauAn) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Ẩn/Hiện") } }, colors = customTextFieldColors,
+            isError = uiState.xacNhanMatKhauError != null, supportingText = { if (uiState.xacNhanMatKhauError != null) Text(uiState.xacNhanMatKhauError!!, color = errorColor) }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -211,15 +176,12 @@ fun RegisterScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Divider(modifier = Modifier.weight(1f), color = Color.Gray.copy(alpha = 0.3f))
             Text("HOẶC", modifier = Modifier.padding(horizontal = 8.dp), color = Color.Gray, style = MaterialTheme.typography.bodySmall)
             Divider(modifier = Modifier.weight(1f), color = Color.Gray.copy(alpha = 0.3f))
         }
-
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedButton(
             onClick = {
@@ -232,16 +194,13 @@ fun RegisterScreen(
             border = BorderStroke(1.dp, Color.LightGray),
             colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_google),
-                contentDescription = "Google Logo",
-                modifier = Modifier.size(30.dp)
-            )
+            Image(painter = painterResource(id = R.drawable.ic_google), contentDescription = "Google Logo", modifier = Modifier.size(30.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text("Đăng ký bằng Google", color = Color.Black, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(text = "Bạn đã có tài khoản?")
             TextButton(
@@ -253,7 +212,6 @@ fun RegisterScreen(
         }
     }
 
-    // Hộp thoại lịch (Giữ nguyên)
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -271,16 +229,18 @@ fun RegisterScreen(
         ) { DatePicker(state = datePickerState) }
     }
 
-    // Khối lắng nghe kết quả
     LaunchedEffect(key1 = uiState.registrationResult) {
         uiState.registrationResult?.let { message ->
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-
-            if (message == "Đăng ký thành công!") {
+            if (message == "Đăng ký thành công! Vui lòng đăng nhập.") {
+                navController.popBackStack()
+            }
+            if (message == "Đăng nhập Google thành công!") {
                 navController.navigate(Routes.HOME) {
                     popUpTo(Routes.LOGIN) { inclusive = true }
                 }
             }
+
             authViewModel.resetRegistrationResult()
         }
     }

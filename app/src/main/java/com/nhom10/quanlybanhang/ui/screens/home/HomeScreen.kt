@@ -1,46 +1,51 @@
 package com.nhom10.quanlybanhang.ui.screens.home
 
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.nhom10.quanlybanhang.ui.screens.report.ReportScreen
-import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+<<<<<<< HEAD
+import androidx.navigation.compose.rememberNavController
+=======
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.service.ProductViewModel
 import com.nhom10.quanlybanhang.service.OrderViewModel
 
+>>>>>>> d4747a24322aa7c31301a9fb9d0654f0a681e3a4
 import coil.compose.AsyncImage
-import androidx.compose.foundation.Image
-
-import android.graphics.BitmapFactory
-import android.util.Base64
-import androidx.compose.foundation.lazy.LazyColumn // Thêm import
-import androidx.compose.foundation.lazy.items // Thêm import
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-
-import com.nhom10.quanlybanhang.model.Product // Thêm import
+import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.model.Product
+import com.nhom10.quanlybanhang.service.AccountViewModel
+import com.nhom10.quanlybanhang.service.ProductViewModel
+import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
-
+import com.nhom10.quanlybanhang.ui.screens.report.ReportScreen
 
 // Dữ liệu các mục trong thanh Bottom Nav
 data class BottomNavItem(val label: String, val icon: ImageVector)
@@ -53,12 +58,14 @@ fun HomeScreen(
     orderViewModel: OrderViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
-    var selectedItemIndex by rememberSaveable { mutableStateOf(0) }
+    // Sử dụng mutableIntStateOf cho chỉ số để tối ưu
+    var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
 
-    // Sửa: Lấy danh sách từ ViewModel
+    // Lấy danh sách sản phẩm từ ViewModel
+    // Dùng collectAsState cho an toàn và ổn định
     val productList by productViewModel.products.collectAsState()
 
-    // Sửa: Tải dữ liệu khi màn hình khởi chạy
+    // Tải dữ liệu khi màn hình khởi chạy
     LaunchedEffect(key1 = true) {
         productViewModel.loadProducts()
     }
@@ -71,7 +78,7 @@ fun HomeScreen(
     )
 
     Scaffold(
-        // === 1. TOP BAR (Giữ nguyên) ===
+        // === 1. TOP BAR ===
         topBar = {
             when (selectedItemIndex) {
                 1 -> ReportTopBar(appBlueColor = appBlueColor)
@@ -89,12 +96,11 @@ fun HomeScreen(
             }
         },
 
-        // === 2. NÚT DẤU CỘNG (FAB) (Giữ nguyên) ===
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate(Routes.PRODUCT_SETUP) },
                 modifier = Modifier
-                    .offset(y = 50.dp)
+                    .offset(y = 45.dp)
                     .size(60.dp),
                 containerColor = appBlueColor,
                 contentColor = Color.White,
@@ -109,7 +115,7 @@ fun HomeScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
 
-        // === 3. BOTTOM BAR (Giữ nguyên) ===
+        // === 3. BOTTOM BAR ===
         bottomBar = {
             BottomAppBar(
                 modifier = Modifier.height(85.dp),
@@ -159,7 +165,7 @@ fun HomeScreen(
             }
         },
 
-        // === 4. NỘI DUNG CHÍNH (SỬA CASE 0) ===
+        // === 4. NỘI DUNG CHÍNH ===
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -168,18 +174,42 @@ fun HomeScreen(
             ) {
                 when (selectedItemIndex) {
                     0 -> {
+                        // --- TRANG CHỦ ---
                         SearchSection(appBlueColor = appBlueColor)
 
-                        // Sửa: Hiển thị danh sách sản phẩm
-                        ProductListForHome(
-                            products = productList,
-                            onProductClick = { /* TODO: Xử lý thêm vào giỏ hàng */ }
-                        )
+                        if (productList.isEmpty()) {
+                            // Hiển thị khi không có sản phẩm
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.ShoppingBag,
+                                        contentDescription = null,
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(64.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text("Chưa có sản phẩm nào", color = Color.Gray)
+                                }
+                            }
+                        } else {
+                            // Hiển thị danh sách
+                            ProductListForHome(
+                                products = productList,
+                                onProductClick = { /* TODO: Xử lý khi nhấn vào sản phẩm */ }
+                            )
+                        }
                     }
                     1 -> ReportScreen()
+<<<<<<< HEAD
+                    2 -> HistoryScreen(navController = navController)
+=======
                     // 2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
                     2 -> HistoryScreen(navController = navController,
                         orderViewModel = orderViewModel)
+>>>>>>> d4747a24322aa7c31301a9fb9d0654f0a681e3a4
                     3 -> AccountScreen(navController = navController)
                 }
             }
@@ -187,13 +217,15 @@ fun HomeScreen(
     )
 }
 
-// Thêm: Composable mới để hiển thị danh sách
+// === CÁC COMPOSABLE PHỤ TRỢ ===
+
 @Composable
 fun ProductListForHome(
     products: List<Product>,
     onProductClick: (Product) -> Unit
 ) {
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Fastfood)
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -208,21 +240,22 @@ fun ProductListForHome(
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .height(IntrinsicSize.Min),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // === LOGIC HIỂN THỊ ẢNH THAY ĐỔI TẠI ĐÂY ===
+                    // --- XỬ LÝ ẢNH SẢN PHẨM (BASE64) ---
+                    // Dùng remember để tránh decode lại liên tục gây lag
                     val imageBitmap = remember(product.imageData) {
                         base64ToImageBitmap(product.imageData)
                     }
 
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.LightGray.copy(alpha = 0.5f))
-                        // Xóa padding(end = 8.dp) ở đây
-                        ,
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.LightGray.copy(alpha = 0.3f)),
                         contentAlignment = Alignment.Center
                     ) {
                         if (imageBitmap != null) {
@@ -231,52 +264,70 @@ fun ProductListForHome(
                                 contentDescription = product.tenMatHang,
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
-                                // XÓA placeholder VÀ error Ở ĐÂY
                             )
                         } else {
-                            // Hiển thị Icon placeholder nếu không có ảnh
                             Icon(
                                 painter = placeholderPainter,
-                                contentDescription = "Placeholder",
+                                contentDescription = "No Image",
                                 tint = Color.Gray,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                     }
-                    // Thêm Spacer ở đây
-                    Spacer(modifier = Modifier.width(8.dp))
-                    // ==========================================
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(product.tenMatHang, fontWeight = FontWeight.Bold)
-                        Text("Còn: ${product.soLuong} ${product.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    // --- THÔNG TIN SẢN PHẨM ---
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = product.tenMatHang,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Còn: ${product.soLuong} ${product.donViTinh}",
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
-                    Text("${product.giaBan}đ", fontWeight = FontWeight.Bold)
+
+                    // --- GIÁ BÁN ---
+                    // Định dạng giá đơn giản (bạn có thể thêm NumberFormat sau)
+                    Text(
+                        text = "${product.giaBan} đ",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0088FF),
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
             }
         }
     }
 }
 
+// Hàm chuyển đổi Base64 sang Bitmap
 private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
     if (base64String.isEmpty()) return null
     return try {
         val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
-        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size).asImageBitmap()
+        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
     } catch (e: Exception) {
         e.printStackTrace()
         null
     }
 }
 
-// ... (Tất cả các hàm private khác giữ nguyên) ...
-
-// ... (AccountTopBar) ...
 @Composable
-private fun AccountTopBar(appBlueColor: Color) {
-    val photoUrl = "URL_ANH_DAI_DIEN_CUA_BAN_TU_FIREBASE"
-    val userName = "Võ Anh Quốc"
-    val userId = "ID:12"
+private fun AccountTopBar(
+    appBlueColor: Color,
+    viewModel: AccountViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
 
     Column(
@@ -286,30 +337,41 @@ private fun AccountTopBar(appBlueColor: Color) {
             .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 24.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = photoUrl,
-                contentDescription = "Avatar",
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(Color.White),
-                contentScale = ContentScale.Crop,
-                placeholder = placeholderPainter,
-                error = placeholderPainter
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (!uiState.photoUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = uiState.photoUrl,
+                    contentDescription = "Avatar",
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(Color.White),
+                    contentScale = ContentScale.Crop,
+                    placeholder = placeholderPainter,
+                    error = placeholderPainter
+                )
+            } else {
+                // TRƯỜNG HỢP 2: Không có ảnh (Thủ công) -> Hiện LetterAvatar
+                // Đảm bảo bạn đã có file LetterAvatar.kt trong ui/components
+                // Nếu nó báo đỏ LetterAvatar, hãy bấm Alt+Enter để Import
+                com.nhom10.quanlybanhang.ui.components.LetterAvatar(
+                    name = uiState.userName,
+                    size = 64.dp
+                )
+            }
+            // =============================================
+
             Spacer(modifier = Modifier.width(16.dp))
+
             Column {
                 Text(
-                    text = userName,
+                    text = uiState.userName,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = userId,
+                    text = uiState.userId,
                     color = Color.White.copy(alpha = 0.8f),
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -317,13 +379,16 @@ private fun AccountTopBar(appBlueColor: Color) {
         }
     }
 }
+
 @Composable
 private fun BottomBarItem(item: BottomNavItem, isSelected: Boolean, selectedColor: Color, onClick: () -> Unit) {
     val color = if (isSelected) selectedColor else Color.Gray
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.padding(vertical = 8.dp).clickable { onClick() }
+        modifier = Modifier
+            .padding(vertical = 8.dp)
+            .clickable { onClick() }
     ) {
         Icon(item.icon, contentDescription = item.label, tint = color)
         Text(text = item.label, color = color, style = MaterialTheme.typography.labelSmall)
@@ -334,12 +399,25 @@ private fun BottomBarItem(item: BottomNavItem, isSelected: Boolean, selectedColo
 @Composable
 private fun ReportTopBar(appBlueColor: Color) {
     Column(
-        modifier = Modifier.fillMaxWidth().background(appBlueColor).statusBarsPadding().padding(bottom = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(appBlueColor)
+            .statusBarsPadding()
+            .padding(bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Báo cáo", fontWeight = FontWeight.Bold, color = Color.White, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
+        Text(
+            text = "Báo cáo",
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
         Card(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(48.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .height(48.dp),
             shape = CircleShape,
             colors = CardDefaults.cardColors(containerColor = Color.White),
             border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
@@ -367,12 +445,12 @@ private fun FilterButtonContent(text: String, modifier: Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DefaultTopBar(title: String, showShoppingCart: Boolean, appBlueColor: Color,navController: NavController) {
+private fun DefaultTopBar(title: String, showShoppingCart: Boolean, appBlueColor: Color, navController: NavController) {
     CenterAlignedTopAppBar(
         title = { Text(title, fontWeight = FontWeight.Bold) },
         actions = {
             if (showShoppingCart) {
-                IconButton(onClick = { navController.navigate(Routes.CART)}) {
+                IconButton(onClick = { navController.navigate(Routes.CART) }) {
                     Icon(Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng", tint = Color.White)
                 }
             }
@@ -393,7 +471,9 @@ private fun SearchSection(appBlueColor: Color) {
     OutlinedTextField(
         value = searchQuery,
         onValueChange = { searchQuery = it },
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         placeholder = { Text("Tìm kiếm mặt hàng", color = appBlueColor) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = appBlueColor) },
         singleLine = true,
@@ -408,12 +488,8 @@ private fun SearchSection(appBlueColor: Color) {
     )
 }
 
-
-
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    // Sửa Preview để nó hoạt động (cần NavController giả)
-    // Hoặc đơn giản là comment nó đi nếu nó gây lỗi
-    // HomeScreen(navController = rememberNavController())
+    // Preview trống để tránh lỗi compile khi không có ViewModel giả lập
 }
