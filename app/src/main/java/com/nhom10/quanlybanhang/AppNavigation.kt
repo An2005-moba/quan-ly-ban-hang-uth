@@ -106,7 +106,11 @@ fun AppNavigation() {
             ForgotPasswordScreen(navController = navController)
         }
         composable(Routes.HOME) {
-            HomeScreen(navController = navController, productViewModel = productViewModel)
+            HomeScreen(
+                navController = navController,
+                productViewModel = productViewModel,
+                orderViewModel = orderViewModel // <-- thêm dòng này
+            )
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(navController = navController)
@@ -187,7 +191,11 @@ fun AppNavigation() {
             BankPaymentScreen(navController = navController)
         }
         composable(Routes.HISTORY) {
-            HistoryScreen(navController = navController)
+            HistoryScreen(
+                navController = navController,
+                orderViewModel = orderViewModel
+            )
+
         }
         composable(Routes.BILL) {
             BillDetailScreen(navController = navController)

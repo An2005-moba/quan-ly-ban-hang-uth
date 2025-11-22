@@ -30,7 +30,7 @@ import java.util.Locale
 @Composable
 fun InvoiceScreen(
     navController: NavController,
-    orderViewModel: OrderViewModel // Nhận ViewModel
+    orderViewModel: OrderViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val context = LocalContext.current
@@ -43,7 +43,7 @@ fun InvoiceScreen(
     val changeAmount by orderViewModel.changeAmount.collectAsState()
     val discountPercent by orderViewModel.discountPercent.collectAsState()
     val surcharge by orderViewModel.surcharge.collectAsState()
-    val currentOrderId by orderViewModel.currentOrderId.collectAsState() // Lấy mã đơn hàng
+    val currentOrderId by orderViewModel.currentOrderId.collectAsState()
 
     val formatter = DecimalFormat("#,###")
     val dateNow = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
@@ -68,14 +68,18 @@ fun InvoiceScreen(
         bottomBar = {
             BottomAppBar(containerColor = Color.White, tonalElevation = 8.dp) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    // Nút Xong -> LƯU DB
+
+                    // --- NÚT XONG (Đã sửa đổi) ---
                     Button(
                         onClick = {
                             orderViewModel.saveOrderToFirebase(
                                 onSuccess = {
                                     Toast.makeText(context, "Đã lưu hóa đơn!", Toast.LENGTH_SHORT).show()
-                                    // Quay về trang chủ (Xóa hết stack về Home)
-                                    navController.popBackStack(Routes.HOME, inclusive = false)
+
+                                    // CHUYỂN HƯỚNG SANG HISTORY
+                                    navController.navigate(Routes.HOME) {
+
+                                    }
                                 },
                                 onFailure = { e ->
                                     Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
@@ -88,6 +92,7 @@ fun InvoiceScreen(
                     ) {
                         Text("Xong", color = Color.Black)
                     }
+
                     // Nút In hóa đơn (Giả lập)
                     Button(
                         onClick = { /* Logic in ấn */ },
@@ -128,15 +133,9 @@ fun InvoiceScreen(
 
                     Divider(Modifier.padding(vertical = 16.dp))
 
-                    // --- TÍNH TOÁN (Thêm đoạn này để sửa lỗi Unresolved reference) ---
-
-                    // 1. Tính tổng tiền hàng (trước khi trừ chiết khấu)
+                    // --- TÍNH TOÁN ---
                     val itemsTotal = cartItems.sumOf { it.giaBan * it.soLuong }
-
-                    // 2. Tính số tiền được giảm (để hiển thị)
                     val discountAmount = itemsTotal * (discountPercent / 100)
-
-                    // -------------------------------------------------------------
 
                     // Tổng kết
                     InfoRow("Chiết khấu (${discountPercent}%)", formatter.format(discountAmount))

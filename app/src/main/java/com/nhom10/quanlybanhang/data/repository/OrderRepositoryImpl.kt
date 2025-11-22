@@ -9,11 +9,24 @@ class OrderRepositoryImpl : OrderRepository {
 
     override suspend fun saveOrder(userId: String, order: Order): Result<Unit> {
         return try {
-            // SỬA: Đường dẫn lưu vào sub-collection
             val collectionPath = db.collection("users").document(userId).collection("orders")
-
             collectionPath.add(order).await()
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getOrders(userId: String): Result<List<Order>> {
+        return try {
+            val snapshot = db.collection("users")
+                .document(userId)
+                .collection("orders")
+                .get()
+                .await()
+
+            val list = snapshot.documents.mapNotNull { it.toObject(Order::class.java) }
+            Result.success(list)
         } catch (e: Exception) {
             Result.failure(e)
         }

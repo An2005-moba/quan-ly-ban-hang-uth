@@ -77,9 +77,9 @@ fun AddOrderItemScreen(
                             tint = Color.White
                         )
                     }
-                    // Nút "Hủy"
+                    // Nút ""
                     TextButton(onClick = { navController.popBackStack() }) { // Nhấn Hủy để quay lại
-                        Text("Hủy", color = Color.White)
+                        Text("Lưu", color = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

@@ -30,7 +30,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+<<<<<<< HEAD
 import androidx.navigation.compose.rememberNavController
+=======
+import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.service.ProductViewModel
+import com.nhom10.quanlybanhang.service.OrderViewModel
+
+>>>>>>> d4747a24322aa7c31301a9fb9d0654f0a681e3a4
 import coil.compose.AsyncImage
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.model.Product
@@ -47,7 +54,8 @@ data class BottomNavItem(val label: String, val icon: ImageVector)
 @Composable
 fun HomeScreen(
     navController: NavController,
-    productViewModel: ProductViewModel
+    productViewModel: ProductViewModel,
+    orderViewModel: OrderViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     // Sử dụng mutableIntStateOf cho chỉ số để tối ưu
@@ -195,7 +203,13 @@ fun HomeScreen(
                         }
                     }
                     1 -> ReportScreen()
+<<<<<<< HEAD
                     2 -> HistoryScreen(navController = navController)
+=======
+                    // 2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
+                    2 -> HistoryScreen(navController = navController,
+                        orderViewModel = orderViewModel)
+>>>>>>> d4747a24322aa7c31301a9fb9d0654f0a681e3a4
                     3 -> AccountScreen(navController = navController)
                 }
             }
