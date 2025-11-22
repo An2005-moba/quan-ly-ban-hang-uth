@@ -16,4 +16,9 @@ interface AuthRepository {
     ): Result<Unit>
 
     suspend fun signInWithGoogle(idToken: String): Result<FirebaseUser>
+    fun getCurrentUser(): FirebaseUser?
+    suspend fun updateUserProfile(displayName: String): Result<Unit>
+    suspend fun getUserDetails(userId: String): Result<Map<String, Any>>
+    suspend fun updateGender(userId: String, gender: String): Result<Unit>
+    suspend fun uploadAvatar(imageUri: android.net.Uri): Result<String>
 }
