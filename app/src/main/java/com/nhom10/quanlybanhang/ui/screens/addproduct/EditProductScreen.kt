@@ -4,12 +4,17 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.model.ProductItem
 import com.google.firebase.firestore.FirebaseFirestore
+import com.nhom10.quanlybanhang.model.Product
+import com.nhom10.quanlybanhang.service.ProductViewModel
 
 @Composable
-fun EditProductScreen(navController: NavController) {
+fun EditProductScreen(
+    navController: NavController,
+    productViewModel: ProductViewModel
+) {
     val product = navController.previousBackStackEntry
         ?.savedStateHandle
-        ?.get<ProductItem>("product")
+        ?.get<Product>("product")
 
     if (product != null) {
         BaseProductScreen(
@@ -17,10 +22,16 @@ fun EditProductScreen(navController: NavController) {
             screenTitle = "Chỉnh sửa sản phẩm",
             initialProductData = product,
             onSave = { updatedProduct ->
-                println("Cập nhật sản phẩm: $updatedProduct")
-                navController.popBackStack()
+                // Gọi updateProduct để lưu lên Firestore
+                productViewModel.updateProduct(
+                    updatedProduct,
+                    onSuccess = { navController.popBackStack() },
+                    onFailure = { e -> println("Cập nhật thất bại: $e") }
+                )
             }
         )
     }
 }
+
+
 

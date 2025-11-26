@@ -120,7 +120,14 @@ fun ProductSetupScreen(
                     items(filteredList) { product ->
                         ProductListItem( // Truyền cả đối tượng product
                             product = product,
-                            onClick = { /* TODO: Mở trang chi tiết mặt hàng */ }
+                            onClick = {
+                                navController.currentBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("product", product)
+
+                                navController.navigate(Routes.EDIT_PRODUCT)
+                            }
+
                         )
                     }
                 }
