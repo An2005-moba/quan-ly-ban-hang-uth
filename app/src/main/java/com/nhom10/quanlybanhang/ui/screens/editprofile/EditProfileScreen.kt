@@ -1,10 +1,14 @@
 package com.nhom10.quanlybanhang.ui.screens.editprofile
 
+import android.content.Context
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +45,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.service.EditProfileViewModel
 import com.nhom10.quanlybanhang.ui.components.LetterAvatar
+import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,21 +61,25 @@ fun EditProfileScreen(
     var showGenderDialog by remember { mutableStateOf(false) }
     var showNameDialog by remember { mutableStateOf(false) }
 
-    // --- 1. TẠO BỘ CHỌN ẢNH (PHOTO PICKER) ---
+    // --- 1. KHỞI TẠO BỘ CHỌN ẢNH ---
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
-        // Khi người dùng chọn xong ảnh, uri sẽ có giá trị
         if (uri != null) {
-            // Gọi ViewModel để upload
-            viewModel.uploadAvatar(uri)
+            // Chuyển URI thành Base64
+            val base64String = uriToBase64(context, uri)
+            // Gọi ViewModel để lưu chuỗi Base64 này lên Firestore
+            // (Bạn nhớ thêm hàm updateAvatar(String) vào ViewModel nhé)
+            viewModel.updateAvatar(base64String)
         }
     }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Chỉnh sửa thông tin cá nhân", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text("Chỉnh sửa thông tin cá nhân", fontWeight = FontWeight.Bold)
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
@@ -92,13 +103,12 @@ fun EditProfileScreen(
             ) {
                 val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
 
-                // Mục 1: Ảnh đại diện
+                // --- MỤC 1: ẢNH ĐẠI DIỆN (ĐÃ HOÀN THIỆN) ---
                 EditProfileItem(
                     title = "Ảnh đại diện",
-                    // --- 2. SỬA SỰ KIỆN CLICK ---
                     onClick = {
                         if (!uiState.isGoogleLogin) {
-                            // Mở thư viện ảnh (Chỉ chọn ảnh)
+                            // Mở thư viện ảnh nếu không phải Google
                             photoPickerLauncher.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
@@ -107,18 +117,14 @@ fun EditProfileScreen(
                         }
                     }
                 ) {
-                    // --- 3. HIỂN THỊ LOADING KHI ĐANG UPLOAD ---
-                    if (uiState.isUploading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = appBlueColor
-                        )
-                    } else {
-                        // Logic hiển thị ảnh bình thường
-                        if (!uiState.photoUrl.isNullOrBlank()) {
+                    val photoData = uiState.photoUrl
+
+                    if (!photoData.isNullOrBlank()) {
+                        // Kiểm tra xem là Link Google (http) hay Base64
+                        if (photoData.startsWith("http")) {
+                            // 1. Ảnh Google -> Dùng AsyncImage
                             AsyncImage(
-                                model = uiState.photoUrl,
+                                model = photoData,
                                 contentDescription = "Avatar",
                                 modifier = Modifier
                                     .size(40.dp)
@@ -128,33 +134,64 @@ fun EditProfileScreen(
                                 error = placeholderPainter
                             )
                         } else {
-                            LetterAvatar(name = uiState.userName, size = 40.dp)
+                            // 2. Ảnh tự up (Base64) -> Convert sang Bitmap và hiển thị
+                            val imageBitmap = remember(photoData) {
+                                base64ToImageBitmap(photoData)
+                            }
+                            if (imageBitmap != null) {
+                                Image(
+                                    bitmap = imageBitmap,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                LetterAvatar(name = uiState.userName, size = 40.dp)
+                            }
                         }
+                    } else {
+                        // 3. Không có ảnh -> LetterAvatar
+                        LetterAvatar(name = uiState.userName, size = 40.dp)
                     }
 
+                    // Ẩn mũi tên nếu là Google
                     if (!uiState.isGoogleLogin) Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
                 }
 
-                // (Các mục Tên, Email, Giới tính, Nút Đăng xuất... giữ nguyên như cũ)
+                // Mục 2: Tên tài khoản
                 EditProfileItem(
                     title = "Tên tài khoản",
-                    onClick = { if (!uiState.isGoogleLogin) showNameDialog = true else Toast.makeText(context, "Tài khoản Google không thể đổi tên", Toast.LENGTH_SHORT).show() }
+                    onClick = {
+                        if (!uiState.isGoogleLogin) {
+                            showNameDialog = true
+                        } else {
+                            Toast.makeText(context, "Tài khoản Google không thể đổi tên", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 ) {
                     Text(uiState.userName, color = Color.Gray)
                     if (!uiState.isGoogleLogin) Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
                 }
 
+                // Mục 3: Email
                 EditProfileItem(title = "Email", onClick = {}) {
                     Text(uiState.email, color = Color.Gray)
                 }
 
-                EditProfileItem(title = "Giới tính", onClick = { showGenderDialog = true }) {
+                // Mục 4: Giới tính
+                EditProfileItem(
+                    title = "Giới tính",
+                    onClick = { showGenderDialog = true }
+                ) {
                     Text(uiState.gender, color = Color.Gray)
                     Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Nút Đăng xuất
                 Button(
                     onClick = {
                         auth.signOut()
@@ -177,7 +214,7 @@ fun EditProfileScreen(
         }
     )
 
-    // (Các Dialog Sửa tên và Giới tính giữ nguyên như cũ)
+    // Dialog Sửa tên
     if (showNameDialog) {
         NameEditDialog(
             initialName = uiState.userName,
@@ -189,6 +226,7 @@ fun EditProfileScreen(
         )
     }
 
+    // Dialog Giới tính
     if (showGenderDialog) {
         Dialog(onDismissRequest = { showGenderDialog = false }) {
             Card(
@@ -211,14 +249,41 @@ fun EditProfileScreen(
                     GenderSelectionButton("Nam giới") { viewModel.updateGender("Nam"); showGenderDialog = false }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Tôi không muốn tiết lộ!", modifier = Modifier.clickable { viewModel.updateGender("Không tiết lộ"); showGenderDialog = false })
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
     }
 }
 
-// ... (Các hàm phụ trợ NameEditDialog, GenderSelectionButton, EditProfileItem giữ nguyên)
+// --- CÁC HÀM HỖ TRỢ XỬ LÝ ẢNH ---
+private fun uriToBase64(context: Context, uri: Uri): String {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val outputStream = ByteArrayOutputStream()
+        inputStream?.use { input ->
+            outputStream.use { output ->
+                input.copyTo(output)
+            }
+        }
+        val bytes = outputStream.toByteArray()
+        Base64.encodeToString(bytes, Base64.DEFAULT)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        ""
+    }
+}
+
+private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
+    if (base64String.isEmpty()) return null
+    return try {
+        val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
+    } catch (e: Exception) {
+        null
+    }
+}
+
+// --- CÁC COMPOSABLE UI KHÁC ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NameEditDialog(initialName: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {

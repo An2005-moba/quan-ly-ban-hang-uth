@@ -3,7 +3,7 @@ package com.nhom10.quanlybanhang.service
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider // <-- Import này
+import com.google.firebase.auth.GoogleAuthProvider
 import com.nhom10.quanlybanhang.data.repository.AuthRepository
 import com.nhom10.quanlybanhang.data.repository.AuthRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,20 +34,16 @@ class EditProfileViewModel : ViewModel() {
     private fun loadUserProfile() {
         val user = auth.currentUser
         if (user != null) {
-            // 1. Kiểm tra xem có phải Google không?
-            // Duyệt qua danh sách provider, nếu thấy google.com thì là true
             val isGoogle = user.providerData.any { it.providerId == GoogleAuthProvider.PROVIDER_ID }
 
-            // 2. Lấy thông tin cơ bản
             val basicState = EditProfileUiState(
                 userName = user.displayName ?: "Chưa đặt tên",
                 photoUrl = user.photoUrl?.toString(),
                 email = user.email ?: "",
-                isGoogleLogin = isGoogle // <-- Gán vào state
+                isGoogleLogin = isGoogle
             )
             _uiState.value = basicState
 
-            // 3. Lấy Giới tính từ Firestore
             viewModelScope.launch {
                 val result = authRepo.getUserDetails(user.uid)
                 result.onSuccess { data ->
@@ -75,22 +71,23 @@ class EditProfileViewModel : ViewModel() {
         }
     }
 
-    fun uploadAvatar(uri: android.net.Uri) {
+    /**
+     * SỬA: nhận trực tiếp base64String thay vì Context + Uri
+     * UI sẽ chịu trách nhiệm chuyển Uri -> Base64 (dùng contentResolver),
+     * rồi gọi hàm này để upload / cập nhật state.
+     */
+    fun updateAvatar(base64String: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isUploading = true) // Bắt đầu xoay
+            val userId = auth.currentUser?.uid ?: return@launch
 
-            val result = authRepo.uploadAvatar(uri)
+            // updateAvatarBase64 : giả sử repo đã có hàm này
+            val result = authRepo.updateAvatarBase64(userId, base64String)
 
-            result.onSuccess { newUrl ->
-                // Cập nhật UI ngay lập tức với ảnh mới
-                _uiState.value = _uiState.value.copy(
-                    photoUrl = newUrl,
-                    isUploading = false
-                )
+            result.onSuccess {
+                _uiState.value = _uiState.value.copy(photoUrl = base64String)
             }
             result.onFailure {
-                _uiState.value = _uiState.value.copy(isUploading = false)
-                // Có thể thêm biến error để báo lỗi nếu muốn
+                // TODO: xử lý lỗi (thông báo, logging, set isUploading = false,...)
             }
         }
     }

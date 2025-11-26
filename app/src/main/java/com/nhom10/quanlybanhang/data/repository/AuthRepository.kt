@@ -20,5 +20,5 @@ interface AuthRepository {
     suspend fun updateUserProfile(displayName: String): Result<Unit>
     suspend fun getUserDetails(userId: String): Result<Map<String, Any>>
     suspend fun updateGender(userId: String, gender: String): Result<Unit>
-    suspend fun uploadAvatar(imageUri: android.net.Uri): Result<String>
+    suspend fun updateAvatarBase64(userId: String, base64String: String): Result<Unit>
 }

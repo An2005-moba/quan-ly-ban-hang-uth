@@ -99,31 +99,13 @@ class AuthRepositoryImpl : AuthRepository {
             Result.failure(e)
         }
     }
-    override suspend fun uploadAvatar(imageUri: android.net.Uri): Result<String> {
-        val user = auth.currentUser ?: return Result.failure(Exception("Chưa đăng nhập"))
 
+    override suspend fun updateAvatarBase64(userId: String, base64String: String): Result<Unit> {
         return try {
-            // 1. Tạo tên file: avatars/ID_CUA_USER.jpg
-            // (Ghi đè ảnh cũ luôn cho tiết kiệm dung lượng)
-            val storageRef = storage.reference.child("avatars/${user.uid}.jpg")
-
-            // 2. Upload file lên
-            storageRef.putFile(imageUri).await()
-
-            // 3. Lấy đường link tải về (URL)
-            val downloadUrl = storageRef.downloadUrl.await().toString()
-
-            // 4. Cập nhật link ảnh vào hồ sơ Auth (để hiện ngay lập tức)
-            val profileUpdates = UserProfileChangeRequest.Builder()
-                .setPhotoUri(android.net.Uri.parse(downloadUrl))
-                .build()
-            user.updateProfile(profileUpdates).await()
-
-            // 5. Cập nhật link ảnh vào Firestore (để đồng bộ dữ liệu)
-            db.collection("users").document(user.uid)
-                .update("photoUrl", downloadUrl).await()
-
-            Result.success(downloadUrl)
+            // Lưu chuỗi Base64 thẳng vào field "photoUrl" trong Firestore
+            db.collection("users").document(userId)
+                .update("photoUrl", base64String).await()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
