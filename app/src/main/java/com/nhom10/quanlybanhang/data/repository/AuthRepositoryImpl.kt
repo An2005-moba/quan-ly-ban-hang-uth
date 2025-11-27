@@ -7,6 +7,7 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.auth.EmailAuthProvider
 
 class AuthRepositoryImpl : AuthRepository {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -107,6 +108,27 @@ class AuthRepositoryImpl : AuthRepository {
                 .update("photoUrl", base64String).await()
             Result.success(Unit)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun changePassword(currentPass: String, newPass: String): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(Exception("Chưa đăng nhập"))
+        val email = user.email ?: return Result.failure(Exception("Không tìm thấy email"))
+
+        return try {
+            // BƯỚC 1: Tạo thông tin xác thực từ mật khẩu cũ
+            val credential = EmailAuthProvider.getCredential(email, currentPass)
+
+            // BƯỚC 2: Xác thực lại (Re-authenticate)
+            user.reauthenticate(credential).await()
+
+            // BƯỚC 3: Nếu bước 2 ok, tiến hành đổi mật khẩu mới
+            user.updatePassword(newPass).await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            // Sai mật khẩu cũ, hoặc mật khẩu mới quá yếu...
             Result.failure(e)
         }
     }

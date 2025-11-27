@@ -21,4 +21,5 @@ interface AuthRepository {
     suspend fun getUserDetails(userId: String): Result<Map<String, Any>>
     suspend fun updateGender(userId: String, gender: String): Result<Unit>
     suspend fun updateAvatarBase64(userId: String, base64String: String): Result<Unit>
+    suspend fun changePassword(currentPass: String, newPass: String): Result<Unit>
 }
