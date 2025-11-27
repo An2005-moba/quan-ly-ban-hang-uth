@@ -16,7 +16,8 @@ data class EditProfileUiState(
     val email: String = "",
     val gender: String = "Chưa thiết lập",
     val isGoogleLogin: Boolean = false,
-    val isUploading: Boolean = false
+    val isUploading: Boolean = false,
+    val error: String? = null
 )
 
 class EditProfileViewModel : ViewModel() {
@@ -34,21 +35,31 @@ class EditProfileViewModel : ViewModel() {
     private fun loadUserProfile() {
         val user = auth.currentUser
         if (user != null) {
+            // Kiểm tra xem có phải đăng nhập bằng Google không
             val isGoogle = user.providerData.any { it.providerId == GoogleAuthProvider.PROVIDER_ID }
 
-            val basicState = EditProfileUiState(
-                userName = user.displayName ?: "Chưa đặt tên",
+            // Lấy thông tin cơ bản
+            _uiState.value = EditProfileUiState(
+                userName = user.displayName ?: "",
                 photoUrl = user.photoUrl?.toString(),
                 email = user.email ?: "",
                 isGoogleLogin = isGoogle
             )
-            _uiState.value = basicState
 
+            // Lấy thông tin chi tiết từ Firestore (Giới tính, Ảnh Base64)
             viewModelScope.launch {
                 val result = authRepo.getUserDetails(user.uid)
                 result.onSuccess { data ->
                     val genderFromDb = data["gioiTinh"] as? String ?: "Chưa thiết lập"
-                    _uiState.value = _uiState.value.copy(gender = genderFromDb)
+                    val dbPhoto = data["photoUrl"] as? String
+                    val dbName = data["hoTen"] as? String
+
+                    _uiState.value = _uiState.value.copy(
+                        gender = genderFromDb,
+                        // Ưu tiên dữ liệu từ DB hơn Auth
+                        photoUrl = dbPhoto ?: _uiState.value.photoUrl,
+                        userName = dbName ?: _uiState.value.userName
+                    )
                 }
             }
         }
@@ -64,31 +75,42 @@ class EditProfileViewModel : ViewModel() {
 
     fun updateName(newName: String) {
         val user = auth.currentUser ?: return
-
         viewModelScope.launch {
+            // 1. Cập nhật Auth (để hiển thị nhanh)
             authRepo.updateUserProfile(newName)
+            // 2. Cập nhật UI State
             _uiState.value = _uiState.value.copy(userName = newName)
+
+            // LƯU Ý: Để đồng bộ hoàn toàn, bạn nên thêm hàm updateName trong Repository
+            // để lưu vào Firestore field "hoTen". Hiện tại ta cập nhật Auth Profile trước.
         }
     }
 
-    /**
-     * SỬA: nhận trực tiếp base64String thay vì Context + Uri
-     * UI sẽ chịu trách nhiệm chuyển Uri -> Base64 (dùng contentResolver),
-     * rồi gọi hàm này để upload / cập nhật state.
-     */
     fun updateAvatar(base64String: String) {
+        val userId = auth.currentUser?.uid ?: return
         viewModelScope.launch {
-            val userId = auth.currentUser?.uid ?: return@launch
+            _uiState.value = _uiState.value.copy(isUploading = true)
 
-            // updateAvatarBase64 : giả sử repo đã có hàm này
+            // Gọi Repository để lưu chuỗi Base64 vào Firestore
             val result = authRepo.updateAvatarBase64(userId, base64String)
 
             result.onSuccess {
-                _uiState.value = _uiState.value.copy(photoUrl = base64String)
+                _uiState.value = _uiState.value.copy(
+                    photoUrl = base64String,
+                    isUploading = false,
+                    error = null
+                )
             }
-            result.onFailure {
-                // TODO: xử lý lỗi (thông báo, logging, set isUploading = false,...)
+            result.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    isUploading = false,
+                    error = "Lỗi lưu ảnh: ${e.message}"
+                )
             }
         }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

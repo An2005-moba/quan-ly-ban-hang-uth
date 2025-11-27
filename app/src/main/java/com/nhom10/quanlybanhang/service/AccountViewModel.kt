@@ -1,12 +1,16 @@
 package com.nhom10.quanlybanhang.service
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.nhom10.quanlybanhang.data.repository.AuthRepository
+import com.nhom10.quanlybanhang.data.repository.AuthRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-// Data class chứa thông tin hiển thị (Mặc định là chưa đăng nhập)
+// Data class chứa thông tin hiển thị
 data class AccountUiState(
     val userName: String = "Chưa đăng nhập",
     val userId: String = "",
@@ -15,57 +19,60 @@ data class AccountUiState(
 
 class AccountViewModel : ViewModel() {
 
-    // Lấy trực tiếp FirebaseAuth để gắn "camera giám sát"
     private val auth = FirebaseAuth.getInstance()
+    private val authRepo: AuthRepository = AuthRepositoryImpl()
 
     private val _uiState = MutableStateFlow(AccountUiState())
     val uiState: StateFlow<AccountUiState> = _uiState
 
-    // --- 1. TẠO BỘ LẮNG NGHE (LISTENER) ---
-    // Mỗi khi người dùng Đăng nhập hoặc Đăng xuất, hàm này sẽ tự chạy
+    // Lắng nghe sự thay đổi đăng nhập/đăng xuất
     private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-        updateUi(firebaseAuth.currentUser)
+        // Khi trạng thái Auth thay đổi, tự động tải dữ liệu
+        loadUserData()
     }
 
     init {
-        // --- 2. BẮT ĐẦU LẮNG NGHE NGAY KHI KHỞI TẠO ---
         auth.addAuthStateListener(authStateListener)
-
-        // Cập nhật trạng thái hiện tại ngay lập tức
-        updateUi(auth.currentUser)
+        // Tải lần đầu
+        loadUserData()
     }
 
-    // Hàm xử lý logic cập nhật UI
-    private fun updateUi(user: FirebaseUser?) {
+    // --- ĐÂY LÀ HÀM MÀ HOMESCREEN ĐANG TÌM ---
+    fun loadUserData() {
+        val user = auth.currentUser
         if (user != null) {
-            // --- TRƯỜNG HỢP ĐÃ ĐĂNG NHẬP ---
-
-            // Lấy tên (Ưu tiên tên từ Google/Auth, nếu không có thì để mặc định)
-            val name = if (!user.displayName.isNullOrBlank()) {
-                user.displayName
-            } else {
-                "Người dùng" // Hoặc tên bạn lấy từ Firestore nếu muốn phức tạp hơn
-            }
-
-            // Lấy ID (Cắt ngắn 6 ký tự đầu cho đẹp)
+            // 1. Lấy thông tin cơ bản từ Auth (để hiển thị nhanh)
+            val authName = user.displayName ?: "Người dùng"
+            val authPhoto = user.photoUrl?.toString()
             val id = "ID: ${user.uid.take(6)}..."
 
-            // Lấy ảnh (Google có ảnh, Đăng ký tay thì null)
-            val photo = user.photoUrl?.toString()
-
-            _uiState.value = AccountUiState(
-                userName = name!!,
+            // Cập nhật tạm thời
+            _uiState.value = _uiState.value.copy(
+                userName = authName,
                 userId = id,
-                photoUrl = photo
+                photoUrl = authPhoto
             )
+
+            // 2. Gọi Firestore để lấy dữ liệu MỚI NHẤT (Ảnh Base64, Tên mới sửa)
+            viewModelScope.launch {
+                val result = authRepo.getUserDetails(user.uid)
+                result.onSuccess { data ->
+                    val dbName = data["hoTen"] as? String
+                    val dbPhoto = data["photoUrl"] as? String
+
+                    // Nếu Firestore có dữ liệu thì ưu tiên dùng đè lên
+                    _uiState.value = _uiState.value.copy(
+                        userName = dbName ?: _uiState.value.userName,
+                        photoUrl = dbPhoto ?: _uiState.value.photoUrl
+                    )
+                }
+            }
         } else {
-            // --- TRƯỜNG HỢP CHƯA ĐĂNG NHẬP / ĐÃ ĐĂNG XUẤT ---
-            // Reset về trạng thái rỗng
+            // Nếu chưa đăng nhập
             _uiState.value = AccountUiState()
         }
     }
 
-    // --- 3. HỦY LẮNG NGHE KHI THOÁT APP ĐỂ TRÁNH LỖI ---
     override fun onCleared() {
         super.onCleared()
         auth.removeAuthStateListener(authStateListener)

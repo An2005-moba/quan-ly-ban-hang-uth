@@ -1,6 +1,7 @@
 package com.nhom10.quanlybanhang.ui.screens.editprofile
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
@@ -61,25 +62,24 @@ fun EditProfileScreen(
     var showGenderDialog by remember { mutableStateOf(false) }
     var showNameDialog by remember { mutableStateOf(false) }
 
-    // --- 1. KHỞI TẠO BỘ CHỌN ẢNH ---
+    // --- 1. TẠO BỘ CHỌN ẢNH ---
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
-            // Chuyển URI thành Base64
+            // Chuyển URI -> Base64 (Đã nén)
             val base64String = uriToBase64(context, uri)
-            // Gọi ViewModel để lưu chuỗi Base64 này lên Firestore
-            // (Bạn nhớ thêm hàm updateAvatar(String) vào ViewModel nhé)
+
+            // Upload và BÁO CHO MÀN HÌNH TRƯỚC BIẾT
             viewModel.updateAvatar(base64String)
+            navController.previousBackStackEntry?.savedStateHandle?.set("profile_updated", true)
         }
     }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text("Chỉnh sửa thông tin cá nhân", fontWeight = FontWeight.Bold)
-                },
+                title = { Text("Chỉnh sửa thông tin cá nhân", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
@@ -103,12 +103,11 @@ fun EditProfileScreen(
             ) {
                 val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
 
-                // --- MỤC 1: ẢNH ĐẠI DIỆN (ĐÃ HOÀN THIỆN) ---
+                // Mục 1: Ảnh đại diện
                 EditProfileItem(
                     title = "Ảnh đại diện",
                     onClick = {
                         if (!uiState.isGoogleLogin) {
-                            // Mở thư viện ảnh nếu không phải Google
                             photoPickerLauncher.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
@@ -117,46 +116,40 @@ fun EditProfileScreen(
                         }
                     }
                 ) {
-                    val photoData = uiState.photoUrl
-
-                    if (!photoData.isNullOrBlank()) {
-                        // Kiểm tra xem là Link Google (http) hay Base64
-                        if (photoData.startsWith("http")) {
-                            // 1. Ảnh Google -> Dùng AsyncImage
-                            AsyncImage(
-                                model = photoData,
-                                contentDescription = "Avatar",
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop,
-                                placeholder = placeholderPainter,
-                                error = placeholderPainter
-                            )
-                        } else {
-                            // 2. Ảnh tự up (Base64) -> Convert sang Bitmap và hiển thị
-                            val imageBitmap = remember(photoData) {
-                                base64ToImageBitmap(photoData)
-                            }
-                            if (imageBitmap != null) {
-                                Image(
-                                    bitmap = imageBitmap,
+                    // Loading
+                    if (uiState.isUploading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = appBlueColor)
+                    } else {
+                        val photoData = uiState.photoUrl
+                        if (!photoData.isNullOrBlank()) {
+                            if (photoData.startsWith("http")) {
+                                // Ảnh Google (URL)
+                                AsyncImage(
+                                    model = photoData,
                                     contentDescription = "Avatar",
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
+                                    modifier = Modifier.size(40.dp).clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                    placeholder = placeholderPainter,
+                                    error = placeholderPainter
                                 )
                             } else {
-                                LetterAvatar(name = uiState.userName, size = 40.dp)
+                                // Ảnh tự up (Base64)
+                                val imageBitmap = remember(photoData) { base64ToImageBitmap(photoData) }
+                                if (imageBitmap != null) {
+                                    Image(
+                                        bitmap = imageBitmap,
+                                        contentDescription = "Avatar",
+                                        modifier = Modifier.size(40.dp).clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    LetterAvatar(name = uiState.userName, size = 40.dp)
+                                }
                             }
+                        } else {
+                            LetterAvatar(name = uiState.userName, size = 40.dp)
                         }
-                    } else {
-                        // 3. Không có ảnh -> LetterAvatar
-                        LetterAvatar(name = uiState.userName, size = 40.dp)
                     }
-
-                    // Ẩn mũi tên nếu là Google
                     if (!uiState.isGoogleLogin) Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
                 }
 
@@ -164,11 +157,8 @@ fun EditProfileScreen(
                 EditProfileItem(
                     title = "Tên tài khoản",
                     onClick = {
-                        if (!uiState.isGoogleLogin) {
-                            showNameDialog = true
-                        } else {
-                            Toast.makeText(context, "Tài khoản Google không thể đổi tên", Toast.LENGTH_SHORT).show()
-                        }
+                        if (!uiState.isGoogleLogin) showNameDialog = true
+                        else Toast.makeText(context, "Tài khoản Google không thể đổi tên", Toast.LENGTH_SHORT).show()
                     }
                 ) {
                     Text(uiState.userName, color = Color.Gray)
@@ -221,6 +211,8 @@ fun EditProfileScreen(
             onDismiss = { showNameDialog = false },
             onSave = { newName ->
                 viewModel.updateName(newName)
+                // Báo cập nhật khi sửa tên
+                navController.previousBackStackEntry?.savedStateHandle?.set("profile_updated", true)
                 showNameDialog = false
             }
         )
@@ -229,16 +221,10 @@ fun EditProfileScreen(
     // Dialog Giới tính
     if (showGenderDialog) {
         Dialog(onDismissRequest = { showGenderDialog = false }) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
-            ) {
+            Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(modifier = Modifier.fillMaxWidth()) {
-                        IconButton(onClick = { showGenderDialog = false }, modifier = Modifier.align(Alignment.CenterStart)) {
-                            Icon(Icons.Default.Close, contentDescription = "Đóng")
-                        }
+                        IconButton(onClick = { showGenderDialog = false }, modifier = Modifier.align(Alignment.CenterStart)) { Icon(Icons.Default.Close, contentDescription = "Đóng") }
                         Text("Giới tính", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Center))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -249,23 +235,40 @@ fun EditProfileScreen(
                     GenderSelectionButton("Nam giới") { viewModel.updateGender("Nam"); showGenderDialog = false }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Tôi không muốn tiết lộ!", modifier = Modifier.clickable { viewModel.updateGender("Không tiết lộ"); showGenderDialog = false })
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
     }
 }
 
-// --- CÁC HÀM HỖ TRỢ XỬ LÝ ẢNH ---
+// --- HÀM NÉN VÀ CHUYỂN ĐỔI ẢNH (CỰC QUAN TRỌNG ĐỂ TRÁNH CRASH) ---
 private fun uriToBase64(context: Context, uri: Uri): String {
     return try {
         val inputStream = context.contentResolver.openInputStream(uri)
-        val outputStream = ByteArrayOutputStream()
-        inputStream?.use { input ->
-            outputStream.use { output ->
-                input.copyTo(output)
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+
+        // Thu nhỏ ảnh nếu quá to (Giới hạn 600px)
+        val maxDimension = 600
+        var width = originalBitmap.width
+        var height = originalBitmap.height
+        if (width > maxDimension || height > maxDimension) {
+            val ratio = width.toFloat() / height.toFloat()
+            if (width > height) {
+                width = maxDimension
+                height = (width / ratio).toInt()
+            } else {
+                height = maxDimension
+                width = (height * ratio).toInt()
             }
         }
+        val resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, true)
+
+        // Nén JPEG chất lượng 60%
+        val outputStream = ByteArrayOutputStream()
+        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
         val bytes = outputStream.toByteArray()
+
         Base64.encodeToString(bytes, Base64.DEFAULT)
     } catch (e: Exception) {
         e.printStackTrace()
@@ -278,9 +281,7 @@ private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
     return try {
         val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
         BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
-    } catch (e: Exception) {
-        null
-    }
+    } catch (e: Exception) { null }
 }
 
 // --- CÁC COMPOSABLE UI KHÁC ---
