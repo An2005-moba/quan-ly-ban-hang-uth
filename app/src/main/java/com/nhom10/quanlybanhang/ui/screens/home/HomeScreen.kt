@@ -57,8 +57,23 @@ fun HomeScreen(
 ) {
     val appBlueColor = Color(0xFF0088FF)
     var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
-
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val productList by productViewModel.products.collectAsState()
+    // 2. LOGIC LỌC DANH SÁCH (Case-insensitive)
+    // Nếu có từ khóa -> Lọc và hiển thị (sẽ tự động ở đầu danh sách). Nếu không -> Hiển thị hết.
+    val filteredList = remember(productList, searchQuery) {
+        if (searchQuery.isBlank()) {
+            productList
+        } else {
+            productList.filter { product ->
+                product.tenMatHang.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    LaunchedEffect(key1 = true) {
+        productViewModel.loadProducts()
+    }
 
     LaunchedEffect(key1 = true) {
         productViewModel.loadProducts()
@@ -130,13 +145,21 @@ fun HomeScreen(
             Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 when (selectedItemIndex) {
                     0 -> {
-                        SearchSection(appBlueColor = appBlueColor)
-                        if (productList.isEmpty()) {
+                        SearchSection(
+                            appBlueColor = appBlueColor,
+                            searchQuery = searchQuery,
+                            onSearchQueryChange = { searchQuery = it }
+                        )
+
+                        if (filteredList.isEmpty()) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Chưa có sản phẩm nào", color = Color.Gray)
+                                Text(
+                                    if (searchQuery.isEmpty()) "Chưa có sản phẩm nào" else "Không tìm thấy sản phẩm",
+                                    color = Color.Gray
+                                )
                             }
                         } else {
-                            ProductListForHome(products = productList, onProductClick = { })
+                            ProductListForHome(products = filteredList, onProductClick = { })
                         }
                     }
                     1 -> ReportScreen()
@@ -278,11 +301,15 @@ private fun DefaultTopBar(title: String, showShoppingCart: Boolean, appBlueColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SearchSection(appBlueColor: Color) {
-    var searchQuery by remember { mutableStateOf("") }
+private fun SearchSection(
+    appBlueColor: Color,
+    searchQuery: String,                  // Tham số mới
+    onSearchQueryChange: (String) -> Unit // Tham số mới
+) {
     val lightGrayBorder = Color.Black.copy(alpha = 0.2f)
     OutlinedTextField(
-        value = searchQuery, onValueChange = { searchQuery = it },
+        value = searchQuery,
+        onValueChange = onSearchQueryChange, // Sử dụng callback
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         placeholder = { Text("Tìm kiếm mặt hàng", color = appBlueColor) },
         leadingIcon = { Icon(Icons.Default.Search, null, tint = appBlueColor) },
