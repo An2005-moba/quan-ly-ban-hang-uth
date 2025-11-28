@@ -7,6 +7,7 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.auth.EmailAuthProvider
 
 class AuthRepositoryImpl : AuthRepository {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -99,32 +100,35 @@ class AuthRepositoryImpl : AuthRepository {
             Result.failure(e)
         }
     }
-    override suspend fun uploadAvatar(imageUri: android.net.Uri): Result<String> {
+
+    override suspend fun updateAvatarBase64(userId: String, base64String: String): Result<Unit> {
+        return try {
+            // Lưu chuỗi Base64 thẳng vào field "photoUrl" trong Firestore
+            db.collection("users").document(userId)
+                .update("photoUrl", base64String).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun changePassword(currentPass: String, newPass: String): Result<Unit> {
         val user = auth.currentUser ?: return Result.failure(Exception("Chưa đăng nhập"))
+        val email = user.email ?: return Result.failure(Exception("Không tìm thấy email"))
 
         return try {
-            // 1. Tạo tên file: avatars/ID_CUA_USER.jpg
-            // (Ghi đè ảnh cũ luôn cho tiết kiệm dung lượng)
-            val storageRef = storage.reference.child("avatars/${user.uid}.jpg")
+            // BƯỚC 1: Tạo thông tin xác thực từ mật khẩu cũ
+            val credential = EmailAuthProvider.getCredential(email, currentPass)
 
-            // 2. Upload file lên
-            storageRef.putFile(imageUri).await()
+            // BƯỚC 2: Xác thực lại (Re-authenticate)
+            user.reauthenticate(credential).await()
 
-            // 3. Lấy đường link tải về (URL)
-            val downloadUrl = storageRef.downloadUrl.await().toString()
+            // BƯỚC 3: Nếu bước 2 ok, tiến hành đổi mật khẩu mới
+            user.updatePassword(newPass).await()
 
-            // 4. Cập nhật link ảnh vào hồ sơ Auth (để hiện ngay lập tức)
-            val profileUpdates = UserProfileChangeRequest.Builder()
-                .setPhotoUri(android.net.Uri.parse(downloadUrl))
-                .build()
-            user.updateProfile(profileUpdates).await()
-
-            // 5. Cập nhật link ảnh vào Firestore (để đồng bộ dữ liệu)
-            db.collection("users").document(user.uid)
-                .update("photoUrl", downloadUrl).await()
-
-            Result.success(downloadUrl)
+            Result.success(Unit)
         } catch (e: Exception) {
+            // Sai mật khẩu cũ, hoặc mật khẩu mới quá yếu...
             Result.failure(e)
         }
     }

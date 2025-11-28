@@ -28,24 +28,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-<<<<<<< HEAD
 import androidx.navigation.compose.rememberNavController
-=======
-import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.service.ProductViewModel
-import com.nhom10.quanlybanhang.service.OrderViewModel
-
->>>>>>> d4747a24322aa7c31301a9fb9d0654f0a681e3a4
 import coil.compose.AsyncImage
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.model.Product
 import com.nhom10.quanlybanhang.service.AccountViewModel
 import com.nhom10.quanlybanhang.service.ProductViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
 import com.nhom10.quanlybanhang.ui.screens.report.ReportScreen
+import com.nhom10.quanlybanhang.ui.components.LetterAvatar
+// --- CÁC IMPORT MỚI ĐỂ XỬ LÝ TẢI LẠI ---
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.nhom10.quanlybanhang.service.OrderViewModel
 
 // Dữ liệu các mục trong thanh Bottom Nav
 data class BottomNavItem(val label: String, val icon: ImageVector)
@@ -58,14 +58,10 @@ fun HomeScreen(
     orderViewModel: OrderViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
-    // Sử dụng mutableIntStateOf cho chỉ số để tối ưu
     var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
 
-    // Lấy danh sách sản phẩm từ ViewModel
-    // Dùng collectAsState cho an toàn và ổn định
     val productList by productViewModel.products.collectAsState()
 
-    // Tải dữ liệu khi màn hình khởi chạy
     LaunchedEffect(key1 = true) {
         productViewModel.loadProducts()
     }
@@ -78,7 +74,6 @@ fun HomeScreen(
     )
 
     Scaffold(
-        // === 1. TOP BAR ===
         topBar = {
             when (selectedItemIndex) {
                 1 -> ReportTopBar(appBlueColor = appBlueColor)
@@ -99,117 +94,55 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate(Routes.PRODUCT_SETUP) },
-                modifier = Modifier
-                    .offset(y = 45.dp)
-                    .size(60.dp),
+                modifier = Modifier.offset(y = 45.dp).size(60.dp),
                 containerColor = appBlueColor,
                 contentColor = Color.White,
                 shape = CircleShape,
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 10.dp,
-                    pressedElevation = 15.dp
-                )
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 10.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Thêm", modifier = Modifier.size(32.dp))
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
 
-        // === 3. BOTTOM BAR ===
         bottomBar = {
             BottomAppBar(
                 modifier = Modifier.height(85.dp),
                 containerColor = Color.White,
                 tonalElevation = 8.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Trái: 2 item đầu
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
                         bottomNavItems.take(2).forEachIndexed { index, item ->
-                            BottomBarItem(
-                                item = item,
-                                isSelected = selectedItemIndex == index,
-                                selectedColor = appBlueColor,
-                                onClick = { selectedItemIndex = index }
-                            )
+                            BottomBarItem(item, selectedItemIndex == index, appBlueColor) { selectedItemIndex = index }
                         }
                     }
-
-                    // Khoảng trống giữa cho FAB
                     Spacer(modifier = Modifier.width(70.dp))
-
-                    // Phải: 2 item cuối
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
+                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
                         bottomNavItems.drop(2).forEachIndexed { idx, item ->
                             val index = idx + 2
-                            BottomBarItem(
-                                item = item,
-                                isSelected = selectedItemIndex == index,
-                                selectedColor = appBlueColor,
-                                onClick = { selectedItemIndex = index }
-                            )
+                            BottomBarItem(item, selectedItemIndex == index, appBlueColor) { selectedItemIndex = index }
                         }
                     }
                 }
             }
         },
 
-        // === 4. NỘI DUNG CHÍNH ===
         content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
+            Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 when (selectedItemIndex) {
                     0 -> {
-                        // --- TRANG CHỦ ---
                         SearchSection(appBlueColor = appBlueColor)
-
                         if (productList.isEmpty()) {
-                            // Hiển thị khi không có sản phẩm
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        imageVector = Icons.Default.ShoppingBag,
-                                        contentDescription = null,
-                                        tint = Color.Gray,
-                                        modifier = Modifier.size(64.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("Chưa có sản phẩm nào", color = Color.Gray)
-                                }
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("Chưa có sản phẩm nào", color = Color.Gray)
                             }
                         } else {
-                            // Hiển thị danh sách
-                            ProductListForHome(
-                                products = productList,
-                                onProductClick = { /* TODO: Xử lý khi nhấn vào sản phẩm */ }
-                            )
+                            ProductListForHome(products = productList, onProductClick = { })
                         }
                     }
                     1 -> ReportScreen()
-<<<<<<< HEAD
-                    2 -> HistoryScreen(navController = navController)
-=======
-                    // 2 -> Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Nội dung Lịch sử GD") }
-                    2 -> HistoryScreen(navController = navController,
-                        orderViewModel = orderViewModel)
->>>>>>> d4747a24322aa7c31301a9fb9d0654f0a681e3a4
+                    2 -> HistoryScreen(navController = navController, orderViewModel = orderViewModel)
                     3 -> AccountScreen(navController = navController)
                 }
             }
@@ -217,111 +150,42 @@ fun HomeScreen(
     )
 }
 
-// === CÁC COMPOSABLE PHỤ TRỢ ===
-
 @Composable
-fun ProductListForHome(
-    products: List<Product>,
-    onProductClick: (Product) -> Unit
-) {
+fun ProductListForHome(products: List<Product>, onProductClick: (Product) -> Unit) {
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Fastfood)
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(products) { product ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onProductClick(product) },
-                elevation = CardDefaults.cardElevation(2.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .height(IntrinsicSize.Min),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // --- XỬ LÝ ẢNH SẢN PHẨM (BASE64) ---
-                    // Dùng remember để tránh decode lại liên tục gây lag
-                    val imageBitmap = remember(product.imageData) {
-                        base64ToImageBitmap(product.imageData)
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.LightGray.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
+            Card(modifier = Modifier.fillMaxWidth().height(90.dp).clickable { onProductClick(product) }, elevation = CardDefaults.cardElevation(2.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                Row(modifier = Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val imageBitmap = remember(product.imageData) { base64ToImageBitmap(product.imageData) }
+                    Box(modifier = Modifier.aspectRatio(1f).fillMaxHeight().clip(RoundedCornerShape(8.dp)).background(Color.LightGray.copy(alpha = 0.3f)), contentAlignment = Alignment.Center) {
                         if (imageBitmap != null) {
-                            Image(
-                                bitmap = imageBitmap,
-                                contentDescription = product.tenMatHang,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
+                            Image(bitmap = imageBitmap, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                         } else {
-                            Icon(
-                                painter = placeholderPainter,
-                                contentDescription = "No Image",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            Icon(painter = placeholderPainter, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))
                         }
                     }
-
                     Spacer(modifier = Modifier.width(12.dp))
-
-                    // --- THÔNG TIN SẢN PHẨM ---
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = product.tenMatHang,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Còn: ${product.soLuong} ${product.donViTinh}",
-                            color = Color.Gray,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    Column(modifier = Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
+                        Text(product.tenMatHang, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                        Text("Còn: ${product.soLuong} ${product.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                     }
-
-                    // --- GIÁ BÁN ---
-                    // Định dạng giá đơn giản (bạn có thể thêm NumberFormat sau)
-                    Text(
-                        text = "${product.giaBan} đ",
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0088FF),
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Text("${product.giaBan} đ", fontWeight = FontWeight.Bold, color = Color(0xFF0088FF))
                 }
             }
         }
     }
 }
 
-// Hàm chuyển đổi Base64 sang Bitmap
 private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
     if (base64String.isEmpty()) return null
     return try {
         val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
         BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
-    }
+    } catch (e: Exception) { null }
 }
 
+// === ACCOUNT TOP BAR CÓ LOGIC TỰ LÀM MỚI ===
 @Composable
 private fun AccountTopBar(
     appBlueColor: Color,
@@ -329,52 +193,44 @@ private fun AccountTopBar(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
+    val currentPhotoUrl = uiState.photoUrl
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(appBlueColor)
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 24.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (!uiState.photoUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = uiState.photoUrl,
-                    contentDescription = "Avatar",
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentScale = ContentScale.Crop,
-                    placeholder = placeholderPainter,
-                    error = placeholderPainter
-                )
-            } else {
-                // TRƯỜNG HỢP 2: Không có ảnh (Thủ công) -> Hiện LetterAvatar
-                // Đảm bảo bạn đã có file LetterAvatar.kt trong ui/components
-                // Nếu nó báo đỏ LetterAvatar, hãy bấm Alt+Enter để Import
-                com.nhom10.quanlybanhang.ui.components.LetterAvatar(
-                    name = uiState.userName,
-                    size = 64.dp
-                )
+    // --- PHẦN MỚI THÊM: TỰ ĐỘNG TẢI LẠI DỮ LIỆU KHI MÀN HÌNH HIỆN ---
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                // Khi quay lại màn hình này (ON_RESUME), gọi hàm tải lại dữ liệu
+                viewModel.loadUserData()
             }
-            // =============================================
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    // ----------------------------------------------------------------
 
+    Column(modifier = Modifier.fillMaxWidth().background(appBlueColor).statusBarsPadding().padding(horizontal = 20.dp, vertical = 24.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (!currentPhotoUrl.isNullOrBlank()) {
+                if (currentPhotoUrl.startsWith("http")) {
+                    AsyncImage(model = currentPhotoUrl, contentDescription = "Avatar", modifier = Modifier.size(64.dp).clip(CircleShape).background(Color.White), contentScale = ContentScale.Crop, placeholder = placeholderPainter, error = placeholderPainter)
+                } else {
+                    val bitmap = remember(currentPhotoUrl) { base64ToImageBitmap(currentPhotoUrl) }
+                    if (bitmap != null) {
+                        Image(bitmap = bitmap, contentDescription = "Avatar", modifier = Modifier.size(64.dp).clip(CircleShape).background(Color.White), contentScale = ContentScale.Crop)
+                    } else {
+                        LetterAvatar(name = uiState.userName, size = 64.dp)
+                    }
+                }
+            } else {
+                LetterAvatar(name = uiState.userName, size = 64.dp)
+            }
             Spacer(modifier = Modifier.width(16.dp))
-
             Column {
-                Text(
-                    text = uiState.userName,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = uiState.userId,
-                    color = Color.White.copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = uiState.userName, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                Text(text = uiState.userId, color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
@@ -383,14 +239,8 @@ private fun AccountTopBar(
 @Composable
 private fun BottomBarItem(item: BottomNavItem, isSelected: Boolean, selectedColor: Color, onClick: () -> Unit) {
     val color = if (isSelected) selectedColor else Color.Gray
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .padding(vertical = 8.dp)
-            .clickable { onClick() }
-    ) {
-        Icon(item.icon, contentDescription = item.label, tint = color)
+    Column(modifier = Modifier.padding(vertical = 8.dp).clickable { onClick() }, horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(item.icon, contentDescription = null, tint = color)
         Text(text = item.label, color = color, style = MaterialTheme.typography.labelSmall)
     }
 }
@@ -398,34 +248,13 @@ private fun BottomBarItem(item: BottomNavItem, isSelected: Boolean, selectedColo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReportTopBar(appBlueColor: Color) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(appBlueColor)
-            .statusBarsPadding()
-            .padding(bottom = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Báo cáo",
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(vertical = 16.dp)
-        )
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(48.dp),
-            shape = CircleShape,
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
-        ) {
+    Column(modifier = Modifier.fillMaxWidth().background(appBlueColor).statusBarsPadding().padding(bottom = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = "Báo cáo", fontWeight = FontWeight.Bold, color = Color.White, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
+        Card(modifier = Modifier.padding(horizontal = 16.dp).height(48.dp), shape = CircleShape, colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))) {
             Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                FilterButtonContent(text = "Hôm nay", modifier = Modifier.weight(1f).clickable { /* TODO */ })
+                FilterButtonContent("Hôm nay", Modifier.weight(1f).clickable { /* TODO */ })
                 VerticalDivider(modifier = Modifier.fillMaxHeight().width(1.dp), color = Color.LightGray.copy(alpha = 0.5f))
-                FilterButtonContent(text = "Tất cả", modifier = Modifier.weight(1f).clickable { /* TODO */ })
+                FilterButtonContent("Tất cả", Modifier.weight(1f).clickable { /* TODO */ })
             }
         }
     }
@@ -433,13 +262,9 @@ private fun ReportTopBar(appBlueColor: Color) {
 
 @Composable
 private fun FilterButtonContent(text: String, modifier: Modifier) {
-    Row(
-        modifier = modifier.padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = modifier, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Text(text, color = Color(0xFF007AFF), fontWeight = FontWeight.Bold)
-        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF007AFF))
+        Icon(Icons.Default.ArrowDropDown, null, tint = Color(0xFF007AFF))
     }
 }
 
@@ -448,18 +273,8 @@ private fun FilterButtonContent(text: String, modifier: Modifier) {
 private fun DefaultTopBar(title: String, showShoppingCart: Boolean, appBlueColor: Color, navController: NavController) {
     CenterAlignedTopAppBar(
         title = { Text(title, fontWeight = FontWeight.Bold) },
-        actions = {
-            if (showShoppingCart) {
-                IconButton(onClick = { navController.navigate(Routes.CART) }) {
-                    Icon(Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng", tint = Color.White)
-                }
-            }
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = appBlueColor,
-            titleContentColor = Color.White,
-            actionIconContentColor = Color.White
-        )
+        actions = { if (showShoppingCart) IconButton(onClick = { navController.navigate(Routes.CART) }) { Icon(Icons.Default.ShoppingCart, null, tint = Color.White) } },
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = appBlueColor, titleContentColor = Color.White, actionIconContentColor = Color.White)
     )
 }
 
@@ -469,27 +284,15 @@ private fun SearchSection(appBlueColor: Color) {
     var searchQuery by remember { mutableStateOf("") }
     val lightGrayBorder = Color.Black.copy(alpha = 0.2f)
     OutlinedTextField(
-        value = searchQuery,
-        onValueChange = { searchQuery = it },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        value = searchQuery, onValueChange = { searchQuery = it },
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         placeholder = { Text("Tìm kiếm mặt hàng", color = appBlueColor) },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = appBlueColor) },
+        leadingIcon = { Icon(Icons.Default.Search, null, tint = appBlueColor) },
         singleLine = true,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = appBlueColor,
-            unfocusedBorderColor = lightGrayBorder,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedTextColor = appBlueColor,
-            unfocusedTextColor = appBlueColor
-        )
+        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = appBlueColor, unfocusedBorderColor = lightGrayBorder)
     )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun HomeScreenPreview() {
-    // Preview trống để tránh lỗi compile khi không có ViewModel giả lập
-}
+fun HomeScreenPreview() { }

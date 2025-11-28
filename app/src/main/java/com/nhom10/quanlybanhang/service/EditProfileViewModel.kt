@@ -3,7 +3,7 @@ package com.nhom10.quanlybanhang.service
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider // <-- Import này
+import com.google.firebase.auth.GoogleAuthProvider
 import com.nhom10.quanlybanhang.data.repository.AuthRepository
 import com.nhom10.quanlybanhang.data.repository.AuthRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +16,8 @@ data class EditProfileUiState(
     val email: String = "",
     val gender: String = "Chưa thiết lập",
     val isGoogleLogin: Boolean = false,
-    val isUploading: Boolean = false
+    val isUploading: Boolean = false,
+    val error: String? = null
 )
 
 class EditProfileViewModel : ViewModel() {
@@ -34,25 +35,31 @@ class EditProfileViewModel : ViewModel() {
     private fun loadUserProfile() {
         val user = auth.currentUser
         if (user != null) {
-            // 1. Kiểm tra xem có phải Google không?
-            // Duyệt qua danh sách provider, nếu thấy google.com thì là true
+            // Kiểm tra xem có phải đăng nhập bằng Google không
             val isGoogle = user.providerData.any { it.providerId == GoogleAuthProvider.PROVIDER_ID }
 
-            // 2. Lấy thông tin cơ bản
-            val basicState = EditProfileUiState(
-                userName = user.displayName ?: "Chưa đặt tên",
+            // Lấy thông tin cơ bản
+            _uiState.value = EditProfileUiState(
+                userName = user.displayName ?: "",
                 photoUrl = user.photoUrl?.toString(),
                 email = user.email ?: "",
-                isGoogleLogin = isGoogle // <-- Gán vào state
+                isGoogleLogin = isGoogle
             )
-            _uiState.value = basicState
 
-            // 3. Lấy Giới tính từ Firestore
+            // Lấy thông tin chi tiết từ Firestore (Giới tính, Ảnh Base64)
             viewModelScope.launch {
                 val result = authRepo.getUserDetails(user.uid)
                 result.onSuccess { data ->
                     val genderFromDb = data["gioiTinh"] as? String ?: "Chưa thiết lập"
-                    _uiState.value = _uiState.value.copy(gender = genderFromDb)
+                    val dbPhoto = data["photoUrl"] as? String
+                    val dbName = data["hoTen"] as? String
+
+                    _uiState.value = _uiState.value.copy(
+                        gender = genderFromDb,
+                        // Ưu tiên dữ liệu từ DB hơn Auth
+                        photoUrl = dbPhoto ?: _uiState.value.photoUrl,
+                        userName = dbName ?: _uiState.value.userName
+                    )
                 }
             }
         }
@@ -68,30 +75,42 @@ class EditProfileViewModel : ViewModel() {
 
     fun updateName(newName: String) {
         val user = auth.currentUser ?: return
-
         viewModelScope.launch {
+            // 1. Cập nhật Auth (để hiển thị nhanh)
             authRepo.updateUserProfile(newName)
+            // 2. Cập nhật UI State
             _uiState.value = _uiState.value.copy(userName = newName)
+
+            // LƯU Ý: Để đồng bộ hoàn toàn, bạn nên thêm hàm updateName trong Repository
+            // để lưu vào Firestore field "hoTen". Hiện tại ta cập nhật Auth Profile trước.
         }
     }
 
-    fun uploadAvatar(uri: android.net.Uri) {
+    fun updateAvatar(base64String: String) {
+        val userId = auth.currentUser?.uid ?: return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isUploading = true) // Bắt đầu xoay
+            _uiState.value = _uiState.value.copy(isUploading = true)
 
-            val result = authRepo.uploadAvatar(uri)
+            // Gọi Repository để lưu chuỗi Base64 vào Firestore
+            val result = authRepo.updateAvatarBase64(userId, base64String)
 
-            result.onSuccess { newUrl ->
-                // Cập nhật UI ngay lập tức với ảnh mới
+            result.onSuccess {
                 _uiState.value = _uiState.value.copy(
-                    photoUrl = newUrl,
-                    isUploading = false
+                    photoUrl = base64String,
+                    isUploading = false,
+                    error = null
                 )
             }
-            result.onFailure {
-                _uiState.value = _uiState.value.copy(isUploading = false)
-                // Có thể thêm biến error để báo lỗi nếu muốn
+            result.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    isUploading = false,
+                    error = "Lỗi lưu ảnh: ${e.message}"
+                )
             }
         }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

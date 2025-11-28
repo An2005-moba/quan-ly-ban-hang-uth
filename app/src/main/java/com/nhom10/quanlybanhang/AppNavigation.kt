@@ -134,7 +134,8 @@ fun AppNavigation() {
             AddProductScreen(navController = navController, productViewModel = productViewModel)
         }
         composable(Routes.EDIT_PRODUCT) {
-            EditProductScreen(navController = navController)
+            EditProductScreen(navController = navController,
+            productViewModel = productViewModel)
         }
 
         // --- CÁC ROUTE ĐÃ SỬA ---

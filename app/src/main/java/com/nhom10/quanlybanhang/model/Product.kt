@@ -1,7 +1,8 @@
 package com.nhom10.quanlybanhang.model
-
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import com.google.firebase.firestore.DocumentId
-
+@Parcelize
 data class Product(
     @DocumentId val documentId: String = "",
     val tenMatHang: String = "",
@@ -13,4 +14,4 @@ data class Product(
     val apDungThue: Boolean = true,
     val ghiChu: String = "",
     val imageData: String = ""
-)
+) : Parcelable

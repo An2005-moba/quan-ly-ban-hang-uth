@@ -11,4 +11,6 @@ interface ProductRepository {
 
     // SỬA: Thêm userId
     suspend fun addProduct(userId: String, product: Product)
+    suspend fun updateProduct(userId: String, product: Product)
+
 }

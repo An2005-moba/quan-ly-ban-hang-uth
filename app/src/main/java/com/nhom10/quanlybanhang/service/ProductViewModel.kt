@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.update
+
 // THÊM IMPORT NÀY
 import com.google.firebase.auth.FirebaseAuth
 
@@ -72,6 +74,36 @@ class ProductViewModel(
                 Log.w(TAG, "Lỗi khi thêm sản phẩm", e)
                 withContext(Dispatchers.Main) { onFailure(e) }
             }
+
         }
     }
+    // 3. Hàm cập nhật sản phẩm
+    fun updateProduct(
+        updatedProduct: Product,
+        onSuccess: () -> Unit = {},
+        onFailure: (Exception) -> Unit = {}
+    ) {
+        val userId = currentUserId
+        if (userId == null) {
+            onFailure(Exception("Người dùng chưa đăng nhập."))
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // 1. Cập nhật lên repository / Firebase
+                repository.updateProduct(userId, updatedProduct)
+
+                // 2. Cập nhật local StateFlow để UI tự động refresh
+                _products.update { currentList ->
+                    currentList.map { if (it.documentId == updatedProduct.documentId) updatedProduct else it }
+                }
+
+                withContext(Dispatchers.Main) { onSuccess() }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { onFailure(e) }
+            }
+        }
+    }
+
 }

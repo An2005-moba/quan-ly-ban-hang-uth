@@ -42,4 +42,18 @@ class ProductRepositoryImpl : ProductRepository {
             throw e
         }
     }
+    override suspend fun updateProduct(userId: String, product: Product) {
+        try {
+            val docRef = FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .collection("products")
+                .document(product.documentId)
+            Tasks.await(docRef.set(product))
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+
 }

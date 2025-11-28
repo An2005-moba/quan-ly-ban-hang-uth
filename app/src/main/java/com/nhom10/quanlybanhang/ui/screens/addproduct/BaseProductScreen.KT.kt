@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
@@ -18,29 +18,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.nhom10.quanlybanhang.model.ProductItem
+import com.nhom10.quanlybanhang.model.Product
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BaseProductScreen(
     navController: NavController,
     screenTitle: String,
-    initialProductData: ProductItem? = null,
-    onSave: (ProductItem) -> Unit
+    initialProductData: Product? = null,
+    onSave: (Product) -> Unit
 ) {
     val appBlueColor = Color(0xFF0088FF)
 
     // State các trường
-    var tenMatHang by remember { mutableStateOf(initialProductData?.name.orEmpty()) }
-    var maMatHang by remember { mutableStateOf(initialProductData?.id.orEmpty()) }
-    var soLuong by remember { mutableStateOf(initialProductData?.quantity?.toString() ?: "0") }
-    var giaBan by remember { mutableStateOf(initialProductData?.price?.toString() ?: "0") }
-    var giaNhap by remember { mutableStateOf(initialProductData?.importPrice?.toString() ?: "0") }
-    var donViTinh by remember { mutableStateOf(initialProductData?.unit.orEmpty().ifEmpty { "Kg" }) }
-    var apDungThue by remember { mutableStateOf(initialProductData?.taxApplied ?: true) }
-    var ghiChu by remember { mutableStateOf(initialProductData?.note.orEmpty()) }
+    var tenMatHang by remember { mutableStateOf(initialProductData?.tenMatHang.orEmpty()) }
+    var maMatHang by remember { mutableStateOf(initialProductData?.maMatHang.orEmpty()) }
+    var soLuong by remember { mutableStateOf(initialProductData?.soLuong?.toString() ?: "0") }
+    var giaBan by remember { mutableStateOf(initialProductData?.giaBan?.toString() ?: "0") }
+    var giaNhap by remember { mutableStateOf(initialProductData?.giaNhap?.toString() ?: "0") }
+    var donViTinh by remember { mutableStateOf(initialProductData?.donViTinh ?: "Kg") }
+    var apDungThue by remember { mutableStateOf(initialProductData?.apDungThue ?: true) }
+    var ghiChu by remember { mutableStateOf(initialProductData?.ghiChu.orEmpty()) }
+    var imageData by remember { mutableStateOf(initialProductData?.imageData.orEmpty()) }
 
-    // Dropdown state
+    // Dropdown
     val donViOptions = listOf("Cái", "Chai", "Đôi", "Hộp", "Kg", "Lọ", "Thùng")
     var donViExpanded by remember { mutableStateOf(false) }
 
@@ -50,20 +51,25 @@ fun BaseProductScreen(
                 title = { Text(screenTitle, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Quay lại"
+                        )
                     }
                 },
                 actions = {
                     TextButton(onClick = {
-                        val product = ProductItem(
-                            id = maMatHang.ifEmpty { "temp_id" },
-                            name = tenMatHang,
-                            price = giaBan.toDoubleOrNull() ?: 0.0,
-                            importPrice = giaNhap.toDoubleOrNull() ?: 0.0,
-                            quantity = soLuong.toIntOrNull() ?: 0,
-                            unit = donViTinh,
-                            taxApplied = apDungThue,
-                            note = ghiChu
+                        val product = Product(
+                            documentId = initialProductData?.documentId ?: "",
+                            tenMatHang = tenMatHang,
+                            maMatHang = maMatHang,
+                            soLuong = soLuong.toDoubleOrNull() ?: 0.0,
+                            giaBan = giaBan.toDoubleOrNull() ?: 0.0,
+                            giaNhap = giaNhap.toDoubleOrNull() ?: 0.0,
+                            donViTinh = donViTinh,
+                            apDungThue = apDungThue,
+                            ghiChu = ghiChu,
+                            imageData = imageData
                         )
                         onSave(product)
                     }) {
@@ -77,6 +83,7 @@ fun BaseProductScreen(
                 )
             )
         },
+
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -85,11 +92,9 @@ fun BaseProductScreen(
                     .background(Color(0xFFF0F2F5))
                     .verticalScroll(rememberScrollState())
             ) {
-                // Ảnh placeholder
+                // Ảnh sơ bộ (placeholder)
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
@@ -97,14 +102,23 @@ fun BaseProductScreen(
                             .size(120.dp)
                             .clip(MaterialTheme.shapes.medium)
                             .background(Color.LightGray.copy(alpha = 0.5f))
-                            .clickable { },
+                            .clickable { /* TODO: chọn ảnh */ },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Image, contentDescription = "Thêm ảnh", tint = Color.Gray, modifier = Modifier.size(40.dp))
+                        Icon(
+                            Icons.Default.Image,
+                            contentDescription = "Thêm ảnh",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(40.dp)
+                        )
                     }
                 }
 
-                Column(modifier = Modifier.background(Color.White).padding(horizontal = 16.dp)) {
+                Column(
+                    modifier = Modifier
+                        .background(Color.White)
+                        .padding(horizontal = 16.dp)
+                ) {
                     InfoTextField("Tên mặt hàng", tenMatHang) { tenMatHang = it }
                     Divider()
                     InfoTextField("Mã mặt hàng", maMatHang) { maMatHang = it }
@@ -124,13 +138,13 @@ fun BaseProductScreen(
                         onExpandedChange = { donViExpanded = it },
                         onOptionSelected = { donViTinh = it }
                     )
-                    Divider()
 
+                    Divider()
                     InfoRowWithSwitch("Áp dụng thuế", apDungThue) { apDungThue = it }
                 }
 
+                // Ghi chú
                 Spacer(modifier = Modifier.height(16.dp))
-
                 TextField(
                     value = ghiChu,
                     onValueChange = { ghiChu = it },
@@ -158,14 +172,14 @@ private fun InfoTextField(label: String, value: String, onValueChange: (String) 
         onValueChange = onValueChange,
         label = { Text(label) },
         modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
             disabledContainerColor = Color.White,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
-        ),
-        singleLine = true
+        )
     )
 }
 
@@ -218,7 +232,9 @@ private fun InfoRowWithSwitch(label: String, checked: Boolean, onCheckedChange: 
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0088FF))
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color(0xFF0088FF)
+            )
         )
     }
 }
