@@ -1,9 +1,8 @@
 package com.nhom10.quanlybanhang.data.repository
 
-import com.google.android.gms.tasks.Tasks // Thêm import này nếu lỗi Tasks
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.nhom10.quanlybanhang.model.Customer
+import com.nhom10.quanlybanhang.data.model.Customer
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow

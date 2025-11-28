@@ -2,10 +2,8 @@ package com.nhom10.quanlybanhang.ui.screens.addproduct
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
-import com.nhom10.quanlybanhang.model.ProductItem
-import com.google.firebase.firestore.FirebaseFirestore
-import com.nhom10.quanlybanhang.model.Product
-import com.nhom10.quanlybanhang.service.ProductViewModel
+import com.nhom10.quanlybanhang.data.model.Product
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
 
 @Composable
 fun EditProductScreen(

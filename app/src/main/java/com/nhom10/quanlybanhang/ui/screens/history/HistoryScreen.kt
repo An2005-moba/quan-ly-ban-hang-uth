@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.model.Order
+import com.nhom10.quanlybanhang.data.model.Order
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,7 +25,7 @@ import java.util.*
 @Composable
 fun HistoryScreen(
     navController: NavController,
-    orderViewModel: com.nhom10.quanlybanhang.service.OrderViewModel
+    orderViewModel: com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 ) {
     val appBlue = Color(0xFF3388FF)
     val grayBackground = Color(0xFFF0F2F5)

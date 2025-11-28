@@ -17,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.nhom10.quanlybanhang.model.Order
-import com.nhom10.quanlybanhang.model.OrderItem
+import com.nhom10.quanlybanhang.data.model.Order
+import com.nhom10.quanlybanhang.data.model.OrderItem
 import java.text.SimpleDateFormat
 import java.util.*
 

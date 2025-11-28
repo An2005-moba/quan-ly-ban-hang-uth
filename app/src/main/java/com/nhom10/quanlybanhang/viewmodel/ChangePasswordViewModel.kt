@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang.service
+package com.nhom10.quanlybanhang.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

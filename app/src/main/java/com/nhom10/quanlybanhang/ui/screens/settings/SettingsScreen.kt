@@ -23,7 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.service.SettingsViewModel
+import com.nhom10.quanlybanhang.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

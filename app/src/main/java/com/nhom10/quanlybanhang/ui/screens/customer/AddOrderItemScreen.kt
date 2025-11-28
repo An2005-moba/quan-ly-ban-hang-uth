@@ -1,9 +1,8 @@
 package com.nhom10.quanlybanhang.ui.screens.customer
 
 // --- THÊM CÁC IMPORT NÀY ---
-import com.nhom10.quanlybanhang.model.Product
-import com.nhom10.quanlybanhang.service.OrderViewModel
-import com.nhom10.quanlybanhang.service.ProductViewModel
+import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
 // -----------------------------
 
 import androidx.compose.foundation.background
@@ -15,15 +14,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.* // Import tất cả icon
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 
 // XÓA: Data class mẫu (sẽ dùng model/Product.kt)
 // private data class ProductItem(...)

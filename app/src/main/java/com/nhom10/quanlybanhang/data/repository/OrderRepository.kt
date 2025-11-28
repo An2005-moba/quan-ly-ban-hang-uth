@@ -1,6 +1,6 @@
 package com.nhom10.quanlybanhang.data.repository
 
-import com.nhom10.quanlybanhang.model.Order
+import com.nhom10.quanlybanhang.data.model.Order
 
 interface OrderRepository {
     // Lưu order

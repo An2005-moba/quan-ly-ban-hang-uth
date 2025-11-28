@@ -1,11 +1,11 @@
-package com.nhom10.quanlybanhang.service
+package com.nhom10.quanlybanhang.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.nhom10.quanlybanhang.data.repository.CustomerRepository
-import com.nhom10.quanlybanhang.model.Customer
+import com.nhom10.quanlybanhang.data.model.Customer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch

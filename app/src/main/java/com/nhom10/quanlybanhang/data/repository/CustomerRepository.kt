@@ -1,6 +1,6 @@
 package com.nhom10.quanlybanhang.data.repository
 
-import com.nhom10.quanlybanhang.model.Customer
+import com.nhom10.quanlybanhang.data.model.Customer
 import kotlinx.coroutines.flow.Flow
 
 interface CustomerRepository {

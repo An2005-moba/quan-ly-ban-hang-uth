@@ -1,8 +1,7 @@
-package com.nhom10.quanlybanhang.data
+package com.nhom10.quanlybanhang.data.repository
 
-import com.nhom10.quanlybanhang.model.Product
+import com.nhom10.quanlybanhang.data.model.Product
 import kotlinx.coroutines.flow.Flow
-
 
 // Interface định nghĩa các chức năng
 interface ProductRepository {

@@ -1,6 +1,5 @@
 package com.nhom10.quanlybanhang.ui.screens.auth
 
-import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.nhom10.quanlybanhang.service.ForgotPasswordViewModel
+import com.nhom10.quanlybanhang.viewmodel.ForgotPasswordViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

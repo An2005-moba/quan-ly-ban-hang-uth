@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang.model
+package com.nhom10.quanlybanhang.data.model
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import com.google.firebase.firestore.DocumentId

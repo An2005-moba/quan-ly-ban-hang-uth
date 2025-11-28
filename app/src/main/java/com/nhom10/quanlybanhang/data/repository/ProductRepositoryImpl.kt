@@ -1,8 +1,8 @@
-package com.nhom10.quanlybanhang.data
+package com.nhom10.quanlybanhang.data.repository
 
-import com.google.firebase.firestore.FirebaseFirestore
-import com.nhom10.quanlybanhang.model.Product
 import com.google.android.gms.tasks.Tasks
+import com.google.firebase.firestore.FirebaseFirestore
+import com.nhom10.quanlybanhang.data.model.Product
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow

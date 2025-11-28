@@ -44,7 +44,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.service.EditProfileViewModel
+import com.nhom10.quanlybanhang.viewmodel.EditProfileViewModel
 import com.nhom10.quanlybanhang.ui.components.LetterAvatar
 import java.io.ByteArrayOutputStream
 

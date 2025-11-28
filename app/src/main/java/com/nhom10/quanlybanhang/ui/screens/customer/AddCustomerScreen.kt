@@ -3,8 +3,8 @@ package com.nhom10.quanlybanhang.ui.screens.customer
 // --- CÁC IMPORT BỊ THIẾU ---
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
-import com.nhom10.quanlybanhang.model.Customer
-import com.nhom10.quanlybanhang.service.CustomerViewModel
+import com.nhom10.quanlybanhang.data.model.Customer
+import com.nhom10.quanlybanhang.viewmodel.CustomerViewModel
 // -------------------------
 
 import androidx.compose.foundation.background
@@ -23,10 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -28,14 +28,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.model.Product
-import com.nhom10.quanlybanhang.service.AccountViewModel
-import com.nhom10.quanlybanhang.service.ProductViewModel
+import com.nhom10.quanlybanhang.data.model.Product
+import com.nhom10.quanlybanhang.viewmodel.AccountViewModel
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
@@ -45,7 +43,7 @@ import com.nhom10.quanlybanhang.ui.components.LetterAvatar
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.nhom10.quanlybanhang.service.OrderViewModel
+import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 
 // Dữ liệu các mục trong thanh Bottom Nav
 data class BottomNavItem(val label: String, val icon: ImageVector)

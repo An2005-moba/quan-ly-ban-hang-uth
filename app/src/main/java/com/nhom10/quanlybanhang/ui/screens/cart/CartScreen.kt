@@ -21,8 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.model.OrderItem
-import com.nhom10.quanlybanhang.service.OrderViewModel
+import com.nhom10.quanlybanhang.data.model.OrderItem
+import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,11 +1,9 @@
 package com.nhom10.quanlybanhang
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.nhom10.quanlybanhang.ui.screens.auth.LoginScreen
 import com.nhom10.quanlybanhang.ui.screens.auth.RegisterScreen
 import com.nhom10.quanlybanhang.ui.screens.auth.ForgotPasswordScreen
@@ -27,15 +25,15 @@ import com.nhom10.quanlybanhang.ui.screens.payment.InvoiceScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.PaymentScreen
 import com.nhom10.quanlybanhang.ui.screens.payment.BankPaymentScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.nhom10.quanlybanhang.data.ProductRepositoryImpl
+import com.nhom10.quanlybanhang.data.repository.ProductRepositoryImpl
 import com.nhom10.quanlybanhang.data.repository.CustomerRepositoryImpl
 import com.nhom10.quanlybanhang.data.repository.OrderRepositoryImpl
-import com.nhom10.quanlybanhang.service.CustomerViewModel
-import com.nhom10.quanlybanhang.service.CustomerViewModelFactory
-import com.nhom10.quanlybanhang.service.OrderViewModel
-import com.nhom10.quanlybanhang.service.OrderViewModelFactory
-import com.nhom10.quanlybanhang.service.ProductViewModel
-import com.nhom10.quanlybanhang.service.ProductViewModelFactory
+import com.nhom10.quanlybanhang.viewmodel.CustomerViewModel
+import com.nhom10.quanlybanhang.viewmodel.CustomerViewModelFactory
+import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
+import com.nhom10.quanlybanhang.viewmodel.OrderViewModelFactory
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModelFactory
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
 import com.nhom10.quanlybanhang.ui.screens.history.BillDetailScreen
 

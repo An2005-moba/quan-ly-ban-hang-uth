@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.service.OrderViewModel
+import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Date

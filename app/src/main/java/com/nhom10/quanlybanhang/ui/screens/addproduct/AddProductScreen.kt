@@ -22,7 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.nhom10.quanlybanhang.service.ProductViewModel
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
 import android.net.Uri // <-- Thêm
 import androidx.activity.compose.rememberLauncherForActivityResult // <-- Thêm
 import androidx.activity.result.contract.ActivityResultContracts // <-- Thêm
@@ -32,7 +32,7 @@ import android.util.Base64
 import android.widget.Toast
 
 import androidx.compose.ui.platform.LocalContext // Thêm import
-import com.nhom10.quanlybanhang.model.Product // Thêm import
+import com.nhom10.quanlybanhang.data.model.Product // Thêm import
 import androidx.compose.runtime.Composable
 import android.content.Context
 

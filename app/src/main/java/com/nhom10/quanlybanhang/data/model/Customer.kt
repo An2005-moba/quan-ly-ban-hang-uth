@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang.model
+package com.nhom10.quanlybanhang.data.model
 
 import com.google.firebase.firestore.DocumentId
 

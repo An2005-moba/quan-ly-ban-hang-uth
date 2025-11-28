@@ -36,7 +36,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.nhom10.quanlybanhang.R
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.service.LoginViewModel
+import com.nhom10.quanlybanhang.viewmodel.LoginViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

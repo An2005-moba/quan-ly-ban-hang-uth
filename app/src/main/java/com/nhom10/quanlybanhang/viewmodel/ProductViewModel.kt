@@ -1,11 +1,11 @@
-package com.nhom10.quanlybanhang.service
+package com.nhom10.quanlybanhang.viewmodel
 
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nhom10.quanlybanhang.data.ProductRepository // Import
-import com.nhom10.quanlybanhang.model.Product
+import com.nhom10.quanlybanhang.data.repository.ProductRepository // Import
+import com.nhom10.quanlybanhang.data.model.Product
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

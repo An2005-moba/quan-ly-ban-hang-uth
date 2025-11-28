@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang.service
+package com.nhom10.quanlybanhang.viewmodel
 
 import android.util.Patterns // Import trình kiểm tra email
 import androidx.lifecycle.ViewModel

@@ -15,14 +15,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.service.ProductViewModel // Thêm import
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel // Thêm import
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Image
@@ -33,7 +31,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
-import com.nhom10.quanlybanhang.model.Product
+import com.nhom10.quanlybanhang.data.model.Product
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductSetupScreen(
