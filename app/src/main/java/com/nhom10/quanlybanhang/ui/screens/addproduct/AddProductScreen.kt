@@ -83,6 +83,32 @@ fun AddProductScreen(
                             // === THAY ĐỔI LOGIC LƯU TẠI ĐÂY ===
 
                             // 1. Chuyển đổi Uri sang Base64
+                            val cleanGiaBan = giaBan.replace(".", "").replace(",", "").trim()
+                            val cleanGiaNhap = giaNhap.replace(".", "").replace(",", "").trim()
+                            val cleanSoLuong = soLuong.trim()
+
+                            // --- 2. KIỂM TRA RỖNG (Bắt buộc nhập) ---
+                            if (tenMatHang.isBlank() || maMatHang.isBlank() || cleanSoLuong.isBlank() || cleanGiaBan.isBlank() || cleanGiaNhap.isBlank()) {
+                                Toast.makeText(context, "Vui lòng nhập đủ thông tin (Tên, Mã, Số lượng, Giá)", Toast.LENGTH_SHORT).show()
+                                return@TextButton
+                            }
+
+                            // --- 3. KIỂM TRA ĐỊNH DẠNG SỐ & SỐ ÂM ---
+                            val sl = cleanSoLuong.toDoubleOrNull()
+                            val gb = cleanGiaBan.toDoubleOrNull()
+                            val gn = cleanGiaNhap.toDoubleOrNull()
+
+                            if (sl == null || gb == null || gn == null) {
+                                Toast.makeText(context, "Số lượng và Giá phải là số hợp lệ!", Toast.LENGTH_SHORT).show()
+                                return@TextButton
+                            }
+
+                            if (sl < 0 || gb < 0 || gn < 0) {
+                                Toast.makeText(context, "Số lượng và Giá không được âm!", Toast.LENGTH_SHORT).show()
+                                return@TextButton
+                            }
+
+                            // --- 4. XỬ LÝ ẢNH & LƯU (Code cũ giữ nguyên) ---
                             val imageDataString = if (imageUri != null) {
                                 uriToBase64(context, imageUri!!)
                             } else {
@@ -104,9 +130,9 @@ fun AddProductScreen(
                             val newProduct = Product(
                                 tenMatHang = tenMatHang,
                                 maMatHang = maMatHang,
-                                soLuong = soLuongDouble,
-                                giaBan = giaBanDouble,
-                                giaNhap = giaNhapDouble,
+                                soLuong = sl,
+                                giaBan = gb,
+                                giaNhap = gn,
                                 donViTinh = donViTinh,
                                 apDungThue = apDungThue,
                                 ghiChu = ghiChu,
@@ -198,12 +224,26 @@ fun AddProductScreen(
                     Divider()
                     InfoTextField(label = "Mã mặt hàng", value = maMatHang, onValueChange = { maMatHang = it })
                     Divider()
-                    InfoTextField(label = "Số lượng", value = soLuong, onValueChange = { soLuong = it })
+                    InfoTextField(
+                        label = "Số lượng",
+                        value = soLuong,
+                        onValueChange = { soLuong = it },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                    )
                     Divider()
-                    InfoTextField(label = "Giá bán", value = giaBan, onValueChange = { giaBan = it })
+                    InfoTextField(
+                        label = "Giá bán",
+                        value = giaBan,
+                        onValueChange = { giaBan = it },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                    )
                     Divider()
-                    InfoTextField(label = "Giá nhập", value = giaNhap, onValueChange = { giaNhap = it })
-                    Divider()
+                    InfoTextField(
+                        label = "Giá nhập",
+                        value = giaNhap,
+                        onValueChange = { giaNhap = it },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                    )
 
                     // Mục "Đơn vị tính" (có mũi tên)
                     Box {
@@ -290,7 +330,8 @@ private fun uriToBase64(context: Context, uri: Uri): String {
 private fun InfoTextField(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default
 ) {
     TextField(
         value = value,
@@ -304,7 +345,8 @@ private fun InfoTextField(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
         ),
-        singleLine = true
+        singleLine = true ,
+        keyboardOptions = keyboardOptions
     )
 }
 
