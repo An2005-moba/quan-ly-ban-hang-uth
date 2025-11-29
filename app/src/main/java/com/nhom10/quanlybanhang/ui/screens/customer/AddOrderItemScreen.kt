@@ -197,7 +197,7 @@ private fun ProductListItem(
         headlineContent = { Text(product.tenMatHang, fontWeight = FontWeight.Bold) },
         supportingContent = {
             // Tạo chuỗi chi tiết
-            val details = "Giá: ${formatter.format(product.giaBan)} đ - Còn: ${product.soLuong} ${product.donViTinh}"
+            val details = "Giá: ${formatter.format(product.giaBan)} đ - Còn: ${formatter.format(product.soLuong)} ${product.donViTinh}"
             Text(details)
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)

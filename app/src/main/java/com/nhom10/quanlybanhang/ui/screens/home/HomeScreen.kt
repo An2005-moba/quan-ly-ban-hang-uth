@@ -189,7 +189,7 @@ fun ProductListForHome(products: List<Product>, onProductClick: (Product) -> Uni
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
                         Text(product.tenMatHang, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                        Text("Còn: ${product.soLuong} ${product.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                        Text("Còn: ${formatter.format(product.soLuong)} ${product.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                     }
                     Text(
                         text = "${formatter.format(product.giaBan)} đ",
