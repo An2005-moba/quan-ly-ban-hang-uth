@@ -84,5 +84,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation("com.google.firebase:firebase-database-ktx:20.3.2")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
 }

@@ -38,6 +38,7 @@ import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
 import com.nhom10.quanlybanhang.viewmodel.ProductViewModelFactory
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
 import com.nhom10.quanlybanhang.ui.screens.history.BillDetailScreen
+import com.nhom10.quanlybanhang.ui.screens.theme.ThemeScreen
 
 object Routes {
     const val LOGIN = "login_screen"
@@ -48,7 +49,7 @@ object Routes {
     const val EDIT_PROFILE = "edit_profile_screen"
     const val PASSWORD = "password_screen"
     const val CHANGE_PASSWORD = "change_password_screen"
-    const val LANGUAGE = "language_screen"
+    const val THEME = "theme_screen"
     const val PRODUCT_SETUP = "product_setup_screen"
     const val ADD_PRODUCT = "add_product_screen"
     const val EDIT_PRODUCT = "edit_product_screen"
@@ -67,7 +68,7 @@ object Routes {
 
 @Composable
 fun AppNavigation(
-    startDestination: String = Routes.LOGIN // <-- Thêm startDestination với giá trị mặc định là LOGIN
+    startDestination: String // <-- Thêm startDestination với giá trị mặc định là LOGIN
 ) {
     val navController = rememberNavController()
 
@@ -121,8 +122,8 @@ fun AppNavigation(
         composable(Routes.CHANGE_PASSWORD) {
             ChangePasswordScreen(navController = navController)
         }
-        composable(Routes.LANGUAGE) {
-            LanguageScreen(navController = navController)
+        composable(Routes.THEME) {
+            ThemeScreen(navController = navController)
         }
         composable(Routes.PRODUCT_SETUP) {
             ProductSetupScreen(navController = navController, productViewModel = productViewModel)

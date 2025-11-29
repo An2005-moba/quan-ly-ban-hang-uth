@@ -29,21 +29,18 @@ import com.nhom10.quanlybanhang.viewmodel.SettingsViewModel
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    // Inject ViewModel để kiểm tra loại tài khoản
     viewModel: SettingsViewModel = viewModel()
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val context = LocalContext.current
 
-    // Lấy trạng thái (isGoogleLogin) từ ViewModel
+    // Lấy trạng thái đăng nhập
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text("Cài đặt", fontWeight = FontWeight.Bold)
-                },
+                title = { Text("Cài đặt", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -65,30 +62,29 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(Color(0xFFF0F2F5))
+                    .background(MaterialTheme.colorScheme.background)  // DARK MODE
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // --- MỤC MẬT KHẨU (CÓ LOGIC CHẶN GOOGLE) ---
                 SettingsOptionItem(
                     text = "Mật khẩu",
                     onClick = {
                         if (uiState.isGoogleLogin) {
-                            // Nếu là Google -> Báo lỗi
-                            Toast.makeText(context, "Tài khoản Google không cần đổi mật khẩu", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Tài khoản Google không cần đổi mật khẩu",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } else {
-                            // Nếu là Thủ công -> Cho vào trang Đổi mật khẩu
                             navController.navigate(Routes.PASSWORD)
                         }
                     },
-                    // Ẩn mũi tên nếu là Google để người dùng biết là không bấm được (Tùy chọn)
                     showArrow = !uiState.isGoogleLogin
                 )
 
-                // --- MỤC NGÔN NGỮ (LUÔN CHO PHÉP) ---
                 SettingsOptionItem(
-                    text = "Ngôn Ngữ",
-                    onClick = { navController.navigate(Routes.LANGUAGE) },
+                    text = "Chủ đề",
+                    onClick = { navController.navigate(Routes.THEME) },
                     showArrow = true
                 )
             }
@@ -96,24 +92,22 @@ fun SettingsScreen(
     )
 }
 
-/**
- * Composable phụ trợ cho một mục Cài đặt
- * Đã sửa để các ô có chiều cao bằng nhau (60dp)
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsOptionItem(
     text: String,
     onClick: () -> Unit,
-    showArrow: Boolean = true // Thêm tùy chọn ẩn/hiện mũi tên
+    showArrow: Boolean = true
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp) // Chiều cao cố định cho đều đẹp
+            .height(60.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface   // DARK MODE
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -125,6 +119,7 @@ private fun SettingsOptionItem(
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,   // DARK MODE
                 modifier = Modifier.weight(1f)
             )
 
@@ -132,7 +127,7 @@ private fun SettingsOptionItem(
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = null,
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // hợp dark mode
                 )
             }
         }

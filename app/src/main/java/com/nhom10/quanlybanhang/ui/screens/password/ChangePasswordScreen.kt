@@ -2,6 +2,7 @@ package com.nhom10.quanlybanhang.ui.screens.password
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme // <-- Import kiểm tra Dark Mode
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,44 +25,55 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.nhom10.quanlybanhang.viewmodel.ChangePasswordViewModel
+import com.nhom10.quanlybanhang.viewmodel.ChangePasswordViewModel // Đảm bảo import đúng ViewModel của bạn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangePasswordScreen(
     navController: NavController,
-    // Kết nối với ViewModel để xử lý logic
     viewModel: ChangePasswordViewModel = viewModel()
 ) {
     val appBlueColor = Color(0xFF0088FF)
-    val labelColor = Color.Black.copy(alpha = 0.5f)
-    val errorColor = MaterialTheme.colorScheme.error
     val context = LocalContext.current
-
-    // Lấy trạng thái từ ViewModel
     val uiState by viewModel.uiState.collectAsState()
+
+    // === LOGIC DARK MODE ===
+    val isDark = isSystemInDarkTheme()
+
+    // Màu nền TopBar
+    val topBarContainerColor = if (isDark) MaterialTheme.colorScheme.surface else appBlueColor
+    val topBarContentColor = if (isDark) MaterialTheme.colorScheme.onSurface else Color.White
+
+    // Màu nền TextField
+    val textFieldContainerColor = if (isDark) MaterialTheme.colorScheme.surface else Color.White
+
+    // Màu nhãn (Label)
+    val labelColor = if (isDark) MaterialTheme.colorScheme.onSurfaceVariant else Color.Black.copy(alpha = 0.5f)
+
+    val errorColor = MaterialTheme.colorScheme.error
 
     // Biến state cho các ô nhập
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    // Biến ẩn/hiện mật khẩu
     var showCurrent by remember { mutableStateOf(false) }
     var showNew by remember { mutableStateOf(false) }
     var showConfirm by remember { mutableStateOf(false) }
 
-    // Cấu hình màu sắc chung cho TextField
+    // Cấu hình màu sắc TextField
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White,
-        unfocusedBorderColor = Color.LightGray,
+        focusedContainerColor = textFieldContainerColor,
+        unfocusedContainerColor = textFieldContainerColor,
+        unfocusedBorderColor = if (isDark) Color.Gray else Color.LightGray,
         focusedBorderColor = appBlueColor,
-        focusedLabelColor = labelColor,
-        unfocusedLabelColor = labelColor,
+        focusedLabelColor = appBlueColor, // Màu label khi focus
+        unfocusedLabelColor = labelColor, // Màu label khi không focus
         errorBorderColor = errorColor,
         errorLabelColor = errorColor,
-        errorSupportingTextColor = errorColor
+        errorSupportingTextColor = errorColor,
+        focusedTextColor = MaterialTheme.colorScheme.onSurface, // Màu chữ nhập vào
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurface // Màu chữ nhập vào
     )
 
     Scaffold(
@@ -79,9 +91,9 @@ fun ChangePasswordScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = appBlueColor,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = topBarContainerColor, // <-- Màu động
+                    titleContentColor = topBarContentColor, // <-- Màu động
+                    navigationIconContentColor = topBarContentColor
                 )
             )
         },
@@ -91,7 +103,8 @@ fun ChangePasswordScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(Color(0xFFF0F2F5))
+                    // --- MÀU NỀN MÀN HÌNH ĐỘNG ---
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -109,10 +122,13 @@ fun ChangePasswordScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = {
                         IconButton(onClick = { showCurrent = !showCurrent }) {
-                            Icon(if (showCurrent) Icons.Default.VisibilityOff else Icons.Default.Visibility, null)
+                            Icon(
+                                imageVector = if (showCurrent) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null,
+                                tint = labelColor
+                            )
                         }
                     },
-                    // Hiển thị lỗi nếu có
                     isError = uiState.currentPassError != null,
                     supportingText = {
                         if (uiState.currentPassError != null) {
@@ -134,7 +150,11 @@ fun ChangePasswordScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = {
                         IconButton(onClick = { showNew = !showNew }) {
-                            Icon(if (showNew) Icons.Default.VisibilityOff else Icons.Default.Visibility, null)
+                            Icon(
+                                imageVector = if (showNew) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null,
+                                tint = labelColor
+                            )
                         }
                     },
                     isError = uiState.newPassError != null,
@@ -151,14 +171,18 @@ fun ChangePasswordScreen(
                     onValueChange = { confirmPassword = it },
                     label = { Text("Xác nhận mật khẩu mới") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp), // Đồng bộ 12.dp
+                    shape = RoundedCornerShape(12.dp),
                     colors = textFieldColors,
                     singleLine = true,
                     visualTransformation = if (showConfirm) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = {
                         IconButton(onClick = { showConfirm = !showConfirm }) {
-                            Icon(if (showConfirm) Icons.Default.VisibilityOff else Icons.Default.Visibility, null)
+                            Icon(
+                                imageVector = if (showConfirm) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null,
+                                tint = labelColor
+                            )
                         }
                     },
                     isError = uiState.confirmPassError != null,
@@ -174,22 +198,29 @@ fun ChangePasswordScreen(
                 // --- NÚT XÁC NHẬN ---
                 Button(
                     onClick = {
-                        // Gọi ViewModel để xử lý
                         viewModel.changePassword(currentPassword, newPassword, confirmPassword)
                     },
                     modifier = Modifier
-                        .width(200.dp) // Kích thước nhỏ gọn theo ý bạn
+                        .width(200.dp)
                         .height(50.dp),
+                    // Màu nút động (Tối -> Xám đậm, Sáng -> Xanh)
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = appBlueColor
+                        containerColor = if (isDark) MaterialTheme.colorScheme.surfaceVariant else appBlueColor
                     ),
-                    shape = RoundedCornerShape(12.dp), // Bo tròn 12.dp
-                    enabled = !uiState.isLoading // Khóa nút khi đang tải
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !uiState.isLoading
                 ) {
                     if (uiState.isLoading) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(
+                            color = if (isDark) Color.White else Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
                     } else {
-                        Text("Xác nhận đổi")
+                        Text(
+                            "Xác nhận đổi",
+                            // Màu chữ nút động
+                            color = if (isDark) MaterialTheme.colorScheme.onSurface else Color.White
+                        )
                     }
                 }
             }
@@ -200,12 +231,9 @@ fun ChangePasswordScreen(
     LaunchedEffect(key1 = uiState.result) {
         uiState.result?.let { message ->
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-
-            // Nếu thành công, tự động quay lại
             if (uiState.isSuccess) {
                 navController.popBackStack()
             }
-
             viewModel.resetState()
         }
     }

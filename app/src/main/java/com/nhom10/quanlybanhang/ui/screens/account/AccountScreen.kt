@@ -25,7 +25,7 @@ fun AccountScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF0F2F5))
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -54,12 +54,13 @@ private fun AccountOptionItem(
     text: String,
     onClick: () -> Unit
 ) {
+    val appBlueColor = Color(0xFF0088FF)
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -69,14 +70,15 @@ private fun AccountOptionItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color.Gray
+                tint = appBlueColor
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 16.dp)
+                    .padding(start = 16.dp),
+                color = MaterialTheme.colorScheme.onSurface
             )
             Icon(
                 imageVector = Icons.Default.ChevronRight,
