@@ -67,12 +67,11 @@ object Routes {
 
 @Composable
 fun AppNavigation(
-    // --- SỬA 1: NHẬN THAM SỐ ĐIỂM BẮT ĐẦU ---
-    startDestination: String
+    startDestination: String = Routes.LOGIN // <-- Thêm startDestination với giá trị mặc định là LOGIN
 ) {
     val navController = rememberNavController()
 
-    // --- GIỮ NGUYÊN KHỐI VIEWMODEL CỦA BẠN ---
+    // --- Giữ nguyên ViewModel ---
     val productRepository = ProductRepositoryImpl()
     val productViewModelFactory = ProductViewModelFactory(productRepository)
     val productViewModel: ProductViewModel = viewModel(
@@ -92,11 +91,7 @@ fun AppNavigation(
     )
     // ----------------------------------------------------
 
-
-    // --- SỬA 2: DÙNG startDestination ĐƯỢC TRUYỀN VÀO ---
     NavHost(navController = navController, startDestination = startDestination) {
-
-        // ... (Tất cả các routes bên dưới giữ nguyên 100%) ...
 
         composable(Routes.LOGIN) {
             LoginScreen(navController = navController)
@@ -178,16 +173,7 @@ fun AppNavigation(
                 orderViewModel = orderViewModel
             )
         }
-        composable(
-            route = Routes.INVOICE,
-            arguments = listOf(
-                navArgument("khachTra") { type = NavType.StringType },
-                navArgument("tienThua") { type = NavType.StringType }
-            )
-        ) { navBackStackEntry ->
-            val khachTra = navBackStackEntry.arguments?.getString("khachTra") ?: "0"
-            val tienThua = navBackStackEntry.arguments?.getString("tienThua") ?: "0"
-
+        composable(Routes.INVOICE) {
             InvoiceScreen(
                 navController = navController,
                 orderViewModel = orderViewModel
@@ -201,7 +187,6 @@ fun AppNavigation(
                 navController = navController,
                 orderViewModel = orderViewModel
             )
-
         }
         composable(Routes.BILL) {
             BillDetailScreen(navController = navController)
