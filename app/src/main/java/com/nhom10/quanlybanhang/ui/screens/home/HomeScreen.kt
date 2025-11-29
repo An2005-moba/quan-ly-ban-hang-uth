@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
-
+import java.text.DecimalFormat
 // Dữ liệu các mục trong thanh Bottom Nav
 data class BottomNavItem(val label: String, val icon: ImageVector)
 
@@ -170,7 +170,7 @@ fun HomeScreen(
         }
     )
 }
-
+val formatter = DecimalFormat("#,###")
 @Composable
 fun ProductListForHome(products: List<Product>, onProductClick: (Product) -> Unit) {
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Fastfood)
@@ -191,7 +191,11 @@ fun ProductListForHome(products: List<Product>, onProductClick: (Product) -> Uni
                         Text(product.tenMatHang, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1)
                         Text("Còn: ${product.soLuong} ${product.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                     }
-                    Text("${product.giaBan} đ", fontWeight = FontWeight.Bold, color = Color(0xFF0088FF))
+                    Text(
+                        text = "${formatter.format(product.giaBan)} đ",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0088FF)
+                    )
                 }
             }
         }

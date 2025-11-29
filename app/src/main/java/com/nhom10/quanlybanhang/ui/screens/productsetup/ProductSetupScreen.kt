@@ -1,5 +1,5 @@
 package com.nhom10.quanlybanhang.ui.screens.productsetup
-
+import java.text.DecimalFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -138,6 +138,8 @@ fun ProductSetupScreen(
 /**
  * Composable phụ trợ cho một item trong danh sách
  */
+val formatter = DecimalFormat("#,###")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProductListItem(
@@ -183,7 +185,7 @@ private fun ProductListItem(
         },
         headlineContent = { Text(product.tenMatHang, fontWeight = FontWeight.Bold) },
         supportingContent = {
-            val details = "Giá: ${product.giaBan} - Còn: ${product.soLuong} ${product.donViTinh}"
+            val details = "Giá: ${formatter.format(product.giaBan)} đ - Còn: ${product.soLuong} ${product.donViTinh}"
             Text(details)
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent) // Nền trong suốt

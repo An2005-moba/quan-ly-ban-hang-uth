@@ -3,7 +3,7 @@ package com.nhom10.quanlybanhang.ui.screens.customer
 
 import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
-// -----------------------------
+import java.text.DecimalFormat
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Image
@@ -150,6 +150,7 @@ fun AddOrderItemScreen(
  * Composable phụ trợ cho một item trong danh sách
  * (Giống hệt ProductSetupScreen)
  */
+val formatter = DecimalFormat("#,###")
 @Composable
 private fun ProductListItem(
     product: Product, // SỬA: Nhận cả đối tượng Product
@@ -196,7 +197,7 @@ private fun ProductListItem(
         headlineContent = { Text(product.tenMatHang, fontWeight = FontWeight.Bold) },
         supportingContent = {
             // Tạo chuỗi chi tiết
-            val details = "Giá: ${product.giaBan} - Còn: ${product.soLuong} ${product.donViTinh}"
+            val details = "Giá: ${formatter.format(product.giaBan)} đ - Còn: ${product.soLuong} ${product.donViTinh}"
             Text(details)
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)

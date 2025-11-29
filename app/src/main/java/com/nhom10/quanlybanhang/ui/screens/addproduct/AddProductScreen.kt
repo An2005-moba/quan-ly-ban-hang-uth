@@ -50,9 +50,9 @@ fun AddProductScreen(
     // Biến state cho các trường
     var tenMatHang by remember { mutableStateOf("") }
     var maMatHang by remember { mutableStateOf("") }
-    var soLuong by remember { mutableStateOf("0") }
-    var giaBan by remember { mutableStateOf("0") }
-    var giaNhap by remember { mutableStateOf("0") }
+    var soLuong by remember { mutableStateOf("") }
+    var giaBan by remember { mutableStateOf("") }
+    var giaNhap by remember { mutableStateOf("") }
     var donViTinh by remember { mutableStateOf("Kg") }
     var apDungThue by remember { mutableStateOf(true) }
     var ghiChu by remember { mutableStateOf("") }
