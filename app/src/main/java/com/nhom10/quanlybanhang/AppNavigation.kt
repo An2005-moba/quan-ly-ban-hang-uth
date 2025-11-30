@@ -187,7 +187,10 @@ fun AppNavigation(
             )
         }
         composable(Routes.BANK_PAYMENT) {
-            BankPaymentScreen(navController = navController)
+            BankPaymentScreen(
+                navController = navController,
+                orderViewModel = orderViewModel // <-- Thêm dòng này
+            )
         }
         composable(Routes.HISTORY) {
             HistoryScreen(
