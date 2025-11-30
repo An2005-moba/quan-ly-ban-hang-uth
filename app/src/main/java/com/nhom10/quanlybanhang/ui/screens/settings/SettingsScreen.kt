@@ -19,21 +19,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.viewmodel.FontSizeViewModel
 import com.nhom10.quanlybanhang.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    viewModel: SettingsViewModel = viewModel()
+    viewModel: SettingsViewModel = viewModel(),
+    fontSizeViewModel: FontSizeViewModel
+
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val context = LocalContext.current
-
+    val fontSize by fontSizeViewModel.fontSize.collectAsState()
     // Lấy trạng thái đăng nhập
     val uiState by viewModel.uiState.collectAsState()
 
@@ -87,6 +91,14 @@ fun SettingsScreen(
                     onClick = { navController.navigate(Routes.THEME) },
                     showArrow = true
                 )
+
+                // Thêm mục Cỡ chữ
+                SettingsOptionItem(
+                    text = "Cỡ chữ",
+                    fontSize = fontSize.sp,
+                    onClick = { navController.navigate(Routes.FONT_SIZE) },
+                    showArrow = true
+                )
             }
         }
     )
@@ -97,7 +109,8 @@ fun SettingsScreen(
 private fun SettingsOptionItem(
     text: String,
     onClick: () -> Unit,
-    showArrow: Boolean = true
+    showArrow: Boolean = true,
+    fontSize: androidx.compose.ui.unit.TextUnit = MaterialTheme.typography.bodyLarge.fontSize
 ) {
     Card(
         modifier = Modifier
@@ -118,10 +131,11 @@ private fun SettingsOptionItem(
         ) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,   // DARK MODE
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = fontSize),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
+
 
             if (showArrow) {
                 Icon(
@@ -134,8 +148,3 @@ private fun SettingsOptionItem(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    SettingsScreen(navController = rememberNavController())
-}

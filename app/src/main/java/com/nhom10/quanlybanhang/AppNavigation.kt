@@ -5,6 +5,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.nhom10.quanlybanhang.ui.screens.font.FontSizeScreen
+import com.nhom10.quanlybanhang.viewmodel.FontSizeViewModel
+
 import androidx.navigation.navArgument
 import com.nhom10.quanlybanhang.ui.screens.auth.LoginScreen
 import com.nhom10.quanlybanhang.ui.screens.auth.RegisterScreen
@@ -64,11 +67,13 @@ object Routes {
     const val BILL = "bill_screen"
     const val INVOICE = "invoice_screen" // Sửa lỗi typo dư dấu }
     fun invoiceRoute(khachTra: String, tienThua: String) = "invoice_screen/$khachTra/$tienThua"
+    const val FONT_SIZE = "font_size_screen"
 }
 
 @Composable
 fun AppNavigation(
-    startDestination: String // <-- Thêm startDestination với giá trị mặc định là LOGIN
+    startDestination: String,
+    fontSizeViewModel: FontSizeViewModel// <-- Thêm startDestination với giá trị mặc định là LOGIN
 ) {
     val navController = rememberNavController()
 
@@ -111,7 +116,8 @@ fun AppNavigation(
             )
         }
         composable(Routes.SETTINGS) {
-            SettingsScreen(navController = navController)
+            SettingsScreen(navController = navController,
+            fontSizeViewModel = fontSizeViewModel)
         }
         composable(Routes.EDIT_PROFILE) {
             EditProfileScreen(navController = navController)
@@ -191,6 +197,14 @@ fun AppNavigation(
         }
         composable(Routes.BILL) {
             BillDetailScreen(navController = navController)
+
         }
+        composable(Routes.FONT_SIZE) {
+            FontSizeScreen(
+                navController = navController,
+                fontSizeViewModel = fontSizeViewModel
+            )
+        }
+
     }
 }
