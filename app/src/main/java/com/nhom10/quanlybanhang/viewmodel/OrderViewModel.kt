@@ -108,6 +108,23 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
         _cartItems.update { it.map { if (it.productId == productId) it.copy(soLuong = newQuantity) else it } }
     }
 
+    // ĐÃ THÊM: Xử lý xóa đơn hàng
+    fun deleteOrder(orderId: String, onSuccess: () -> Unit = {}, onFailure: (Throwable) -> Unit = {}) {
+        val userId = currentUserId ?: return onFailure(Exception("Chưa đăng nhập"))
+
+        viewModelScope.launch {
+            val result = repository.deleteOrder(userId, orderId)
+            result.onSuccess {
+                // Cập nhật lại danh sách lịch sử đơn hàng (Local Update)
+                _orderHistory.update { currentList ->
+                    currentList.filter { it.id != orderId }
+                }
+                onSuccess()
+            }
+            result.onFailure { onFailure(it) }
+        }
+    }
+
     // --- 5. SAVE & RESET ---
     fun saveOrderToFirebase(onSuccess: () -> Unit, onFailure: (Throwable) -> Unit) {
         val userId = currentUserId ?: return onFailure(Exception("Chưa đăng nhập"))
@@ -134,7 +151,6 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
             val result = repository.saveOrder(userId, order)
             result.onSuccess {
                 // Cập nhật ngay danh sách orderHistory để hiển thị HistoryScreen (Optimistic Update)
-                // Vì chúng ta cập nhật ở đây, đơn hàng mới sẽ hiện ngay lập tức.
                 _orderHistory.update { currentList ->
                     (listOf(order) + currentList).sortedByDescending { it.date }
                 }

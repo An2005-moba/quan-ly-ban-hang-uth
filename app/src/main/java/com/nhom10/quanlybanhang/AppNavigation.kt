@@ -196,7 +196,9 @@ fun AppNavigation(
             )
         }
         composable(Routes.BILL) {
-            BillDetailScreen(navController = navController)
+            BillDetailScreen(
+                navController = navController,
+                orderViewModel = orderViewModel  )
 
         }
         composable(Routes.FONT_SIZE) {

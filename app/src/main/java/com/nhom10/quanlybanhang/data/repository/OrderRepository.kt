@@ -8,4 +8,6 @@ interface OrderRepository {
 
     // Lấy order theo userId
     suspend fun getOrders(userId: String): Result<List<Order>>
+    suspend fun deleteOrder(userId: String, orderId: String): Result<Unit>
+
 }

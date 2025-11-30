@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -170,6 +171,15 @@ fun GroupedOrderList(
 @Composable
 fun OrderItemRow(order: Order, isLast: Boolean, navController: NavController) {
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val formattedTime = timeFormat.format(Date(order.date))
+
+    // LOGIC RÚT GỌN ID GIAO DỊCH (10 ký tự)
+    val MAX_ID_LENGTH = 10
+    val displayOrderId = if (order.id.length > MAX_ID_LENGTH) {
+        order.id.substring(0, MAX_ID_LENGTH) + "..."
+    } else {
+        order.id
+    }
 
     Column(
         modifier = Modifier
@@ -185,6 +195,7 @@ fun OrderItemRow(order: Order, isLast: Boolean, navController: NavController) {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 1. ICON
             Icon(
                 Icons.Default.Description,
                 contentDescription = null,
@@ -192,42 +203,63 @@ fun OrderItemRow(order: Order, isLast: Boolean, navController: NavController) {
                 modifier = Modifier.size(24.dp)
             )
 
+            // 2. SPACER
             Spacer(Modifier.width(12.dp))
 
+            // 3. THÔNG TIN GIAO DỊCH TRUNG TÂM (ID, Tên khách hàng)
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        order.id,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        timeFormat.format(Date(order.date)),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp
-                    )
-                }
+
+                // Hàng 1: ID GIAO DỊCH (Đã rút gọn)
+                Text(
+                    displayOrderId,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                // Hàng 2: TÊN KHÁCH HÀNG
                 Text(
                     order.customerName,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            } // END Column
+
+            // 4. KHỐI THÔNG TIN BÊN PHẢI (Thời gian VÀ Số tiền)
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.padding(start = 12.dp)
+            ) {
+                // Hàng 1: THỜI GIAN (16:18)
+                Text(
+                    formattedTime,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp,
+                    modifier = Modifier.wrapContentWidth()
+                )
+
+                // Hàng 2: SỐ TIỀN GIAO DỊCH (200.000đ)
+                Text(
+                    text = "${"%,.0f".format(order.tongTien).replace(",", ".")}₫",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color(0xFF0088FF),
+                    modifier = Modifier.wrapContentWidth()
                 )
             }
 
-            Text(
-                text = "${"%,.0f".format(order.tongTien).replace(",", ".")}₫",
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                color = Color(0xFF0088FF)
-            )
-
+            // 5. ICON MŨI TÊN (Giữ nguyên vị trí ở ngoài cùng)
             Icon(
                 Icons.Default.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier
+                    .size(20.dp)
+                    .padding(start = 4.dp)
             )
         }
 

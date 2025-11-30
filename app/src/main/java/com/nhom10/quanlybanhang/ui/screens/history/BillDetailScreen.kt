@@ -1,6 +1,7 @@
 package com.nhom10.quanlybanhang.ui.screens.history
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,15 +20,20 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.data.model.Order
 import com.nhom10.quanlybanhang.data.model.OrderItem
+import com.nhom10.quanlybanhang.viewmodel.OrderViewModel // Cần import ViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BillDetailScreen(navController: NavController) {
+fun BillDetailScreen(
+    navController: NavController,
+    orderViewModel: OrderViewModel // ĐÃ THÊM: Truyền OrderViewModel vào
+) {
     val appBlue = Color(0xFF3388FF)
     val grayBackground = Color(0xFFF0F2F5)
 
+    // Lấy đối tượng Order từ savedStateHandle
     val order = navController.previousBackStackEntry?.savedStateHandle?.get<Order>("order")
 
     if (order == null) {
@@ -45,6 +51,15 @@ fun BillDetailScreen(navController: NavController) {
         sdf.format(Date(order.date))
     }
 
+    // Hàm xử lý khi nhấn nút Xóa
+    val onDeleteClick: () -> Unit = {
+        // 1. Gọi hàm xóa Order từ ViewModel
+        orderViewModel.deleteOrder(order.id)
+
+        // 2. Quay lại màn hình lịch sử sau khi xóa
+        navController.popBackStack()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -60,8 +75,8 @@ fun BillDetailScreen(navController: NavController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Xử lý xóa */ }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Xóa", tint = Color.White)
+                    IconButton(onClick = onDeleteClick) { // ĐÃ SỬA: Gán hàm onDeleteClick
+                        Icon(Icons.Default.Delete, contentDescription = "Xóa hóa đơn", tint = Color.White)
                     }
                 }
             )
