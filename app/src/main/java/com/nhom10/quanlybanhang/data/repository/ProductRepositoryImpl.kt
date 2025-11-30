@@ -11,7 +11,6 @@ class ProductRepositoryImpl : ProductRepository {
 
     private val db = FirebaseFirestore.getInstance()
 
-    // === SỬA HÀM NÀY ===
     override fun getProducts(userId: String): Flow<List<Product>> = callbackFlow {
         // Thay vì "products", chúng ta truy cập collection con
         val collectionPath = db.collection("users").document(userId).collection("products")
@@ -24,7 +23,8 @@ class ProductRepositoryImpl : ProductRepository {
                 }
                 if (snapshot != null) {
                     val products = snapshot.documents.mapNotNull { doc ->
-                        doc.toObject(Product::class.java)
+                        // Đảm bảo documentId được gán cho model
+                        doc.toObject(Product::class.java)?.copy(documentId = doc.id)
                     }
                     trySend(products)
                 }
@@ -32,16 +32,17 @@ class ProductRepositoryImpl : ProductRepository {
         awaitClose { listenerRegistration.remove() }
     }
 
-    // === SỬA HÀM NÀY ===
     override suspend fun addProduct(userId: String, product: Product) {
         try {
             // Thêm sản phẩm vào collection con của user
             val collectionPath = db.collection("users").document(userId).collection("products")
+            // Firestore sẽ tự động tạo ID và gán
             Tasks.await(collectionPath.add(product))
         } catch (e: Exception) {
             throw e
         }
     }
+
     override suspend fun updateProduct(userId: String, product: Product) {
         try {
             val docRef = FirebaseFirestore.getInstance()
@@ -55,5 +56,19 @@ class ProductRepositoryImpl : ProductRepository {
         }
     }
 
+    // === HÀM MỚI: DELETE PRODUCT ===
+    override suspend fun deleteProduct(userId: String, productId: String) {
+        try {
+            val docRef = db.collection("users")
+                .document(userId)
+                .collection("products")
+                .document(productId) // Sử dụng productId được truyền vào
 
+            // Chờ tác vụ xóa hoàn thành
+            Tasks.await(docRef.delete())
+        } catch (e: Exception) {
+            // Ném exception để ViewModel có thể xử lý lỗi
+            throw e
+        }
+    }
 }

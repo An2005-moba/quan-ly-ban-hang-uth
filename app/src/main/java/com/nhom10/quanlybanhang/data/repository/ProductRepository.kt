@@ -10,6 +10,11 @@ interface ProductRepository {
 
     // SỬA: Thêm userId
     suspend fun addProduct(userId: String, product: Product)
+
+    // Hàm cập nhật sản phẩm
     suspend fun updateProduct(userId: String, product: Product)
+
+    // Hàm xóa sản phẩm: Định nghĩa là một hàm trừu tượng
+    suspend fun deleteProduct(userId: String, productId: String)
 
 }

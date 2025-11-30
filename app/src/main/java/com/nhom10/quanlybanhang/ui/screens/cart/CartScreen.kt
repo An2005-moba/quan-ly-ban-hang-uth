@@ -64,7 +64,7 @@ fun CartScreen(
                 },
                 actions = {
                     IconButton(onClick = { navController.navigate(Routes.ADD_ORDER_ITEM) }) {
-                        Icon(Icons.Default.CalendarToday, "thêm item")
+                        Icon(Icons.Default.Add, "thêm item") // ĐÃ SỬA: Thay CalendarToday bằng Add
                     }
                     IconButton(onClick = { navController.navigate(Routes.SELECT_CUSTOMER) }) {
                         Icon(Icons.Default.Person, "Khách hàng")
@@ -400,7 +400,7 @@ private fun SummaryRowAction(
                         }
                     }
                 }
-                }
             }
         }
     }
+}

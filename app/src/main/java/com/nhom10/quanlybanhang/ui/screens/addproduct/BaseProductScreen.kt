@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete // Import biểu tượng Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +27,9 @@ fun BaseProductScreen(
     navController: NavController,
     screenTitle: String,
     initialProductData: Product? = null,
-    onSave: (Product) -> Unit
+    onSave: (Product) -> Unit,
+    // THÊM: Tham số tùy chọn cho hành động xóa. Chỉ dùng cho màn hình Chỉnh sửa.
+    onDelete: (() -> Unit)? = null
 ) {
     val appBlueColor = Color(0xFF0088FF)
 
@@ -58,6 +61,19 @@ fun BaseProductScreen(
                     }
                 },
                 actions = {
+                    // THÊM NÚT XÓA Ở ĐÂY
+                    // Nút xóa chỉ hiển thị nếu có hành động onDelete được truyền vào (dùng cho EditProductScreen)
+                    onDelete?.let {
+                        IconButton(onClick = it) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Xóa sản phẩm",
+                                tint = Color.White
+                            )
+                        }
+                    }
+
+                    // Nút LƯU
                     TextButton(onClick = {
                         val product = Product(
                             documentId = initialProductData?.documentId ?: "",

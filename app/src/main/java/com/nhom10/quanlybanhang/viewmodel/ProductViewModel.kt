@@ -4,7 +4,7 @@ package com.nhom10.quanlybanhang.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nhom10.quanlybanhang.data.repository.ProductRepository // Import
+import com.nhom10.quanlybanhang.data.repository.ProductRepository
 import com.nhom10.quanlybanhang.data.model.Product
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,34 +14,32 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.update
 
-// THÊM IMPORT NÀY
 import com.google.firebase.auth.FirebaseAuth
 
 class ProductViewModel(
-    private val repository: ProductRepository // Nhận Repository
+    private val repository: ProductRepository
 ) : ViewModel() {
 
     private val TAG = "ProductViewModel"
 
-    // THÊM 2 DÒNG NÀY
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    // Lấy ID người dùng hiện tại
     private val currentUserId: String? get() = auth.currentUser?.uid
 
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products = _products.asStateFlow()
 
-    // 1. Hàm lắng nghe (đọc) dữ liệu (SỬA LẠI)
+    // 1. Hàm lắng nghe (đọc) dữ liệu
     fun loadProducts() {
-        // Kiểm tra xem user đã đăng nhập chưa
         val userId = currentUserId
         if (userId == null) {
-            _products.value = emptyList() // Nếu chưa, trả về list rỗng
+            _products.value = emptyList()
             Log.w(TAG, "User chưa đăng nhập, không thể tải sản phẩm.")
             return
         }
 
         viewModelScope.launch {
-            repository.getProducts(userId) // <-- Truyền userId vào
+            repository.getProducts(userId)
                 .catch { e ->
                     Log.w(TAG, "Lỗi khi tải sản phẩm: ", e)
                 }
@@ -52,13 +50,12 @@ class ProductViewModel(
         }
     }
 
-    // 2. Hàm thêm (ghi) sản phẩm mới (SỬA LẠI)
+    // 2. Hàm thêm (ghi) sản phẩm mới
     fun addProduct(
         product: Product,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        // Kiểm tra xem user đã đăng nhập chưa
         val userId = currentUserId
         if (userId == null) {
             onFailure(Exception("Người dùng chưa đăng nhập."))
@@ -67,7 +64,7 @@ class ProductViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                repository.addProduct(userId, product) // <-- Truyền userId vào
+                repository.addProduct(userId, product)
 
                 withContext(Dispatchers.Main) { onSuccess() }
             } catch (e: Exception) {
@@ -77,6 +74,7 @@ class ProductViewModel(
 
         }
     }
+
     // 3. Hàm cập nhật sản phẩm
     fun updateProduct(
         updatedProduct: Product,
@@ -101,6 +99,43 @@ class ProductViewModel(
 
                 withContext(Dispatchers.Main) { onSuccess() }
             } catch (e: Exception) {
+                Log.w(TAG, "Lỗi khi cập nhật sản phẩm", e)
+                withContext(Dispatchers.Main) { onFailure(e) }
+            }
+        }
+    }
+
+    // 4. HÀM XÓA SẢN PHẨM (MỚI THÊM)
+    fun deleteProduct(
+        product: Product,
+        onSuccess: () -> Unit = {},
+        onFailure: (Exception) -> Unit = {}
+    ) {
+        val userId = currentUserId
+        if (userId == null) {
+            onFailure(Exception("Người dùng chưa đăng nhập."))
+            return
+        }
+
+        // Kiểm tra xem sản phẩm có documentId hợp lệ không
+        if (product.documentId.isEmpty()) {
+            onFailure(Exception("Thiếu ID sản phẩm để xóa."))
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // 1. Xóa trên repository / Firebase
+                repository.deleteProduct(userId, product.documentId)
+
+                // 2. Cập nhật local StateFlow để UI tự động refresh
+                _products.update { currentList ->
+                    currentList.filter { it.documentId != product.documentId }
+                }
+
+                withContext(Dispatchers.Main) { onSuccess() }
+            } catch (e: Exception) {
+                Log.w(TAG, "Lỗi khi xóa sản phẩm", e)
                 withContext(Dispatchers.Main) { onFailure(e) }
             }
         }
