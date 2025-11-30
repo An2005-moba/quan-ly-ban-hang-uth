@@ -208,7 +208,7 @@ private fun ProductListSection(navController: NavController, items: List<OrderIt
         } else {
             items.forEach { item ->
                 val formatter = DecimalFormat("#,###")
-                ProductItem(
+                Product(
                     title = item.tenMatHang,
                     subtitle = "${formatter.format(item.giaBan)} x ${item.soLuong} ${item.donViTinh}",
                     total = formatter.format(item.giaBan * item.soLuong),
@@ -220,7 +220,7 @@ private fun ProductListSection(navController: NavController, items: List<OrderIt
 }
 
 @Composable
-private fun ProductItem(title: String, subtitle: String, total: String, onClick: () -> Unit) {
+private fun Product(title: String, subtitle: String, total: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

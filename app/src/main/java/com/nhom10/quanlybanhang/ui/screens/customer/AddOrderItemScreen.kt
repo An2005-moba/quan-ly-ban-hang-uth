@@ -31,8 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.data.model.Product
 
-// XÓA: Data class mẫu (sẽ dùng model/Product.kt)
-// private data class ProductItem(...)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

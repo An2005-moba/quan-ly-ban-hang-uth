@@ -133,7 +133,7 @@ fun ProductSetupScreen(
     )
 }
 
-// Xóa: Data class ProductItem (vì đã dùng Product model)
+
 
 /**
  * Composable phụ trợ cho một item trong danh sách
