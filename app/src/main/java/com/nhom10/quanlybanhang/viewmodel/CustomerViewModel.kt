@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.nhom10.quanlybanhang.data.repository.CustomerRepository
 import com.nhom10.quanlybanhang.data.model.Customer
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -14,37 +15,57 @@ import kotlinx.coroutines.launch
 class CustomerViewModel(private val repository: CustomerRepository) : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
-    private val currentUserId: String? get() = auth.currentUser?.uid
 
+    // State chứa danh sách khách hàng
     private val _customers = MutableStateFlow<List<Customer>>(emptyList())
     val customers = _customers.asStateFlow()
 
-    init {
-        loadCustomers()
-    }
+    // Biến Job để quản lý việc lắng nghe dữ liệu (để có thể hủy khi đổi user)
+    private var dataJob: Job? = null
 
-    // SỬA: Lấy ID và gọi repo
-    private fun loadCustomers() {
-        val userId = currentUserId
-        if (userId == null) {
+    // Listener lắng nghe sự thay đổi user (Đăng nhập/Đăng xuất)
+    private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        val user = firebaseAuth.currentUser
+        if (user != null) {
+            // Nếu có user -> Tải dữ liệu của user đó
+            Log.d("CustomerViewModel", "User đã đăng nhập: ${user.uid}. Bắt đầu tải data.")
+            loadCustomers(user.uid)
+        } else {
+            // Nếu đăng xuất -> Xóa sạch dữ liệu cũ và hủy lắng nghe
+            Log.d("CustomerViewModel", "User đã đăng xuất. Xóa data.")
             _customers.value = emptyList()
-            return
-        }
-
-        viewModelScope.launch {
-            repository.getCustomers(userId) // Truyền userId
-                .catch { e -> Log.e("CustomerViewModel", "Lỗi tải khách: ", e) }
-                .collect { _customers.value = it }
+            dataJob?.cancel()
         }
     }
 
-    // SỬA: Lấy ID và gọi repo
+    init {
+        // Đăng ký listener ngay khi ViewModel được tạo
+        auth.addAuthStateListener(authStateListener)
+    }
+
+    // Hàm tải dữ liệu (Real-time update)
+    private fun loadCustomers(userId: String) {
+        // Hủy job cũ nếu đang chạy (để tránh nghe lầm data của user cũ)
+        dataJob?.cancel()
+
+        dataJob = viewModelScope.launch {
+            repository.getCustomers(userId)
+                .catch { e ->
+                    Log.e("CustomerViewModel", "Lỗi tải khách hàng: ", e)
+                }
+                .collect { list ->
+                    // Cập nhật danh sách mới lên UI
+                    _customers.value = list
+                }
+        }
+    }
+
     fun addCustomer(
         customer: Customer,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
-        val userId = currentUserId
+        val userId = auth.currentUser?.uid
         if (userId == null) {
             onFailure(Exception("Chưa đăng nhập"))
             return
@@ -52,11 +73,19 @@ class CustomerViewModel(private val repository: CustomerRepository) : ViewModel(
 
         viewModelScope.launch {
             try {
-                repository.addCustomer(userId, customer) // Truyền userId
+                // Gọi repository để thêm vào Firestore
+                // Firestore sẽ kích hoạt listener ở hàm loadCustomers -> UI tự cập nhật
+                repository.addCustomer(userId, customer)
                 onSuccess()
             } catch (e: Exception) {
                 onFailure(e)
             }
         }
+    }
+
+    // Khi ViewModel bị hủy (đóng app hoàn toàn), nhớ gỡ listener để tránh leak memory
+    override fun onCleared() {
+        super.onCleared()
+        auth.removeAuthStateListener(authStateListener)
     }
 }
