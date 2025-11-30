@@ -1,11 +1,15 @@
 package com.nhom10.quanlybanhang.ui.screens.customer
 
 // --- THÊM CÁC IMPORT NÀY ---
-import com.nhom10.quanlybanhang.data.model.Customer // SỬA: Import model thật
+import com.nhom10.quanlybanhang.data.model.Customer
 import com.nhom10.quanlybanhang.viewmodel.CustomerViewModel
 import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 // -----------------------------
-
+import android.graphics.BitmapFactory
+import android.util.Base64
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -153,6 +157,9 @@ private fun CustomerListItem(
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
+    val imageBitmap = remember(customer.avatarUrl) {
+        base64ToImageBitmap(customer.avatarUrl)
+    }
 
     ListItem(
         modifier = Modifier
@@ -165,19 +172,17 @@ private fun CustomerListItem(
             }
         },
         leadingContent = {
-            if (customer.avatarUrl.isNotEmpty()) { // SỬA: Dùng avatarUrl
-                AsyncImage(
-                    model = customer.avatarUrl,
+            if (imageBitmap != null) {
+                Image(
+                    bitmap = imageBitmap,
                     contentDescription = customer.tenKhachHang,
-                    placeholder = placeholderPainter,
-                    error = placeholderPainter,
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
             } else {
-                // Icon Person mặc định cho "Khác lẻ"
+                // Nếu không có ảnh, hiện icon mặc định
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -208,4 +213,10 @@ private fun CustomerListItem(
     Divider() // Thêm đường kẻ
 }
 
-
+private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
+    if (base64String.isEmpty()) return null
+    return try {
+        val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
+    } catch (e: Exception) { null }
+}

@@ -1,12 +1,21 @@
 package com.nhom10.quanlybanhang.ui.screens.customer
 
 // --- CÁC IMPORT BỊ THIẾU ---
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import com.nhom10.quanlybanhang.data.model.Customer
 import com.nhom10.quanlybanhang.viewmodel.CustomerViewModel
-// -------------------------
-
+import coil.compose.AsyncImage
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
+import androidx.compose.ui.layout.ContentScale
+import androidx.activity.compose.rememberLauncherForActivityResult // Import này
+import androidx.activity.result.PickVisualMediaRequest // Import này
+import androidx.activity.result.contract.ActivityResultContracts // Import này
+import androidx.compose.foundation.Image // Import này
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,9 +51,13 @@ fun AddCustomerScreen(
     var email by remember { mutableStateOf("") } // Đây là SĐT
     var diaChi by remember { mutableStateOf("") }
     var ghiChu by remember { mutableStateOf("") }
-
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current // THÊM
-
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        imageUri = uri
+    }
     Scaffold(
         containerColor = scaffoldBgColor,
         // === 1. TOP BAR ===
@@ -64,12 +78,17 @@ fun AddCustomerScreen(
                             Toast.makeText(context, "Tên và SĐT là bắt buộc", Toast.LENGTH_SHORT).show()
                             return@TextButton
                         }
-
+                        val avatarString = if (imageUri != null) {
+                            uriToBase64(context, imageUri!!)
+                        } else {
+                            ""
+                        }
                         val newCustomer = Customer(
                             tenKhachHang = tenKhachHang,
                             soDienThoai = email, // Giả sử email là SĐT
                             diaChi = diaChi,
-                            ghiChu = ghiChu
+                            ghiChu = ghiChu,
+                            avatarUrl = avatarString
                             // Bạn có thể thêm logic upload ảnh và lấy avatarUrl ở đây
                         )
 
@@ -112,18 +131,32 @@ fun AddCustomerScreen(
                         .size(120.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(textFieldBgColor)
-                        .clickable { /* TODO: Mở thư viện ảnh */ },
+                        .clickable {
+                            // Mở trình chọn ảnh
+                            photoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Image,
-                        contentDescription = "Thêm ảnh",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(40.dp)
-                    )
-                    // TODO: Dùng AsyncImage của Coil để hiển thị ảnh đã chọn
+                    if (imageUri != null) {
+                        // Hiển thị ảnh đã chọn
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = "Avatar",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // Icon mặc định
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = "Thêm ảnh",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
-
                 // --- Khối 2: Các trường thông tin ---
                 CustomTextField(
                     value = tenKhachHang,
@@ -154,7 +187,23 @@ fun AddCustomerScreen(
         }
     )
 }
+private fun uriToBase64(context: Context, uri: Uri): String {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
 
+        // Resize ảnh để tránh chuỗi quá dài gây lỗi Firebase (giới hạn ~1MB)
+        val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 300, 300, true)
+
+        val outputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream) // Nén JPEG 70%
+        val bytes = outputStream.toByteArray()
+        Base64.encodeToString(bytes, Base64.DEFAULT)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        ""
+    }
+}
 /**
  * TextField tùy chỉnh không có viền, chỉ có nền
  */
