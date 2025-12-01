@@ -211,14 +211,29 @@ private fun ProductListSection(
         } else {
             items.forEach { item ->
                 val formatter = DecimalFormat("#,###")
+
+                // Logic hiển thị theo yêu cầu: (1000 - 500) x 2 kg
+                val originalPrice = item.giaBan
+                val discountPercent = item.chietKhau
+                val discountAmount = originalPrice * (discountPercent / 100)
+                val finalUnitPrice = originalPrice - discountAmount
+                val totalPrice = finalUnitPrice * item.soLuong
+
+                // Tạo chuỗi hiển thị dòng dưới
+                // Nếu có giảm giá: "(1.000 - 500) x 2 cái"
+                // Nếu không giảm: "1.000 x 2 cái"
+                val subtitle = if (discountPercent > 0.0) {
+                    "(${formatter.format(originalPrice)} - ${formatter.format(discountAmount)}) x ${item.soLuong} ${item.donViTinh}"
+                } else {
+                    "${formatter.format(originalPrice)} x ${item.soLuong} ${item.donViTinh}"
+                }
+
                 ProductItem(
                     title = item.tenMatHang,
-                    subtitle = "${formatter.format(item.giaBan)} x ${item.soLuong} ${item.donViTinh}",
-                    total = formatter.format(item.giaBan * item.soLuong),
+                    subtitle = subtitle, // <--- Chuỗi đã format kiểu mới
+                    total = formatter.format(totalPrice),
                     onClick = {
-                        // 1. Lưu item được click vào ViewModel
                         orderViewModel.selectOrderItem(item)
-                        // 2. Sau đó mới chuyển màn hình
                         navController.navigate(Routes.EDIT_ORDER_ITEM)
                     }
                 )

@@ -33,7 +33,7 @@ fun PaymentScreen(
 
     // Lấy tổng tiền từ ViewModel
     val totalAmount by orderViewModel.totalAmount.collectAsState()
-
+    val paymentMethod by orderViewModel.paymentMethod.collectAsState()
     // State nhập liệu (String để dễ xử lý thêm số 0)
     var inputString by remember { mutableStateOf("") }
 

@@ -12,7 +12,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
-import androidx.compose.runtime.* // Import quan trọng cho remember, mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,34 +37,48 @@ fun EditOrderItemScreen(
     val scaffoldBgColor = Color(0xFFF0F2F5)
     val context = LocalContext.current
 
-    // [SỬA 1] Không dùng 'by', dùng .value để tránh lỗi "Cannot infer type"
+    // Lấy item đang chọn (Sử dụng .value thay vì by để an toàn)
     val selectedItemState = orderViewModel.selectedOrderItem.collectAsState()
     val selectedItem = selectedItemState.value
 
-    // [SỬA 2] Lấy danh sách sản phẩm
+    // Lấy danh sách sản phẩm để tìm giá gốc
     val productsState = productViewModel.products.collectAsState()
     val productList = productsState.value
 
-    // Nếu null thì quay về, không render tiếp để tránh crash
     if (selectedItem == null) {
         LaunchedEffect(Unit) { navController.popBackStack() }
-        // Trả về một Box trống để placeholder trong khi chờ popBackStack
         Box(Modifier.fillMaxSize().background(scaffoldBgColor))
         return
     }
 
-    // Logic tìm tồn kho (Dùng !! ở đây an toàn vì đã check null ở trên)
+    // --- LOGIC TÌM GIÁ GỐC VÀ TỒN KHO ---
     val currentProduct = remember(selectedItem, productList) {
         productList.find { it.documentId == selectedItem.productId }
     }
     val maxStock = (currentProduct?.soLuong ?: 0.0)
+    val originalPrice = (currentProduct?.giaBan ?: selectedItem.giaBan) // Giá gốc từ danh sách sản phẩm
 
-    // [SỬA 3] Dùng mutableStateOf thay vì mutableIntStateOf để dễ chịu hơn với các phiên bản compose
+    // --- STATE ---
     var soLuong by remember { mutableStateOf(selectedItem.soLuong) }
 
-    val formatter = DecimalFormat("#")
+    val formatter = DecimalFormat("#") // Định dạng số nguyên cho đẹp
+
+    // Giá bán (Giá gốc)
     var giaBanStr by remember { mutableStateOf(formatter.format(selectedItem.giaBan)) }
-    var note by remember { mutableStateOf("") }
+
+    // Chiết khấu % (Lấy từ item, mặc định 0)
+    var discountStr by remember { mutableStateOf(formatter.format(selectedItem.chietKhau)) }
+
+    // [INIT] Tính toán % chiết khấu ban đầu khi mở màn hình
+    LaunchedEffect(Unit) {
+        if (originalPrice > 0) {
+            val currentPrice = selectedItem.giaBan
+            // Công thức: % Giảm = (1 - Giá hiện tại / Giá gốc) * 100
+            val initialDiscount = (1.0 - currentPrice / originalPrice) * 100
+            // Làm tròn nếu gần như nguyên (ví dụ 10.0 -> 10)
+            discountStr = formatter.format(initialDiscount)
+        }
+    }
 
     Scaffold(
         containerColor = scaffoldBgColor,
@@ -78,11 +92,14 @@ fun EditOrderItemScreen(
                 },
                 actions = {
                     TextButton(onClick = {
-                        // Logic Lưu
-                        val newPrice = giaBanStr.replace(".", "").replace(",", "").toDoubleOrNull() ?: 0.0
+                        // [LƯU]
+                        val rawPrice = giaBanStr.replace(".", "").replace(",", "").toDoubleOrNull() ?: 0.0
+                        val rawDiscount = discountStr.replace(",", ".").toDoubleOrNull() ?: 0.0
+
                         val updatedItem = selectedItem.copy(
                             soLuong = soLuong,
-                            giaBan = newPrice
+                            giaBan = rawPrice,       // Lưu giá gốc
+                            chietKhau = rawDiscount  // Lưu % chiết khấu
                         )
                         orderViewModel.updateCartItem(updatedItem)
                         navController.popBackStack()
@@ -125,6 +142,7 @@ fun EditOrderItemScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Tên sản phẩm
             Text(
                 text = selectedItem.tenMatHang,
                 fontSize = 28.sp,
@@ -132,6 +150,7 @@ fun EditOrderItemScreen(
                 color = Color.Black
             )
 
+            // Tồn kho
             Text(
                 text = "(Kho còn: ${formatter.format(maxStock)})",
                 fontSize = 14.sp,
@@ -140,7 +159,7 @@ fun EditOrderItemScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Bộ tăng giảm số lượng
+            // --- BỘ ĐẾM SỐ LƯỢNG ---
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -180,37 +199,35 @@ fun EditOrderItemScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // --- Ô NHẬP GIÁ GỐC ---
             EditItemTextField(
-                label = "Giá bán",
+                label = "Đơn giá gốc (đ)",
                 value = giaBanStr,
-                onValueChange = { giaBanStr = it },
+                onValueChange = { giaBanStr = it }, // Chỉ lưu, không tính toán gì cả
                 keyboardType = KeyboardType.Number
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // --- Ô NHẬP CHIẾT KHẤU (%) ---
             EditItemTextField(
-                label = "Chiết khấu mặt hàng",
-                value = "0 %",
-                onValueChange = { },
+                label = "Chiết khấu (%)",
+                value = discountStr,
+                onValueChange = { discountStr = it }, // Chỉ lưu, không tính toán
                 keyboardType = KeyboardType.Number
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Hiển thị giá sau giảm để user dễ hình dung (Chỉ để xem)
+            val price = giaBanStr.replace(".", "").replace(",", "").toDoubleOrNull() ?: 0.0
+            val discount = discountStr.replace(",", ".").toDoubleOrNull() ?: 0.0
+            val finalPrice = price * (1 - discount / 100)
+            val formatterVND = DecimalFormat("#,###")
 
-            OutlinedTextField(
-                value = note,
-                onValueChange = { note = it },
-                label = { Text("Ghi Chú") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    unfocusedBorderColor = Color.LightGray
-                )
+            Text(
+                text = "Giá sau giảm: ${formatterVND.format(finalPrice)} đ",
+                color = appBlueColor,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp).align(Alignment.End)
             )
         }
     }

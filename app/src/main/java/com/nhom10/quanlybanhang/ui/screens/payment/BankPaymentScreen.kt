@@ -1,6 +1,5 @@
 package com.nhom10.quanlybanhang.ui.screens.payment
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -32,25 +31,19 @@ import java.text.DecimalFormat
 @Composable
 fun BankPaymentScreen(
     navController: NavController,
-    orderViewModel: OrderViewModel // Thêm ViewModel để lấy số tiền
+    orderViewModel: OrderViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val scaffoldBgColor = Color(0xFFF0F2F5)
 
-    // Lấy dữ liệu từ ViewModel
     val totalAmount by orderViewModel.totalAmount.collectAsState()
     val orderId by orderViewModel.currentOrderId.collectAsState()
 
-    // --- State lưu thông tin ngân hàng (Thực tế nên lưu vào DataStore/Preferences để dùng lâu dài) ---
-    // Danh sách mã ngân hàng xem tại: https://vietqr.io/danh-sach-api/ (VD: MB, VCB, ACB...)
     var bankId by remember { mutableStateOf("VIETINBANK") }
-    var accountNo by remember { mutableStateOf("106883202133") } // Nhập số tài khoản của bạn
-    var accountName by remember { mutableStateOf("HONG TRUNG KIEN") } // Nhập tên không dấu
-
-    // Chế độ chỉnh sửa thông tin ngân hàng
+    var accountNo by remember { mutableStateOf("106883202133") }
+    var accountName by remember { mutableStateOf("HONG TRUNG KIEN") }
     var isEditing by remember { mutableStateOf(false) }
 
-    // Link tạo QR động của VietQR (Miễn phí)
     val qrUrl = remember(bankId, accountNo, totalAmount, accountName) {
         "https://img.vietqr.io/image/$bankId-$accountNo-compact2.png?amount=${totalAmount.toLong()}&addInfo=$orderId&accountName=$accountName"
     }
@@ -66,7 +59,6 @@ fun BankPaymentScreen(
                     }
                 },
                 actions = {
-                    // Nút để sửa thông tin ngân hàng
                     IconButton(onClick = { isEditing = !isEditing }) {
                         Icon(Icons.Default.Edit, contentDescription = "Sửa thông tin")
                     }
@@ -83,11 +75,11 @@ fun BankPaymentScreen(
             BottomAppBar(containerColor = Color.White, tonalElevation = 8.dp) {
                 Button(
                     onClick = {
-                        // 1. Cập nhật số tiền khách đã trả (Khách chuyển khoản = Trả đủ)
-                        orderViewModel.updateCashGiven(totalAmount)
+                        // --- CHANGED: Đảm bảo set phương thức là Ngân hàng ---
+                        orderViewModel.setPaymentMethod("Ngân hàng")
+                        // -----------------------------------------------------
 
-                        // 2. Chuyển sang màn hình Hóa đơn (InvoiceScreen)
-                        // Tại màn hình đó user sẽ bấm "Xong" để lưu về Firestore
+                        orderViewModel.updateCashGiven(totalAmount)
                         navController.navigate(Routes.INVOICE)
                     },
                     modifier = Modifier
@@ -111,7 +103,6 @@ fun BankPaymentScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (isEditing) {
-                    // --- FORM NHẬP THÔNG TIN NGÂN HÀNG ---
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         shape = RoundedCornerShape(12.dp),
@@ -149,14 +140,12 @@ fun BankPaymentScreen(
                         }
                     }
                 } else {
-                    // --- HIỂN THỊ MÃ QR ---
                     Text(
                         text = "Quét mã để thanh toán",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.Gray
                     )
 
-                    // Card chứa QR Code
                     Card(
                         shape = RoundedCornerShape(16.dp),
                         elevation = CardDefaults.cardElevation(4.dp),
@@ -166,7 +155,6 @@ fun BankPaymentScreen(
                             modifier = Modifier.padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Tải ảnh QR từ VietQR
                             AsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
                                     .data(qrUrl)
@@ -174,7 +162,7 @@ fun BankPaymentScreen(
                                     .build(),
                                 contentDescription = "VietQR Code",
                                 modifier = Modifier
-                                    .size(300.dp) // Kích thước QR
+                                    .size(300.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(Color.White),
                                 contentScale = ContentScale.Fit

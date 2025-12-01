@@ -54,14 +54,24 @@ class OrderViewModel(
     val isLoading = _isLoading.asStateFlow()
     private val _selectedOrderItem = MutableStateFlow<OrderItem?>(null)
     val selectedOrderItem = _selectedOrderItem.asStateFlow()
+    private val _paymentMethod = MutableStateFlow("Tiền mặt")
+    val paymentMethod = _paymentMethod.asStateFlow()
 
     // --- 2. LOGIC ---
     val totalAmount: StateFlow<Double> = combine(
         _cartItems, _discountPercent, _surcharge, _isTaxEnabled
     ) { items, discount, surcharge, _ ->
-        val itemsTotal = items.sumOf { it.giaBan * it.soLuong }
-        val discountAmount = itemsTotal * (discount / 100)
-        maxOf(0.0, itemsTotal - discountAmount + surcharge)
+
+        // Tính tổng tiền các món (Đã trừ chiết khấu từng món)
+        val itemsTotal = items.sumOf { item ->
+            val priceAfterItemDiscount = item.giaBan * (1 - item.chietKhau / 100)
+            priceAfterItemDiscount * item.soLuong
+        }
+
+        // Tính tiếp chiết khấu tổng đơn hàng (nếu có)
+        val orderDiscountAmount = itemsTotal * (discount / 100)
+
+        maxOf(0.0, itemsTotal - orderDiscountAmount + surcharge)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val changeAmount: StateFlow<Double> = combine(_cashGiven, totalAmount) { cash, total ->
@@ -83,6 +93,9 @@ class OrderViewModel(
     }
 
     // --- 4. ACTIONS ---
+    fun setPaymentMethod(method: String) {
+        _paymentMethod.value = method
+    }
     fun selectCustomer(customer: Customer) {
         _selectedCustomer.value = customer
     }
@@ -187,6 +200,7 @@ class OrderViewModel(
             result.onFailure { onFailure(it) }
         }
     }
+
     fun selectOrderItem(item: OrderItem) {
         _selectedOrderItem.value = item
     }
@@ -218,7 +232,8 @@ class OrderViewModel(
             khachTra = _cashGiven.value,
             tienThua = changeAmount.value,
             userId = userId,
-            date = System.currentTimeMillis()
+            date = System.currentTimeMillis(),
+            phuongThucTT = _paymentMethod.value
         )
 
         viewModelScope.launch {
@@ -251,6 +266,7 @@ class OrderViewModel(
             }
         }
     }
+
     fun clearCart() {
         _cartItems.value = emptyList()
         _discountPercent.value = 0.0
@@ -260,6 +276,7 @@ class OrderViewModel(
         _cashGiven.value = 0.0
         _selectedCustomer.value = Customer(id = "khach_le", tenKhachHang = "Khách lẻ")
         _currentOrderId.value = generateOrderId()
+        _paymentMethod.value = "Tiền mặt"
     }
 
     fun loadOrderHistory() {
