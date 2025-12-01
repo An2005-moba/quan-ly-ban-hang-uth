@@ -195,7 +195,7 @@ fun BillSummaryCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             if (discount > 0) {
-                SummaryRow("Chiết khấu", "$discount%")
+                SummaryRow("Giảm giá", "$discount%")
             }
             if (surcharge > 0) {
                 SummaryRow("Phụ phí", surcharge.formatVND())

@@ -8,12 +8,17 @@ import com.nhom10.quanlybanhang.data.model.Order
 import com.nhom10.quanlybanhang.data.model.OrderItem
 import com.nhom10.quanlybanhang.data.model.Product
 import com.nhom10.quanlybanhang.data.repository.OrderRepository
+import com.nhom10.quanlybanhang.data.repository.ProductRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
+class OrderViewModel(
+    private val repository: OrderRepository,
+
+    private val productRepository: ProductRepository
+) : ViewModel() {
 
     // --- 1. STATE ---
     private val auth = FirebaseAuth.getInstance()
@@ -46,6 +51,7 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
     private val _orderHistory = MutableStateFlow<List<Order>>(emptyList())
     val orderHistory = _orderHistory.asStateFlow()
 
+
     // --- 2. LOGIC ---
     val totalAmount: StateFlow<Double> = combine(
         _cartItems, _discountPercent, _surcharge, _isTaxEnabled
@@ -74,18 +80,46 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
     }
 
     // --- 4. ACTIONS ---
-    fun selectCustomer(customer: Customer) { _selectedCustomer.value = customer }
-    fun updateDiscount(percent: Double) { _discountPercent.value = percent.coerceAtMost(100.0) }
-    fun updateSurcharge(value: Double) { _surcharge.value = value }
-    fun updateNote(value: String) { _note.value = value }
-    fun updateCashGiven(amount: Double) { _cashGiven.value = amount }
-    fun toggleTax(isEnabled: Boolean) { _isTaxEnabled.value = isEnabled }
+    fun selectCustomer(customer: Customer) {
+        _selectedCustomer.value = customer
+    }
 
-    fun addProductToCart(product: Product) {
+    fun updateDiscount(percent: Double) {
+        _discountPercent.value = percent.coerceAtMost(100.0)
+    }
+
+    fun updateSurcharge(value: Double) {
+        _surcharge.value = value
+    }
+
+    fun updateNote(value: String) {
+        _note.value = value
+    }
+
+    fun updateCashGiven(amount: Double) {
+        _cashGiven.value = amount
+    }
+
+    fun toggleTax(isEnabled: Boolean) {
+        _isTaxEnabled.value = isEnabled
+    }
+
+    // SỬA: Hàm thêm trả về Boolean và kiểm tra tồn kho
+    fun addProductToCart(product: Product): Boolean {
         val existing = _cartItems.value.find { it.productId == product.documentId }
+        val currentQtyInCart = existing?.soLuong ?: 0
+
+        // Kiểm tra tồn kho (Product.soLuong là tồn kho)
+        if (currentQtyInCart + 1 > product.soLuong) {
+            return false // Báo hiệu hết hàng/không đủ hàng
+        }
+
         if (existing != null) {
             _cartItems.update { list ->
-                list.map { if (it.productId == product.documentId) it.copy(soLuong = it.soLuong + 1) else it }
+                list.map {
+                    if (it.productId == product.documentId) it.copy(soLuong = it.soLuong + 1)
+                    else it
+                }
             }
         } else {
             val newItem = OrderItem(
@@ -97,6 +131,25 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
             )
             _cartItems.update { it + newItem }
         }
+        return true // Thêm thành công
+    }
+
+    // THÊM: Hàm giảm số lượng
+    fun decreaseProductFromCart(product: Product) {
+        val existing = _cartItems.value.find { it.productId == product.documentId } ?: return
+
+        if (existing.soLuong > 1) {
+            // Nếu > 1 thì giảm 1
+            _cartItems.update { list ->
+                list.map {
+                    if (it.productId == product.documentId) it.copy(soLuong = it.soLuong - 1)
+                    else it
+                }
+            }
+        } else {
+            // Nếu = 1 thì xóa khỏi giỏ
+            removeProductFromCart(product.documentId)
+        }
     }
 
     fun removeProductFromCart(productId: String) {
@@ -104,12 +157,18 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
     }
 
     fun updateProductQuantity(productId: String, newQuantity: Int) {
-        if (newQuantity <= 0) { removeProductFromCart(productId); return }
+        if (newQuantity <= 0) {
+            removeProductFromCart(productId); return
+        }
         _cartItems.update { it.map { if (it.productId == productId) it.copy(soLuong = newQuantity) else it } }
     }
 
     // ĐÃ THÊM: Xử lý xóa đơn hàng
-    fun deleteOrder(orderId: String, onSuccess: () -> Unit = {}, onFailure: (Throwable) -> Unit = {}) {
+    fun deleteOrder(
+        orderId: String,
+        onSuccess: () -> Unit = {},
+        onFailure: (Throwable) -> Unit = {}
+    ) {
         val userId = currentUserId ?: return onFailure(Exception("Chưa đăng nhập"))
 
         viewModelScope.launch {
@@ -148,20 +207,29 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
         )
 
         viewModelScope.launch {
-            val result = repository.saveOrder(userId, order)
-            result.onSuccess {
-                // Cập nhật ngay danh sách orderHistory để hiển thị HistoryScreen (Optimistic Update)
-                _orderHistory.update { currentList ->
-                    (listOf(order) + currentList).sortedByDescending { it.date }
-                }
+            // 1. Lưu đơn hàng trước
+            val orderResult = repository.saveOrder(userId, order)
 
-                clearCart()
-                onSuccess()
+            orderResult.onSuccess {
+                // 2. NẾU LƯU ĐƠN THÀNH CÔNG -> GỌI TRỪ KHO
+                try {
+                    productRepository.deductStock(userId, items)
+
+                    // Cập nhật lịch sử (Optimistic update)
+                    _orderHistory.update { currentList ->
+                        (listOf(order) + currentList).sortedByDescending { it.date }
+                    }
+
+                    clearCart()
+                    onSuccess()
+                } catch (e: Exception) {
+                    // Nếu trừ kho lỗi, vẫn báo lỗi (dù đơn hàng đã lưu)
+                    onFailure(Exception("Lưu đơn thành công nhưng lỗi trừ kho: ${e.message}"))
+                }
             }
-            result.onFailure { onFailure(it) }
+            orderResult.onFailure { onFailure(it) }
         }
     }
-
     fun clearCart() {
         _cartItems.value = emptyList()
         _discountPercent.value = 0.0
@@ -181,4 +249,5 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
             }
         }
     }
+
 }

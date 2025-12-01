@@ -1,5 +1,6 @@
 package com.nhom10.quanlybanhang.data.repository
 
+import com.nhom10.quanlybanhang.data.model.OrderItem
 import com.nhom10.quanlybanhang.data.model.Product
 import kotlinx.coroutines.flow.Flow
 
@@ -16,5 +17,6 @@ interface ProductRepository {
 
     // Hàm xóa sản phẩm: Định nghĩa là một hàm trừu tượng
     suspend fun deleteProduct(userId: String, productId: String)
+    suspend fun deductStock(userId: String, items: List<OrderItem>)
 
 }

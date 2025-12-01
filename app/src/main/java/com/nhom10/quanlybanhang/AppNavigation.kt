@@ -91,7 +91,7 @@ fun AppNavigation(
     )
 
     val orderRepository = OrderRepositoryImpl()
-    val orderViewModelFactory = OrderViewModelFactory(orderRepository)
+    val orderViewModelFactory = OrderViewModelFactory(orderRepository, productRepository)
     val orderViewModel: OrderViewModel = viewModel(
         factory = orderViewModelFactory
     )
