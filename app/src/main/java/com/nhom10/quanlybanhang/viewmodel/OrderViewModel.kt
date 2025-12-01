@@ -59,9 +59,17 @@ class OrderViewModel(
     val totalAmount: StateFlow<Double> = combine(
         _cartItems, _discountPercent, _surcharge, _isTaxEnabled
     ) { items, discount, surcharge, _ ->
-        val itemsTotal = items.sumOf { it.giaBan * it.soLuong }
-        val discountAmount = itemsTotal * (discount / 100)
-        maxOf(0.0, itemsTotal - discountAmount + surcharge)
+
+        // Tính tổng tiền các món (Đã trừ chiết khấu từng món)
+        val itemsTotal = items.sumOf { item ->
+            val priceAfterItemDiscount = item.giaBan * (1 - item.chietKhau / 100)
+            priceAfterItemDiscount * item.soLuong
+        }
+
+        // Tính tiếp chiết khấu tổng đơn hàng (nếu có)
+        val orderDiscountAmount = itemsTotal * (discount / 100)
+
+        maxOf(0.0, itemsTotal - orderDiscountAmount + surcharge)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val changeAmount: StateFlow<Double> = combine(_cashGiven, totalAmount) { cash, total ->
@@ -187,6 +195,7 @@ class OrderViewModel(
             result.onFailure { onFailure(it) }
         }
     }
+
     fun selectOrderItem(item: OrderItem) {
         _selectedOrderItem.value = item
     }
@@ -251,6 +260,7 @@ class OrderViewModel(
             }
         }
     }
+
     fun clearCart() {
         _cartItems.value = emptyList()
         _discountPercent.value = 0.0
