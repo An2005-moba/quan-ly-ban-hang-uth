@@ -204,9 +204,7 @@ private fun uriToBase64(context: Context, uri: Uri): String {
         ""
     }
 }
-/**
- * TextField tùy chỉnh không có viền, chỉ có nền
- */
+
 @Composable
 private fun CustomTextField(
     value: String,

@@ -46,10 +46,9 @@ class OrderRepositoryImpl : OrderRepository {
     // --- ĐÃ THÊM: Triển khai deleteOrder ---
     override suspend fun deleteOrder(userId: String, orderId: String): Result<Unit> {
         return try {
-            // Xóa trực tiếp Document bằng ID đơn hàng (vì ta dùng order.id làm Document ID)
             db.collection("users").document(userId)
                 .collection("orders").document(orderId)
-                .delete()
+                .update("status", "Đã xóa") // Soft Delete
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
