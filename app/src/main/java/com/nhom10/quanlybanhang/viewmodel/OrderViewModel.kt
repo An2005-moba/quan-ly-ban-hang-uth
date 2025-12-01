@@ -129,6 +129,7 @@ class OrderViewModel(
                 productId = product.documentId,
                 tenMatHang = product.tenMatHang,
                 giaBan = product.giaBan,
+                giaVon = product.giaNhap,
                 soLuong = 1,
                 donViTinh = product.donViTinh
             )
