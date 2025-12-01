@@ -310,6 +310,13 @@ private fun SummarySection(
             isTaxRow = false,
             onClick = onEditSurcharge
         )
+        SummaryRowAction(
+            label = "Chiết khấu",
+            value = "${percentFormatter.format(discountPercent)}%",
+            icon = Icons.Default.Edit,
+            isTaxRow = false,
+            onClick = onEditDiscount // Khi bấm sẽ mở lại popup nhập %
+        )
 
         SummaryRowAction(
             label = "Ghi chú",
