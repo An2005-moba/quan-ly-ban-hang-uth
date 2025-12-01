@@ -1,39 +1,27 @@
 package com.nhom10.quanlybanhang.ui.screens.report
 
-import android.app.DatePickerDialog
-import android.widget.DatePicker
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nhom10.quanlybanhang.viewmodel.ReportViewModel
 import com.nhom10.quanlybanhang.viewmodel.ReportUiState
-import com.nhom10.quanlybanhang.viewmodel.StatusFilter
-import com.nhom10.quanlybanhang.viewmodel.TimeFilter
 import java.text.DecimalFormat
-import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportScreen(
-    viewModel: ReportViewModel = viewModel()
+    // CHANGED: Nhận viewModel từ bên ngoài thay vì tự khởi tạo
+    viewModel: ReportViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val timeFilter by viewModel.timeFilter.collectAsState()
-    val statusFilter by viewModel.statusFilter.collectAsState()
 
     // Auto load data khi mở màn hình
     LaunchedEffect(Unit) {
@@ -46,16 +34,7 @@ fun ReportScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // --- 1. FILTER BAR (BỘ LỌC) ---
-        FilterSection(
-            currentTimeFilter = timeFilter,
-            currentStatusFilter = statusFilter,
-            onTimeSelected = { viewModel.setTimeFilter(it) },
-            onStatusSelected = { viewModel.setStatusFilter(it) },
-            onCustomDateSelected = { start, end -> viewModel.setCustomDateRange(start, end) }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
+        // --- CHANGED: ĐÃ XÓA FilterSection VÌ ĐÃ CHUYỂN LÊN TOP BAR ---
 
         // --- 2. THẺ TÓM TẮT ---
         SummaryCards(uiState)
@@ -72,96 +51,7 @@ fun ReportScreen(
     }
 }
 
-@Composable
-fun FilterSection(
-    currentTimeFilter: TimeFilter,
-    currentStatusFilter: StatusFilter,
-    onTimeSelected: (TimeFilter) -> Unit,
-    onStatusSelected: (StatusFilter) -> Unit,
-    onCustomDateSelected: (Long, Long) -> Unit
-) {
-    var timeExpanded by remember { mutableStateOf(false) }
-    var statusExpanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    // Hàm hiển thị DatePicker
-    fun showDateRangePicker() {
-        val calendar = Calendar.getInstance()
-        // Chọn ngày bắt đầu
-        DatePickerDialog(context, { _, startYear, startMonth, startDay ->
-            val startCal = Calendar.getInstance()
-            startCal.set(startYear, startMonth, startDay, 0, 0, 0)
-
-            // Sau khi chọn ngày bắt đầu, hiện tiếp chọn ngày kết thúc
-            DatePickerDialog(context, { _, endYear, endMonth, endDay ->
-                val endCal = Calendar.getInstance()
-                endCal.set(endYear, endMonth, endDay, 23, 59, 59)
-
-                onCustomDateSelected(startCal.timeInMillis, endCal.timeInMillis)
-                onTimeSelected(TimeFilter.CUSTOM) // Kích hoạt filter Custom
-            }, startYear, startMonth, startDay).show()
-
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
-    }
-
-    Row(modifier = Modifier.fillMaxWidth().height(40.dp)) {
-        // --- BÊN TRÁI: THỜI GIAN ---
-        Box(modifier = Modifier.weight(1f)) {
-            Button(
-                onClick = { timeExpanded = true },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, Color(0xFF007AFF)),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(
-                    text = when(currentTimeFilter) {
-                        TimeFilter.TODAY -> "Hôm nay"
-                        TimeFilter.THIS_WEEK -> "Tuần này"
-                        TimeFilter.THIS_MONTH -> "Tháng này"
-                        TimeFilter.CUSTOM -> "Tùy chỉnh"
-                    },
-                    color = Color(0xFF007AFF)
-                )
-                Icon(Icons.Default.ArrowDropDown, null, tint = Color(0xFF007AFF))
-            }
-
-            DropdownMenu(expanded = timeExpanded, onDismissRequest = { timeExpanded = false }) {
-                DropdownMenuItem(text = { Text("Hôm nay") }, onClick = { onTimeSelected(TimeFilter.TODAY); timeExpanded = false })
-                DropdownMenuItem(text = { Text("Tuần này") }, onClick = { onTimeSelected(TimeFilter.THIS_WEEK); timeExpanded = false })
-                DropdownMenuItem(text = { Text("Tháng này") }, onClick = { onTimeSelected(TimeFilter.THIS_MONTH); timeExpanded = false })
-                DropdownMenuItem(text = { Text("Khác (Chọn ngày)") }, onClick = {
-                    timeExpanded = false
-                    showDateRangePicker()
-                })
-            }
-        }
-
-        Spacer(Modifier.width(16.dp))
-
-        // --- BÊN PHẢI: TRẠNG THÁI ---
-        Box(modifier = Modifier.weight(1f)) {
-            Button(
-                onClick = { statusExpanded = true },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, Color(0xFF007AFF)),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(
-                    text = if (currentStatusFilter == StatusFilter.DELETED) "Đã xóa" else "Tất cả",
-                    color = Color(0xFF007AFF)
-                )
-                Icon(Icons.Default.ArrowDropDown, null, tint = Color(0xFF007AFF))
-            }
-
-            DropdownMenu(expanded = statusExpanded, onDismissRequest = { statusExpanded = false }) {
-                DropdownMenuItem(text = { Text("Tất cả (Đơn hàng)") }, onClick = { onStatusSelected(StatusFilter.ALL); statusExpanded = false })
-                DropdownMenuItem(text = { Text("Hóa đơn đã xóa") }, onClick = { onStatusSelected(StatusFilter.DELETED); statusExpanded = false })
-            }
-        }
-    }
-}
+// --- CHANGED: Đã xóa FilterSection Composable ---
 
 val formatter = DecimalFormat("#,###")
 
@@ -228,7 +118,6 @@ private fun PaymentSection(state: ReportUiState) {
     }
 }
 
-// Các hàm phụ trợ SummaryCard, ReportStatItem giữ nguyên như file cũ của bạn
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SummaryCard(title: String, amount: String, color: Color, modifier: Modifier = Modifier) {

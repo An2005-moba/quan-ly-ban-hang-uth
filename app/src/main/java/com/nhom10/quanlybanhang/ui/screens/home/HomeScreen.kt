@@ -1,5 +1,6 @@
 package com.nhom10.quanlybanhang.ui.screens.home
 
+import android.app.DatePickerDialog
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.BorderStroke
@@ -25,27 +26,31 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.data.model.Product
-import com.nhom10.quanlybanhang.viewmodel.AccountViewModel
-import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.nhom10.quanlybanhang.ui.components.LetterAvatar
 import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
 import com.nhom10.quanlybanhang.ui.screens.report.ReportScreen
-import com.nhom10.quanlybanhang.ui.components.LetterAvatar
-// --- CÁC IMPORT MỚI ĐỂ XỬ LÝ TẢI LẠI ---
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import com.nhom10.quanlybanhang.viewmodel.AccountViewModel
 import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
+import com.nhom10.quanlybanhang.viewmodel.ReportViewModel
+import com.nhom10.quanlybanhang.viewmodel.StatusFilter
+import com.nhom10.quanlybanhang.viewmodel.TimeFilter
 import java.text.DecimalFormat
-// Dữ liệu các mục trong thanh Bottom Nav
+import java.util.Calendar
+
 data class BottomNavItem(val label: String, val icon: ImageVector)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,8 +64,10 @@ fun HomeScreen(
     var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val productList by productViewModel.products.collectAsState()
-    // 2. LOGIC LỌC DANH SÁCH (Case-insensitive)
-    // Nếu có từ khóa -> Lọc và hiển thị (sẽ tự động ở đầu danh sách). Nếu không -> Hiển thị hết.
+
+    // --- CHANGED: Tạo ReportViewModel ở đây để chia sẻ State ---
+    val reportViewModel: ReportViewModel = viewModel()
+
     val filteredList = remember(productList, searchQuery) {
         if (searchQuery.isBlank()) {
             productList
@@ -69,10 +76,6 @@ fun HomeScreen(
                 product.tenMatHang.contains(searchQuery, ignoreCase = true)
             }
         }
-    }
-
-    LaunchedEffect(key1 = true) {
-        productViewModel.loadProducts()
     }
 
     LaunchedEffect(key1 = true) {
@@ -89,7 +92,8 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             when (selectedItemIndex) {
-                1 -> ReportTopBar(appBlueColor = appBlueColor)
+                // --- CHANGED: Truyền reportViewModel vào TopBar ---
+                1 -> ReportTopBar(appBlueColor = appBlueColor, viewModel = reportViewModel)
                 3 -> AccountTopBar(appBlueColor = appBlueColor)
                 else -> DefaultTopBar(
                     title = when (selectedItemIndex) {
@@ -162,7 +166,8 @@ fun HomeScreen(
                             ProductListForHome(products = filteredList, onProductClick = { })
                         }
                     }
-                    1 -> ReportScreen()
+                    // --- CHANGED: Truyền reportViewModel vào Screen ---
+                    1 -> ReportScreen(viewModel = reportViewModel)
                     2 -> HistoryScreen(navController = navController, orderViewModel = orderViewModel)
                     3 -> AccountScreen(navController = navController)
                 }
@@ -170,7 +175,9 @@ fun HomeScreen(
         }
     )
 }
+
 val formatter = DecimalFormat("#,###")
+
 @Composable
 fun ProductListForHome(products: List<Product>, onProductClick: (Product) -> Unit) {
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Fastfood)
@@ -210,7 +217,6 @@ private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
     } catch (e: Exception) { null }
 }
 
-// === ACCOUNT TOP BAR CÓ LOGIC TỰ LÀM MỚI ===
 @Composable
 private fun AccountTopBar(
     appBlueColor: Color,
@@ -220,12 +226,10 @@ private fun AccountTopBar(
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
     val currentPhotoUrl = uiState.photoUrl
 
-    // --- PHẦN MỚI THÊM: TỰ ĐỘNG TẢI LẠI DỮ LIỆU KHI MÀN HÌNH HIỆN ---
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                // Khi quay lại màn hình này (ON_RESUME), gọi hàm tải lại dữ liệu
                 viewModel.loadUserData()
             }
         }
@@ -234,7 +238,6 @@ private fun AccountTopBar(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    // ----------------------------------------------------------------
 
     Column(modifier = Modifier.fillMaxWidth().background(appBlueColor).statusBarsPadding().padding(horizontal = 20.dp, vertical = 24.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -270,23 +273,83 @@ private fun BottomBarItem(item: BottomNavItem, isSelected: Boolean, selectedColo
     }
 }
 
+// --- CHANGED: ReportTopBar mới tích hợp logic lọc ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ReportTopBar(appBlueColor: Color) {
+private fun ReportTopBar(appBlueColor: Color, viewModel: ReportViewModel) {
+    // Lấy state từ ViewModel
+    val timeFilter by viewModel.timeFilter.collectAsState()
+    val statusFilter by viewModel.statusFilter.collectAsState()
+
+    var timeExpanded by remember { mutableStateOf(false) }
+    var statusExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // Logic DatePicker (Chuyển từ ReportScreen sang đây)
+    fun showDateRangePicker() {
+        val calendar = Calendar.getInstance()
+        DatePickerDialog(context, { _, startYear, startMonth, startDay ->
+            val startCal = Calendar.getInstance()
+            startCal.set(startYear, startMonth, startDay, 0, 0, 0)
+
+            DatePickerDialog(context, { _, endYear, endMonth, endDay ->
+                val endCal = Calendar.getInstance()
+                endCal.set(endYear, endMonth, endDay, 23, 59, 59)
+
+                viewModel.setCustomDateRange(startCal.timeInMillis, endCal.timeInMillis)
+                viewModel.setTimeFilter(TimeFilter.CUSTOM)
+            }, startYear, startMonth, startDay).show()
+
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
     Column(modifier = Modifier.fillMaxWidth().background(appBlueColor).statusBarsPadding().padding(bottom = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = "Báo cáo", fontWeight = FontWeight.Bold, color = Color.White, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
+
+        // Thanh bộ lọc (Pill shape)
         Card(modifier = Modifier.padding(horizontal = 16.dp).height(48.dp), shape = CircleShape, colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))) {
             Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                FilterButtonContent("Hôm nay", Modifier.weight(1f).clickable { /* TODO */ })
+
+                // --- BÊN TRÁI: THỜI GIAN ---
+                Box(modifier = Modifier.weight(1f)) {
+                    val timeText = when(timeFilter) {
+                        TimeFilter.TODAY -> "Hôm nay"
+                        TimeFilter.THIS_WEEK -> "Tuần này"
+                        TimeFilter.THIS_MONTH -> "Tháng này"
+                        TimeFilter.CUSTOM -> "Tùy chỉnh"
+                    }
+                    FilterButtonContent(text = timeText, modifier = Modifier.fillMaxSize().clickable { timeExpanded = true })
+
+                    DropdownMenu(expanded = timeExpanded, onDismissRequest = { timeExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Hôm nay") }, onClick = { viewModel.setTimeFilter(TimeFilter.TODAY); timeExpanded = false })
+                        DropdownMenuItem(text = { Text("Tuần này") }, onClick = { viewModel.setTimeFilter(TimeFilter.THIS_WEEK); timeExpanded = false })
+                        DropdownMenuItem(text = { Text("Tháng này") }, onClick = { viewModel.setTimeFilter(TimeFilter.THIS_MONTH); timeExpanded = false })
+                        DropdownMenuItem(text = { Text("Khác (Chọn ngày)") }, onClick = {
+                            timeExpanded = false
+                            showDateRangePicker()
+                        })
+                    }
+                }
+
                 VerticalDivider(modifier = Modifier.fillMaxHeight().width(1.dp), color = Color.LightGray.copy(alpha = 0.5f))
-                FilterButtonContent("Tất cả", Modifier.weight(1f).clickable { /* TODO */ })
+
+                // --- BÊN PHẢI: TRẠNG THÁI ---
+                Box(modifier = Modifier.weight(1f)) {
+                    val statusText = if (statusFilter == StatusFilter.DELETED) "Đã xóa" else "Tất cả"
+                    FilterButtonContent(text = statusText, modifier = Modifier.fillMaxSize().clickable { statusExpanded = true })
+
+                    DropdownMenu(expanded = statusExpanded, onDismissRequest = { statusExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Tất cả (Đơn hàng)") }, onClick = { viewModel.setStatusFilter(StatusFilter.ALL); statusExpanded = false })
+                        DropdownMenuItem(text = { Text("Hóa đơn đã xóa") }, onClick = { viewModel.setStatusFilter(StatusFilter.DELETED); statusExpanded = false })
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun FilterButtonContent(text: String, modifier: Modifier) {
+private fun FilterButtonContent(text: String, modifier: Modifier = Modifier) {
     Row(modifier = modifier, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Text(text, color = Color(0xFF007AFF), fontWeight = FontWeight.Bold)
         Icon(Icons.Default.ArrowDropDown, null, tint = Color(0xFF007AFF))
@@ -307,13 +370,13 @@ private fun DefaultTopBar(title: String, showShoppingCart: Boolean, appBlueColor
 @Composable
 private fun SearchSection(
     appBlueColor: Color,
-    searchQuery: String,                  // Tham số mới
-    onSearchQueryChange: (String) -> Unit // Tham số mới
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit
 ) {
     val lightGrayBorder = Color.Black.copy(alpha = 0.2f)
     OutlinedTextField(
         value = searchQuery,
-        onValueChange = onSearchQueryChange, // Sử dụng callback
+        onValueChange = onSearchQueryChange,
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         placeholder = { Text("Tìm kiếm mặt hàng", color = appBlueColor) },
         leadingIcon = { Icon(Icons.Default.Search, null, tint = appBlueColor) },
