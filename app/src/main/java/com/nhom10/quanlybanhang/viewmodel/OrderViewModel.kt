@@ -50,7 +50,8 @@ class OrderViewModel(
 
     private val _orderHistory = MutableStateFlow<List<Order>>(emptyList())
     val orderHistory = _orderHistory.asStateFlow()
-
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
 
     // --- 2. LOGIC ---
     val totalAmount: StateFlow<Double> = combine(
@@ -207,27 +208,33 @@ class OrderViewModel(
         )
 
         viewModelScope.launch {
-            // 1. Lưu đơn hàng trước
+            // 2. BẬT LOADING
+            _isLoading.value = true
+
+            // Gọi repository (Giữ nguyên logic cũ)
             val orderResult = repository.saveOrder(userId, order)
 
             orderResult.onSuccess {
-                // 2. NẾU LƯU ĐƠN THÀNH CÔNG -> GỌI TRỪ KHO
                 try {
                     productRepository.deductStock(userId, items)
 
-                    // Cập nhật lịch sử (Optimistic update)
                     _orderHistory.update { currentList ->
                         (listOf(order) + currentList).sortedByDescending { it.date }
                     }
-
                     clearCart()
+
+                    // 3. TẮT LOADING TRƯỚC KHI GỌI SUCCESS
+                    _isLoading.value = false
                     onSuccess()
                 } catch (e: Exception) {
-                    // Nếu trừ kho lỗi, vẫn báo lỗi (dù đơn hàng đã lưu)
+                    _isLoading.value = false // Tắt loading nếu lỗi
                     onFailure(Exception("Lưu đơn thành công nhưng lỗi trừ kho: ${e.message}"))
                 }
             }
-            orderResult.onFailure { onFailure(it) }
+            orderResult.onFailure {
+                _isLoading.value = false // Tắt loading nếu lỗi
+                onFailure(it)
+            }
         }
     }
     fun clearCart() {

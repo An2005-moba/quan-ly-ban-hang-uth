@@ -47,6 +47,7 @@ fun InvoiceScreen(
 
     val formatter = DecimalFormat("#,###")
     val dateNow = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
+    val isLoading by orderViewModel.isLoading.collectAsState()
 
     Scaffold(
         containerColor = Color(0xFFF0F2F5),
@@ -75,11 +76,7 @@ fun InvoiceScreen(
                             orderViewModel.saveOrderToFirebase(
                                 onSuccess = {
                                     Toast.makeText(context, "Đã lưu hóa đơn!", Toast.LENGTH_SHORT).show()
-
-                                    // CHUYỂN HƯỚNG SANG HISTORY
-                                    navController.navigate(Routes.HOME) {
-
-                                    }
+                                    navController.navigate(Routes.HOME) { popUpTo(0) }
                                 },
                                 onFailure = { e ->
                                     Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
@@ -88,9 +85,21 @@ fun InvoiceScreen(
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray.copy(alpha = 0.5f)),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+
+                        // 3. Vô hiệu hóa nút khi đang tải để tránh bấm nhiều lần
+                        enabled = !isLoading
                     ) {
-                        Text("Xong", color = Color.Black)
+                        // 4. Kiểm tra: Nếu đang tải thì hiện vòng xoay, ngược lại hiện chữ "Xong"
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = appBlueColor,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Xong", color = Color.Black)
+                        }
                     }
 
                     // Nút In hóa đơn (Giả lập)
