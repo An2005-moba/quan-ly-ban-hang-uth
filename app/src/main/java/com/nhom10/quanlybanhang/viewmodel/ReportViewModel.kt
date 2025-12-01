@@ -141,19 +141,16 @@ class ReportViewModel : ViewModel() {
             totalRevenue += finalAmount // Doanh thu = Tổng tiền khách phải trả
 
             totalCost += costTotal
-            totalProfit += (finalAmount - costTotal) // Lợi nhuận
+            totalProfit += ((finalAmount - order.thue) - costTotal)
 
             // Thanh toán
             if (order.phuongThucTT == "Ngân hàng") {
-                totalBank += order.khachTra
+                totalBank += order.tongTien
             } else {
-                totalCash += order.khachTra
+                totalCash += order.tongTien
             }
 
-            // Khách nợ = Tổng tiền phải trả - Khách đã trả
-            // (Chỉ tính nếu khách trả thiếu, nếu trả thừa thì Debt = 0)
-            val debt = (finalAmount - order.khachTra).coerceAtLeast(0.0)
-            totalDebt += debt
+
         }
 
         _uiState.value = ReportUiState(
