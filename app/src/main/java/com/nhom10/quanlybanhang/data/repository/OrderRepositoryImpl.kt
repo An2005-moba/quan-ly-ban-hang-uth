@@ -9,13 +9,11 @@ import com.google.firebase.firestore.Query
 class OrderRepositoryImpl : OrderRepository {
     private val db = FirebaseFirestore.getInstance()
 
-    // --- Cải tiến: Dùng order.id làm Document ID ---
     override suspend fun saveOrder(userId: String, order: Order): Result<Unit> {
         return try {
-            // Sử dụng order.id làm Document ID để việc xóa và truy xuất sau này dễ dàng hơn
             db.collection("users").document(userId)
                 .collection("orders").document(order.id)
-                .set(order) // Dùng set() thay vì add()
+                .set(order)
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -23,18 +21,17 @@ class OrderRepositoryImpl : OrderRepository {
         }
     }
 
-    // --- Cải tiến: Sắp xếp theo ngày mới nhất ---
     override suspend fun getOrders(userId: String): Result<List<Order>> {
         return try {
             val snapshot = db.collection("users")
                 .document(userId)
                 .collection("orders")
-                .orderBy("date", Query.Direction.DESCENDING) // Sắp xếp theo ngày mới nhất
+                .orderBy("date", Query.Direction.DESCENDING)
                 .get()
                 .await()
 
+            // SỬA: Lấy TẤT CẢ (bao gồm cả "Đã xóa") để ReportViewModel có dữ liệu tính toán
             val list = snapshot.documents.mapNotNull { document ->
-                // Lấy đối tượng Order và thêm ID của Firebase Document (mặc dù ta đã dùng order.id làm Document ID)
                 document.toObject(Order::class.java)
             }
             Result.success(list)
@@ -43,12 +40,12 @@ class OrderRepositoryImpl : OrderRepository {
         }
     }
 
-    // --- ĐÃ THÊM: Triển khai deleteOrder ---
+    // SỬA: Quay lại Soft Delete (Cập nhật status thay vì delete)
     override suspend fun deleteOrder(userId: String, orderId: String): Result<Unit> {
         return try {
             db.collection("users").document(userId)
                 .collection("orders").document(orderId)
-                .update("status", "Đã xóa") // Soft Delete
+                .update("status", "Đã xóa") // Chỉ đánh dấu là đã xóa
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {

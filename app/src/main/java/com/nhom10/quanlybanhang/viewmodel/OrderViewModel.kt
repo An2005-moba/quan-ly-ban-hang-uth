@@ -282,8 +282,11 @@ class OrderViewModel(
     fun loadOrderHistory() {
         val userId = currentUserId ?: return
         viewModelScope.launch {
-            repository.getOrders(userId).onSuccess {
-                _orderHistory.value = it.sortedByDescending { order -> order.date }
+            repository.getOrders(userId).onSuccess { allOrders ->
+                // SỬA: Chỉ lấy những đơn CHƯA XÓA để hiện lên màn hình Lịch sử
+                _orderHistory.value = allOrders
+                    .filter { it.status != "Đã xóa" } // <-- Lọc tại đây
+                    .sortedByDescending { order -> order.date }
             }
         }
     }
