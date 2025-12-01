@@ -52,6 +52,8 @@ class OrderViewModel(
     val orderHistory = _orderHistory.asStateFlow()
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
+    private val _selectedOrderItem = MutableStateFlow<OrderItem?>(null)
+    val selectedOrderItem = _selectedOrderItem.asStateFlow()
 
     // --- 2. LOGIC ---
     val totalAmount: StateFlow<Double> = combine(
@@ -182,6 +184,17 @@ class OrderViewModel(
                 onSuccess()
             }
             result.onFailure { onFailure(it) }
+        }
+    }
+    fun selectOrderItem(item: OrderItem) {
+        _selectedOrderItem.value = item
+    }
+
+    fun updateCartItem(updatedItem: OrderItem) {
+        _cartItems.update { list ->
+            list.map {
+                if (it.productId == updatedItem.productId) updatedItem else it
+            }
         }
     }
 

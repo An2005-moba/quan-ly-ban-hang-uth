@@ -172,7 +172,11 @@ fun AppNavigation(
         }
 
         composable(Routes.EDIT_ORDER_ITEM) {
-            EditOrderItemScreen(navController = navController)
+            EditOrderItemScreen(
+                navController = navController,
+                orderViewModel = orderViewModel,
+                productViewModel = productViewModel // <--- 1. THÊM DÒNG NÀY
+            )
         }
         composable(Routes.PAYMENT) {
             PaymentScreen(

@@ -40,13 +40,11 @@ fun CartScreen(
     val selectedCustomer by orderViewModel.selectedCustomer.collectAsState()
     val totalAmount by orderViewModel.totalAmount.collectAsState()
 
-    // Lưu ý: ViewModel dùng discountPercent
     val discountPercent by orderViewModel.discountPercent.collectAsState()
     val surcharge by orderViewModel.surcharge.collectAsState()
     val note by orderViewModel.note.collectAsState()
     val isTaxEnabled by orderViewModel.isTaxEnabled.collectAsState()
 
-    // State dialog
     var showDiscountDialog by remember { mutableStateOf(false) }
     var showSurchargeDialog by remember { mutableStateOf(false) }
     var showNoteDialog by remember { mutableStateOf(false) }
@@ -64,7 +62,7 @@ fun CartScreen(
                 },
                 actions = {
                     IconButton(onClick = { navController.navigate(Routes.ADD_ORDER_ITEM) }) {
-                        Icon(Icons.Default.Add, "thêm item") // ĐÃ SỬA: Thay CalendarToday bằng Add
+                        Icon(Icons.Default.Add, "Thêm") // Icon dấu + cho gọn
                     }
                     IconButton(onClick = { navController.navigate(Routes.SELECT_CUSTOMER) }) {
                         Icon(Icons.Default.Person, "Khách hàng")
@@ -87,11 +85,7 @@ fun CartScreen(
         bottomBar = {
             BottomAppBar(containerColor = Color.White, tonalElevation = 8.dp) {
                 Button(
-                    onClick = {
-                        // KHÔNG gọi orderViewModel.checkout() ở đây nữa
-                        // Chỉ chuyển màn hình
-                        navController.navigate(Routes.PAYMENT)
-                    },
+                    onClick = { navController.navigate(Routes.PAYMENT) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -125,13 +119,18 @@ fun CartScreen(
                         customerName = selectedCustomer?.tenKhachHang ?: "Chưa chọn"
                     )
                     Divider(modifier = Modifier.padding(horizontal = 16.dp))
-                    ProductListSection(navController, cartItems)
+
+                    // [SỬA QUAN TRỌNG]: Truyền orderViewModel xuống để xử lý click
+                    ProductListSection(
+                        navController = navController,
+                        items = cartItems,
+                        orderViewModel = orderViewModel
+                    )
                 }
 
-                // Gọi SummarySection với tham số discountPercent
                 SummarySection(
                     totalAmount = totalAmount,
-                    discountPercent = discountPercent, // SỬA: Truyền %
+                    discountPercent = discountPercent,
                     surcharge = surcharge,
                     note = note,
                     isTaxEnabled = isTaxEnabled,
@@ -143,9 +142,8 @@ fun CartScreen(
                 Spacer(modifier = Modifier.height(0.dp))
             }
 
-            // Hiển thị Dialog
             if (showDiscountDialog) {
-                DiscountDialog( // Dùng DiscountDialog mới (chỉ nhập số)
+                DiscountDialog(
                     initialValue = discountPercent,
                     onDismiss = { showDiscountDialog = false },
                     onConfirm = { orderViewModel.updateDiscount(it) }
@@ -194,8 +192,13 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
+// [SỬA QUAN TRỌNG]: Thêm tham số orderViewModel
 @Composable
-private fun ProductListSection(navController: NavController, items: List<OrderItem>) {
+private fun ProductListSection(
+    navController: NavController,
+    items: List<OrderItem>,
+    orderViewModel: OrderViewModel
+) {
     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (items.isEmpty()) {
             Text(
@@ -208,11 +211,16 @@ private fun ProductListSection(navController: NavController, items: List<OrderIt
         } else {
             items.forEach { item ->
                 val formatter = DecimalFormat("#,###")
-                Product(
+                ProductItem(
                     title = item.tenMatHang,
                     subtitle = "${formatter.format(item.giaBan)} x ${item.soLuong} ${item.donViTinh}",
                     total = formatter.format(item.giaBan * item.soLuong),
-                    onClick = { navController.navigate(Routes.EDIT_ORDER_ITEM) }
+                    onClick = {
+                        // 1. Lưu item được click vào ViewModel
+                        orderViewModel.selectOrderItem(item)
+                        // 2. Sau đó mới chuyển màn hình
+                        navController.navigate(Routes.EDIT_ORDER_ITEM)
+                    }
                 )
             }
         }
@@ -220,7 +228,7 @@ private fun ProductListSection(navController: NavController, items: List<OrderIt
 }
 
 @Composable
-private fun Product(title: String, subtitle: String, total: String, onClick: () -> Unit) {
+private fun ProductItem(title: String, subtitle: String, total: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -245,7 +253,7 @@ private fun Product(title: String, subtitle: String, total: String, onClick: () 
 
 @Composable
 private fun SummarySection(
-    discountPercent: Double, // SỬA: Nhận %
+    discountPercent: Double,
     surcharge: Double,
     note: String,
     isTaxEnabled: Boolean,
@@ -256,7 +264,7 @@ private fun SummarySection(
     onToggleTax: (Boolean) -> Unit
 ) {
     val formatter = DecimalFormat("#,###")
-    val percentFormatter = DecimalFormat("#.##") // Định dạng số lẻ cho %
+    val percentFormatter = DecimalFormat("#.##")
 
     Column(
         modifier = Modifier
@@ -267,16 +275,14 @@ private fun SummarySection(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 1. Chiết khấu (Hiển thị %)
         SummaryRowAction(
             label = "Chiết khấu",
-            value = "${percentFormatter.format(discountPercent)} %", // Thêm dấu %
+            value = "${percentFormatter.format(discountPercent)} %",
             icon = Icons.Default.Edit,
             isTaxRow = false,
             onClick = onEditDiscount
         )
 
-        // 2. Phụ phí
         SummaryRowAction(
             label = "Phụ phí",
             value = formatter.format(surcharge),
@@ -285,7 +291,6 @@ private fun SummarySection(
             onClick = onEditSurcharge
         )
 
-        // 3. Ghi chú
         SummaryRowAction(
             label = "Ghi chú",
             value = null,
@@ -295,7 +300,6 @@ private fun SummarySection(
             onClick = onEditNote
         )
 
-        // 4. Thuế
         SummaryRowAction(
             label = "Thuế",
             value = "0",
@@ -357,34 +361,25 @@ private fun SummaryRowAction(
             )
         }
 
-        Box(
-            modifier = Modifier.size(24.dp), // Kích thước cố định
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
             if (isTaxRow) {
-                // Checkbox cho Thuế
                 Checkbox(
                     checked = isChecked,
                     onCheckedChange = onCheckedChange,
-                    colors = CheckboxDefaults.colors(checkedColor = appBlueColor),
-                    // Tùy chọn: Thêm modifier scale nếu muốn ô vuông nhỏ lại cho cân đối
-                    // modifier = Modifier.scale(0.8f)
+                    colors = CheckboxDefaults.colors(checkedColor = appBlueColor)
                 )
             } else {
-                // Icon Edit cho các mục khác
                 IconButton(
                     onClick = { onClick?.invoke() },
-                    modifier = Modifier.size(24.dp) // Đảm bảo Icon cũng 24dp
+                    modifier = Modifier.size(24.dp)
                 ) {
                     if (label == "Ghi chú") {
-                        // Icon checkbox hiển thị trạng thái ghi chú
                         Icon(
                             imageVector = if (isChecked) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
                             contentDescription = null,
                             tint = if (isChecked) appBlueColor else Color.Gray
                         )
                     } else {
-                        // Icon cây viết nền xanh
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
