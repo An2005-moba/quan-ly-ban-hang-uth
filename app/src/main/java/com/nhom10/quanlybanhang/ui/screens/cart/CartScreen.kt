@@ -34,6 +34,7 @@ fun CartScreen(
     val appBlueColor = Color(0xFF0088FF)
     val scaffoldBgColor = Color(0xFFF0F2F5)
     val context = LocalContext.current
+    val taxAmount by orderViewModel.taxAmount.collectAsState()
 
     // Lấy dữ liệu từ ViewModel
     val cartItems by orderViewModel.cartItems.collectAsState()
@@ -49,6 +50,7 @@ fun CartScreen(
     var showSurchargeDialog by remember { mutableStateOf(false) }
     var showNoteDialog by remember { mutableStateOf(false) }
     val currentOrderId by orderViewModel.currentOrderId.collectAsState()
+
 
     Scaffold(
         containerColor = scaffoldBgColor,
@@ -135,6 +137,7 @@ fun CartScreen(
                     note = note,
                     isTaxEnabled = isTaxEnabled,
                     onEditDiscount = { showDiscountDialog = true },
+                    taxAmount = taxAmount,
                     onEditSurcharge = { showSurchargeDialog = true },
                     onEditNote = { showNoteDialog = true },
                     onToggleTax = { orderViewModel.toggleTax(it) }
@@ -274,12 +277,14 @@ private fun SummarySection(
     isTaxEnabled: Boolean,
     totalAmount: Double,
     onEditDiscount: () -> Unit,
+    taxAmount: Double,
     onEditSurcharge: () -> Unit,
     onEditNote: () -> Unit,
     onToggleTax: (Boolean) -> Unit
 ) {
     val formatter = DecimalFormat("#,###")
     val percentFormatter = DecimalFormat("#.##")
+
 
     Column(
         modifier = Modifier
@@ -291,11 +296,11 @@ private fun SummarySection(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SummaryRowAction(
-            label = "Chiết khấu",
-            value = "${percentFormatter.format(discountPercent)} %",
-            icon = Icons.Default.Edit,
-            isTaxRow = false,
-            onClick = onEditDiscount
+            label = "Thuế (10%)",
+            value = DecimalFormat("#,###").format(taxAmount), // Hiển thị số tiền thuế
+            icon = Icons.Default.Info, // Hoặc icon nào đó
+            isTaxRow = false, // Coi như 1 dòng thông tin bình thường, không phải checkbox
+            onClick = {} // Không làm gì khi click
         )
 
         SummaryRowAction(
@@ -315,14 +320,6 @@ private fun SummarySection(
             onClick = onEditNote
         )
 
-        SummaryRowAction(
-            label = "Thuế",
-            value = "0",
-            icon = Icons.Default.CheckBox,
-            isTaxRow = true,
-            isChecked = isTaxEnabled,
-            onCheckedChange = onToggleTax
-        )
 
         Divider(modifier = Modifier.padding(vertical = 8.dp))
         SummaryTotalRow(label = "Tổng tiền", total = formatter.format(totalAmount))

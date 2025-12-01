@@ -132,7 +132,7 @@ class ReportViewModel : ViewModel() {
 
             // Logic 11 chỉ số
             totalInvoiceValue += rawTotal
-            totalTax += 0.0 // (Nếu app có lưu tiền thuế riêng thì cộng vào, tạm thời = 0 hoặc logic order.thue)
+            totalTax += order.thue
             totalDiscount += discountAmount
 
             // Tiền bán = Tiền hàng - Giảm giá + Phụ phí

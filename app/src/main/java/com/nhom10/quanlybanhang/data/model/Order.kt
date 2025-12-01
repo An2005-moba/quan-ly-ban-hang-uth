@@ -15,7 +15,8 @@ data class OrderItem(
     val giaVon: Double = 0.0, // THÊM: Lưu giá vốn tại thời điểm bán để tính lãi chính xác
     val soLuong: Int = 1,
     val donViTinh: String = "Cái",
-    val chietKhau: Double = 0.0
+    val chietKhau: Double = 0.0,
+    val apDungThue: Boolean = false
 ) : Parcelable
 
 @Parcelize

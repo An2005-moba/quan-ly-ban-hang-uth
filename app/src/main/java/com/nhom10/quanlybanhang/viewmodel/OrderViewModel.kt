@@ -58,32 +58,36 @@ class OrderViewModel(
     val paymentMethod = _paymentMethod.asStateFlow()
 
     // --- 2. LOGIC ---
-    val totalAmount: StateFlow<Double> = combine(
-        _cartItems, _discountPercent, _surcharge, _isTaxEnabled
-    ) { items, discount, surcharge, _ ->
-
-        // Tính tổng tiền các món (Đã trừ chiết khấu từng món)
-        val itemsTotal = items.sumOf { item ->
-            val priceAfterItemDiscount = item.giaBan * (1 - item.chietKhau / 100)
-            priceAfterItemDiscount * item.soLuong
+    val taxAmount: StateFlow<Double> = _cartItems.map { items ->
+        items.sumOf { item ->
+            if (item.apDungThue) {
+                (item.giaBan * item.soLuong) * 0.10 // 10% thuế
+            } else {
+                0.0
+            }
         }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-        // Tính tiếp chiết khấu tổng đơn hàng (nếu có)
-        val orderDiscountAmount = itemsTotal * (discount / 100)
+    // --- CHANGED: Cập nhật logic tính Tổng tiền ---
+    val totalAmount: StateFlow<Double> = combine(
+        _cartItems, _discountPercent, _surcharge, taxAmount
+    ) { items, discount, surcharge, tax ->
 
-        maxOf(0.0, itemsTotal - orderDiscountAmount + surcharge)
+        val itemsTotal = items.sumOf { it.giaBan * it.soLuong }
+
+        // Tính giảm giá
+        val discountAmount = itemsTotal * (discount / 100)
+
+        // Tổng = Tiền hàng - Giảm giá + Thuế + Phụ phí
+        maxOf(0.0, itemsTotal - discountAmount + tax + surcharge)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val changeAmount: StateFlow<Double> = combine(_cashGiven, totalAmount) { cash, total ->
         cash - total
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // --- 3. INIT ---
     init {
         _selectedCustomer.value = Customer(id = "khach_le", tenKhachHang = "Khách lẻ")
-
-        // [FIX QUAN TRỌNG] Tải lịch sử đơn hàng ngay khi ViewModel khởi động.
-        // Điều này đảm bảo màn hình History có dữ liệu cũ ngay cả khi chưa mua đơn mới.
         loadOrderHistory()
     }
 
@@ -125,10 +129,7 @@ class OrderViewModel(
         val existing = _cartItems.value.find { it.productId == product.documentId }
         val currentQtyInCart = existing?.soLuong ?: 0
 
-        // Kiểm tra tồn kho (Product.soLuong là tồn kho)
-        if (currentQtyInCart + 1 > product.soLuong) {
-            return false // Báo hiệu hết hàng/không đủ hàng
-        }
+        if (currentQtyInCart + 1 > product.soLuong) return false
 
         if (existing != null) {
             _cartItems.update { list ->
@@ -144,11 +145,13 @@ class OrderViewModel(
                 giaBan = product.giaBan,
                 giaVon = product.giaNhap,
                 soLuong = 1,
-                donViTinh = product.donViTinh
+                donViTinh = product.donViTinh,
+                // Lấy trạng thái thuế từ sản phẩm
+                apDungThue = product.apDungThue
             )
             _cartItems.update { it + newItem }
         }
-        return true // Thêm thành công
+        return true
     }
 
     // THÊM: Hàm giảm số lượng
@@ -231,37 +234,30 @@ class OrderViewModel(
             ghiChu = _note.value,
             khachTra = _cashGiven.value,
             tienThua = changeAmount.value,
+            // Lấy giá trị thuế đã tính toán
+            thue = taxAmount.value,
             userId = userId,
             date = System.currentTimeMillis(),
             phuongThucTT = _paymentMethod.value
         )
 
         viewModelScope.launch {
-            // 2. BẬT LOADING
             _isLoading.value = true
-
-            // Gọi repository (Giữ nguyên logic cũ)
             val orderResult = repository.saveOrder(userId, order)
-
             orderResult.onSuccess {
                 try {
                     productRepository.deductStock(userId, items)
-
-                    _orderHistory.update { currentList ->
-                        (listOf(order) + currentList).sortedByDescending { it.date }
-                    }
+                    _orderHistory.update { (listOf(order) + it).sortedByDescending { o -> o.date } }
                     clearCart()
-
-                    // 3. TẮT LOADING TRƯỚC KHI GỌI SUCCESS
                     _isLoading.value = false
                     onSuccess()
                 } catch (e: Exception) {
-                    _isLoading.value = false // Tắt loading nếu lỗi
-                    onFailure(Exception("Lưu đơn thành công nhưng lỗi trừ kho: ${e.message}"))
+                    _isLoading.value = false
+                    onFailure(Exception("Lưu thành công nhưng lỗi trừ kho: ${e.message}"))
                 }
             }
             orderResult.onFailure {
-                _isLoading.value = false // Tắt loading nếu lỗi
+                _isLoading.value = false
                 onFailure(it)
             }
         }
