@@ -9,4 +9,6 @@ interface CustomerRepository {
 
     // SỬA: Thêm userId để biết thêm vào danh sách của ai
     suspend fun addCustomer(userId: String, customer: Customer)
+    suspend fun deleteCustomer(userId: String, customerId: String)
+    suspend fun deleteAllCustomers(userId: String)
 }

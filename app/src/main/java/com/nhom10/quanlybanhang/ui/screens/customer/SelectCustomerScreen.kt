@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -63,7 +65,9 @@ fun SelectCustomerScreen(
 
     // SỬA: Lấy khách hàng đang được chọn từ OrderViewModel
     val selectedCustomer by orderViewModel.selectedCustomer.collectAsState()
-    val selectedCustomerId = selectedCustomer?.id ?: "khach_le" // Mặc định là "Khách lẻ"
+    val selectedCustomerId = selectedCustomer?.id ?: "khach_le" // Mặc định là "Khách lẻ"\
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
+    var customerToDelete by remember { mutableStateOf<Customer?>(null) }
 
     // XÓA: Dữ liệu mẫu
     // val customers = listOf(...)
@@ -83,6 +87,12 @@ fun SelectCustomerScreen(
                     }
                 },
                 actions = {
+                    // NÚT 1: Xóa tất cả (Chỉ hiện khi có khách trong DB)
+                    if (customersFromDb.isNotEmpty()) {
+                        IconButton(onClick = { showDeleteAllDialog = true }) {
+                            Icon(Icons.Default.DeleteForever, "Xóa tất cả", tint = Color.Red)
+                        }
+                    }
                     IconButton(onClick = { navController.navigate(Routes.ADD_CUSTOMER) }) {
                         Icon(Icons.Default.Add, "Thêm khách hàng")
                     }
@@ -140,20 +150,66 @@ fun SelectCustomerScreen(
                                 // SỬA: Cập nhật ViewModel và quay lại
                                 orderViewModel.selectCustomer(customer)
                                 navController.popBackStack()
-                            }
+                            },
+                            // Gọi dialog khi nhấn nút xóa ở từng dòng
+                            onDelete = { customerToDelete = customer }
                         )
                     }
                 }
             }
         }
     )
+    // --- HỘP THOẠI XÁC NHẬN XÓA TỪNG NGƯỜI ---
+    if (customerToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { customerToDelete = null },
+            title = { Text("Xóa khách hàng") },
+            text = { Text("Bạn có chắc muốn xóa '${customerToDelete?.tenKhachHang}' không?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        customerToDelete?.let {
+                            customerViewModel.deleteCustomer(it.id)
+                        }
+                        customerToDelete = null
+                    }
+                ) { Text("Xóa", color = Color.Red, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { customerToDelete = null }) { Text("Hủy") }
+            },
+            containerColor = Color.White
+        )
+    }
+
+    // --- HỘP THOẠI XÁC NHẬN XÓA TẤT CẢ ---
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text("Xóa tất cả") },
+            text = { Text("Bạn có chắc muốn xóa TOÀN BỘ danh sách khách hàng không? Hành động này không thể hoàn tác.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        customerViewModel.deleteAllCustomers()
+                        showDeleteAllDialog = false
+                    }
+                ) { Text("Xóa hết", color = Color.Red, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) { Text("Hủy") }
+            },
+            containerColor = Color.White
+        )
+    }
 }
 
 @Composable
 private fun CustomerListItem(
     customer: Customer, // SỬA: Đã dùng model thật
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit // Callback xóa
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
@@ -200,12 +256,18 @@ private fun CustomerListItem(
             }
         },
         trailingContent = {
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Đã chọn",
-                    tint = appBlueColor
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isSelected) {
+                    Icon(Icons.Default.CheckCircle, "Đã chọn", tint = appBlueColor)
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
+                // CHỈ HIỆN NÚT XÓA NẾU KHÔNG PHẢI "KHÁCH LẺ"
+                if (customer.id != "khach_le") {
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Delete, "Xóa", tint = Color.Gray)
+                    }
+                }
             }
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)

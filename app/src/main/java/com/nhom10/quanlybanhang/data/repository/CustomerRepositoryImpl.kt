@@ -41,4 +41,31 @@ class CustomerRepositoryImpl : CustomerRepository {
             throw e
         }
     }
+    // 1. Xóa một khách hàng
+    override suspend fun deleteCustomer(userId: String, customerId: String) {
+        try {
+            db.collection("users").document(userId)
+                .collection("customers").document(customerId)
+                .delete()
+                .await()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    // 2. Xóa tất cả khách hàng (Dùng Batch Write để xóa nhanh)
+    override suspend fun deleteAllCustomers(userId: String) {
+        try {
+            val collectionRef = db.collection("users").document(userId).collection("customers")
+            val snapshot = collectionRef.get().await()
+
+            val batch = db.batch()
+            for (document in snapshot.documents) {
+                batch.delete(document.reference)
+            }
+            batch.commit().await()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
 }

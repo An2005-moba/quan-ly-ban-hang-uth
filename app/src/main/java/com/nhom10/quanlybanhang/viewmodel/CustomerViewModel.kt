@@ -88,4 +88,26 @@ class CustomerViewModel(private val repository: CustomerRepository) : ViewModel(
         super.onCleared()
         auth.removeAuthStateListener(authStateListener)
     }
+    fun deleteCustomer(customerId: String) {
+        val userId = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                repository.deleteCustomer(userId, customerId)
+                // Không cần load lại vì getCustomers là Flow (Realtime)
+            } catch (e: Exception) {
+                Log.e("CustomerViewModel", "Lỗi xóa khách: ", e)
+            }
+        }
+    }
+
+    fun deleteAllCustomers() {
+        val userId = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                repository.deleteAllCustomers(userId)
+            } catch (e: Exception) {
+                Log.e("CustomerViewModel", "Lỗi xóa tất cả: ", e)
+            }
+        }
+    }
 }
