@@ -50,7 +50,7 @@ fun CartScreen(
     var showSurchargeDialog by remember { mutableStateOf(false) }
     var showNoteDialog by remember { mutableStateOf(false) }
     val currentOrderId by orderViewModel.currentOrderId.collectAsState()
-
+    var showClearCartDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = scaffoldBgColor,
@@ -69,9 +69,13 @@ fun CartScreen(
                     IconButton(onClick = { navController.navigate(Routes.SELECT_CUSTOMER) }) {
                         Icon(Icons.Default.Person, "Khách hàng")
                     }
+                    // 2. SỬA NÚT XÓA (ICON THÙNG RÁC)
                     IconButton(onClick = {
-                        orderViewModel.clearCart()
-                        Toast.makeText(context, "Đã xóa giỏ hàng", Toast.LENGTH_SHORT).show()
+                        if (cartItems.isNotEmpty()) {
+                            showClearCartDialog = true // Hiện hộp thoại xác nhận
+                        } else {
+                            Toast.makeText(context, "Giỏ hàng đang trống", Toast.LENGTH_SHORT).show()
+                        }
                     }) {
                         Icon(Icons.Default.Delete, "Xóa")
                     }
@@ -169,7 +173,34 @@ fun CartScreen(
             }
         }
     )
+    // 3. THÊM ALERT DIALOG XÓA TOÀN BỘ Ở CUỐI
+    if (showClearCartDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearCartDialog = false },
+            title = { Text(text = "Xác nhận xóa") },
+            text = { Text(text = "Bạn có chắc muốn xóa toàn bộ giỏ hàng không?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Thực hiện xóa khi chọn Đồng ý
+                        orderViewModel.clearCart()
+                        Toast.makeText(context, "Đã xóa giỏ hàng", Toast.LENGTH_SHORT).show()
+                        showClearCartDialog = false
+                    }
+                ) {
+                    Text("Đồng ý", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearCartDialog = false }) {
+                    Text("Hủy", color = Color.Gray)
+                }
+            },
+            containerColor = Color.White
+        )
+    }
 }
+
 
 // --- CÁC HÀM PHỤ TRỢ ---
 
