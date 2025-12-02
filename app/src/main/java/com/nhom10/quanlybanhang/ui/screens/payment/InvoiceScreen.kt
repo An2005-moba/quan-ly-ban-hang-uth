@@ -48,6 +48,7 @@ fun InvoiceScreen(
     val formatter = DecimalFormat("#,###")
     val dateNow = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
     val isLoading by orderViewModel.isLoading.collectAsState()
+    val taxAmount by orderViewModel.taxAmount.collectAsState()
 
     Scaffold(
         containerColor = Color(0xFFF0F2F5),
@@ -68,23 +69,34 @@ fun InvoiceScreen(
         },
         bottomBar = {
             BottomAppBar(containerColor = Color.White, tonalElevation = 8.dp) {
-                Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
 
                     // --- NÚT XONG (Đã sửa đổi) ---
                     Button(
                         onClick = {
                             orderViewModel.saveOrderToFirebase(
                                 onSuccess = {
-                                    Toast.makeText(context, "Đã lưu hóa đơn!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Đã lưu hóa đơn!", Toast.LENGTH_SHORT)
+                                        .show()
                                     navController.navigate(Routes.HOME) { popUpTo(0) }
                                 },
                                 onFailure = { e ->
-                                    Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG)
+                                        .show()
                                 }
                             )
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.LightGray.copy(
+                                alpha = 0.5f
+                            )
+                        ),
                         shape = RoundedCornerShape(8.dp),
 
                         // 3. Vô hiệu hóa nút khi đang tải để tránh bấm nhiều lần
@@ -121,7 +133,9 @@ fun InvoiceScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
             ) {
-                Column(Modifier.background(Color.White).padding(16.dp)) {
+                Column(Modifier
+                    .background(Color.White)
+                    .padding(16.dp)) {
                     // Thông tin chung
                     InfoRow("Đơn hàng", currentOrderId)
                     InfoRow("Thời gian", dateNow)
@@ -131,25 +145,54 @@ fun InvoiceScreen(
 
                     // Danh sách món
                     cartItems.forEach { item ->
-                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Row(Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)) {
                             Column(Modifier.weight(1f)) {
                                 Text(item.tenMatHang, fontWeight = FontWeight.Bold)
-                                Text("${formatter.format(item.giaBan)} x ${item.soLuong} ${item.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+
+                                // --- LOGIC HIỂN THỊ CHI TIẾT GIÁ ---
+                                val originalTotal = item.giaBan * item.soLuong
+                                val itemDiscountAmt = originalTotal * (item.chietKhau / 100)
+                                val finalLineTotal = originalTotal - itemDiscountAmt
+
+                                // Nếu có giảm giá món, hiển thị chi tiết như CartScreen
+                                if (item.chietKhau > 0) {
+                                    Text(
+                                        "(${formatter.format(item.giaBan)} - ${formatter.format(item.giaBan * item.chietKhau / 100)}) x ${item.soLuong} ${item.donViTinh}",
+                                        color = Color.Gray,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                } else {
+                                    Text(
+                                        "${formatter.format(item.giaBan)} x ${item.soLuong} ${item.donViTinh}",
+                                        color = Color.Gray,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                             }
-                            Text(formatter.format(item.giaBan * item.soLuong))
+
+                            // --- HIỂN THỊ THÀNH TIỀN CỦA DÒNG ĐÓ (Đã trừ chiết khấu món) ---
+                            val finalLinePrice =
+                                (item.giaBan * item.soLuong) * (1 - item.chietKhau / 100)
+                            Text(formatter.format(finalLinePrice))
                         }
                     }
 
                     Divider(Modifier.padding(vertical = 16.dp))
 
-                    // --- TÍNH TOÁN ---
-                    val itemsTotal = cartItems.sumOf { it.giaBan * it.soLuong }
-                    val discountAmount = itemsTotal * (discountPercent / 100)
+                    // --- TÍNH TOÁN (Cập nhật logic hiển thị tổng kết cho khớp ViewModel) ---
+                    // Tính tổng tiền hàng thực tế (đã trừ chiết khấu món)
+                    val itemsTotalReal = cartItems.sumOf {
+                        (it.giaBan * it.soLuong) * (1 - it.chietKhau / 100)
+                    }
+
+                    val discountAmount = itemsTotalReal * (discountPercent / 100)
 
                     // Tổng kết
                     InfoRow("Chiết khấu (${discountPercent}%)", formatter.format(discountAmount))
                     InfoRow("Phụ phí", formatter.format(surcharge))
-                    InfoRow("Thuế", "0")
+                    InfoRow("Thuế", formatter.format(taxAmount))
 
                     Divider(Modifier.padding(vertical = 8.dp))
 
@@ -160,7 +203,11 @@ fun InvoiceScreen(
 
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Tổng tiền", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text(formatter.format(totalAmount), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(
+                            formatter.format(totalAmount),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
                     }
                 }
             }
@@ -171,7 +218,9 @@ fun InvoiceScreen(
 @Composable
 private fun InfoRow(label: String, value: String) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(label, modifier = Modifier.weight(1f))

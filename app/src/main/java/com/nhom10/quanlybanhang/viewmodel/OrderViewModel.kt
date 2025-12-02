@@ -58,28 +58,39 @@ class OrderViewModel(
     val paymentMethod = _paymentMethod.asStateFlow()
 
     // --- 2. LOGIC ---
+    // --- SỬA ĐỔI: LOGIC TÍNH THUẾ (Tính trên giá thực thu sau khi giảm giá món) ---
     val taxAmount: StateFlow<Double> = _cartItems.map { items ->
         items.sumOf { item ->
             if (item.apDungThue) {
-                (item.giaBan * item.soLuong) * 0.10 // 10% thuế
+                // Giá trị của dòng = (Giá x Số lượng) - Chiết khấu món
+                val itemTotal = item.giaBan * item.soLuong
+                val itemDiscount = itemTotal * (item.chietKhau / 100)
+                val finalItemTotal = itemTotal - itemDiscount
+
+                finalItemTotal * 0.10 // 10% thuế trên giá thực bán
             } else {
                 0.0
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // --- CHANGED: Cập nhật logic tính Tổng tiền ---
+    // --- SỬA ĐỔI: LOGIC TỔNG TIỀN (Tính chiết khấu món trước, rồi mới tính tổng) ---
     val totalAmount: StateFlow<Double> = combine(
         _cartItems, _discountPercent, _surcharge, taxAmount
     ) { items, discount, surcharge, tax ->
+        // 1. Tính tổng tiền hàng (Sau khi đã trừ chiết khấu của TỪNG MÓN)
+        val itemsTotalAfterItemDiscount = items.sumOf { item ->
+            val rawTotal = item.giaBan * item.soLuong
+            val itemDiscountAmount = rawTotal * (item.chietKhau / 100)
+            rawTotal - itemDiscountAmount
+        }
 
-        val itemsTotal = items.sumOf { it.giaBan * it.soLuong }
+        // 2. Tính giảm giá tổng đơn hàng (trên tổng tiền đã trừ chiết khấu món)
+        // Hoặc tùy logic shop, thường là giảm trên tổng tiền hàng thực tế
+        val orderDiscountAmount = itemsTotalAfterItemDiscount * (discount / 100)
 
-        // Tính giảm giá
-        val discountAmount = itemsTotal * (discount / 100)
-
-        // Tổng = Tiền hàng - Giảm giá + Thuế + Phụ phí
-        maxOf(0.0, itemsTotal - discountAmount + tax + surcharge)
+        // 3. Công thức cuối cùng
+        maxOf(0.0, itemsTotalAfterItemDiscount - orderDiscountAmount + tax + surcharge)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val changeAmount: StateFlow<Double> = combine(_cashGiven, totalAmount) { cash, total ->
@@ -100,6 +111,7 @@ class OrderViewModel(
     fun setPaymentMethod(method: String) {
         _paymentMethod.value = method
     }
+
     fun selectCustomer(customer: Customer) {
         _selectedCustomer.value = customer
     }
