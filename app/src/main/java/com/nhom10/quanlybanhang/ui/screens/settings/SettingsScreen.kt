@@ -33,7 +33,6 @@ fun SettingsScreen(
     navController: NavController,
     viewModel: SettingsViewModel = viewModel(),
     fontSizeViewModel: FontSizeViewModel
-
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val context = LocalContext.current
@@ -66,10 +65,12 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(MaterialTheme.colorScheme.background)  // DARK MODE
+                    // Vẫn dùng màu nền động của hệ thống để hỗ trợ Dark Mode cơ bản
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Mục Mật khẩu
                 SettingsOptionItem(
                     text = "Mật khẩu",
                     onClick = {
@@ -86,13 +87,9 @@ fun SettingsScreen(
                     showArrow = !uiState.isGoogleLogin
                 )
 
-                SettingsOptionItem(
-                    text = "Chủ đề",
-                    onClick = { navController.navigate(Routes.THEME) },
-                    showArrow = true
-                )
+                // Đã xóa mục Chủ đề
 
-                // Thêm mục Cỡ chữ
+                // Mục Cỡ chữ
                 SettingsOptionItem(
                     text = "Cỡ chữ",
                     fontSize = fontSize.sp,
@@ -119,7 +116,7 @@ private fun SettingsOptionItem(
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface   // DARK MODE
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -136,15 +133,20 @@ private fun SettingsOptionItem(
                 modifier = Modifier.weight(1f)
             )
 
-
             if (showArrow) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) // hợp dark mode
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
         }
     }
 }
 
+// Preview
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    // SettingsScreen(navController = rememberNavController(), fontSizeViewModel = ...)
+}

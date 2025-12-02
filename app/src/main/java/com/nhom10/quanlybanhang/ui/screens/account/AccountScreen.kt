@@ -25,7 +25,8 @@ fun AccountScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            // Quay lại màu nền cố định (Xám nhạt)
+            .background(Color(0xFFF0F2F5))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -55,16 +56,22 @@ private fun AccountOptionItem(
     onClick: () -> Unit
 ) {
     val appBlueColor = Color(0xFF0088FF)
+
+    // Không còn logic Dark Mode, Viền, hay đổi màu chữ nữa
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .height(60.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        // Quay lại màu nền thẻ cố định (Trắng)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -78,7 +85,8 @@ private fun AccountOptionItem(
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 16.dp),
-                color = MaterialTheme.colorScheme.onSurface
+                // Quay lại màu chữ mặc định (Đen)
+                color = Color.Black
             )
             Icon(
                 imageVector = Icons.Default.ChevronRight,

@@ -2,7 +2,6 @@ package com.nhom10.quanlybanhang.ui.screens.password
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme // <-- Import kiểm tra Dark Mode
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.nhom10.quanlybanhang.viewmodel.ChangePasswordViewModel // Đảm bảo import đúng ViewModel của bạn
+import com.nhom10.quanlybanhang.viewmodel.ChangePasswordViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,19 +36,8 @@ fun ChangePasswordScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
-    // === LOGIC DARK MODE ===
-    val isDark = isSystemInDarkTheme()
-
-    // Màu nền TopBar
-    val topBarContainerColor = if (isDark) MaterialTheme.colorScheme.surface else appBlueColor
-    val topBarContentColor = if (isDark) MaterialTheme.colorScheme.onSurface else Color.White
-
-    // Màu nền TextField
-    val textFieldContainerColor = if (isDark) MaterialTheme.colorScheme.surface else Color.White
-
-    // Màu nhãn (Label)
-    val labelColor = if (isDark) MaterialTheme.colorScheme.onSurfaceVariant else Color.Black.copy(alpha = 0.5f)
-
+    // Các màu cố định (không đổi theo theme)
+    val labelColor = Color.Black.copy(alpha = 0.5f)
     val errorColor = MaterialTheme.colorScheme.error
 
     // Biến state cho các ô nhập
@@ -61,19 +49,17 @@ fun ChangePasswordScreen(
     var showNew by remember { mutableStateOf(false) }
     var showConfirm by remember { mutableStateOf(false) }
 
-    // Cấu hình màu sắc TextField
+    // Cấu hình màu sắc TextField (Cố định)
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = textFieldContainerColor,
-        unfocusedContainerColor = textFieldContainerColor,
-        unfocusedBorderColor = if (isDark) Color.Gray else Color.LightGray,
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White,
+        unfocusedBorderColor = Color.LightGray,
         focusedBorderColor = appBlueColor,
-        focusedLabelColor = appBlueColor, // Màu label khi focus
-        unfocusedLabelColor = labelColor, // Màu label khi không focus
+        focusedLabelColor = appBlueColor,
+        unfocusedLabelColor = labelColor,
         errorBorderColor = errorColor,
         errorLabelColor = errorColor,
-        errorSupportingTextColor = errorColor,
-        focusedTextColor = MaterialTheme.colorScheme.onSurface, // Màu chữ nhập vào
-        unfocusedTextColor = MaterialTheme.colorScheme.onSurface // Màu chữ nhập vào
+        errorSupportingTextColor = errorColor
     )
 
     Scaffold(
@@ -91,9 +77,9 @@ fun ChangePasswordScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = topBarContainerColor, // <-- Màu động
-                    titleContentColor = topBarContentColor, // <-- Màu động
-                    navigationIconContentColor = topBarContentColor
+                    containerColor = appBlueColor,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
                 )
             )
         },
@@ -103,8 +89,8 @@ fun ChangePasswordScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    // --- MÀU NỀN MÀN HÌNH ĐỘNG ---
-                    .background(MaterialTheme.colorScheme.background)
+                    // Quay lại màu nền xám nhạt cố định
+                    .background(Color(0xFFF0F2F5))
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -203,23 +189,21 @@ fun ChangePasswordScreen(
                     modifier = Modifier
                         .width(200.dp)
                         .height(50.dp),
-                    // Màu nút động (Tối -> Xám đậm, Sáng -> Xanh)
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDark) MaterialTheme.colorScheme.surfaceVariant else appBlueColor
+                        containerColor = appBlueColor
                     ),
                     shape = RoundedCornerShape(12.dp),
                     enabled = !uiState.isLoading
                 ) {
                     if (uiState.isLoading) {
                         CircularProgressIndicator(
-                            color = if (isDark) Color.White else Color.White,
+                            color = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
                     } else {
                         Text(
                             "Xác nhận đổi",
-                            // Màu chữ nút động
-                            color = if (isDark) MaterialTheme.colorScheme.onSurface else Color.White
+                            color = Color.White
                         )
                     }
                 }

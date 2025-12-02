@@ -65,7 +65,6 @@ fun HomeScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val productList by productViewModel.products.collectAsState()
 
-    // --- CHANGED: Tạo ReportViewModel ở đây để chia sẻ State ---
     val reportViewModel: ReportViewModel = viewModel()
 
     val filteredList = remember(productList, searchQuery) {
@@ -92,7 +91,6 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             when (selectedItemIndex) {
-                // --- CHANGED: Truyền reportViewModel vào TopBar ---
                 1 -> ReportTopBar(appBlueColor = appBlueColor, viewModel = reportViewModel)
                 3 -> AccountTopBar(appBlueColor = appBlueColor)
                 else -> DefaultTopBar(
@@ -166,7 +164,6 @@ fun HomeScreen(
                             ProductListForHome(products = filteredList, onProductClick = { })
                         }
                     }
-                    // --- CHANGED: Truyền reportViewModel vào Screen ---
                     1 -> ReportScreen(viewModel = reportViewModel)
                     2 -> HistoryScreen(navController = navController, orderViewModel = orderViewModel)
                     3 -> AccountScreen(navController = navController)
@@ -273,11 +270,9 @@ private fun BottomBarItem(item: BottomNavItem, isSelected: Boolean, selectedColo
     }
 }
 
-// --- CHANGED: ReportTopBar mới tích hợp logic lọc ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReportTopBar(appBlueColor: Color, viewModel: ReportViewModel) {
-    // Lấy state từ ViewModel
     val timeFilter by viewModel.timeFilter.collectAsState()
     val statusFilter by viewModel.statusFilter.collectAsState()
 
@@ -285,7 +280,6 @@ private fun ReportTopBar(appBlueColor: Color, viewModel: ReportViewModel) {
     var statusExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // Logic DatePicker (Chuyển từ ReportScreen sang đây)
     fun showDateRangePicker() {
         val calendar = Calendar.getInstance()
         DatePickerDialog(context, { _, startYear, startMonth, startDay ->
@@ -295,7 +289,6 @@ private fun ReportTopBar(appBlueColor: Color, viewModel: ReportViewModel) {
             DatePickerDialog(context, { _, endYear, endMonth, endDay ->
                 val endCal = Calendar.getInstance()
                 endCal.set(endYear, endMonth, endDay, 23, 59, 59)
-
                 viewModel.setCustomDateRange(startCal.timeInMillis, endCal.timeInMillis)
                 viewModel.setTimeFilter(TimeFilter.CUSTOM)
             }, startYear, startMonth, startDay).show()
@@ -306,11 +299,8 @@ private fun ReportTopBar(appBlueColor: Color, viewModel: ReportViewModel) {
     Column(modifier = Modifier.fillMaxWidth().background(appBlueColor).statusBarsPadding().padding(bottom = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = "Báo cáo", fontWeight = FontWeight.Bold, color = Color.White, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
 
-        // Thanh bộ lọc (Pill shape)
         Card(modifier = Modifier.padding(horizontal = 16.dp).height(48.dp), shape = CircleShape, colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))) {
             Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-
-                // --- BÊN TRÁI: THỜI GIAN ---
                 Box(modifier = Modifier.weight(1f)) {
                     val timeText = when(timeFilter) {
                         TimeFilter.TODAY -> "Hôm nay"
@@ -319,25 +309,17 @@ private fun ReportTopBar(appBlueColor: Color, viewModel: ReportViewModel) {
                         TimeFilter.CUSTOM -> "Tùy chỉnh"
                     }
                     FilterButtonContent(text = timeText, modifier = Modifier.fillMaxSize().clickable { timeExpanded = true })
-
                     DropdownMenu(expanded = timeExpanded, onDismissRequest = { timeExpanded = false }) {
                         DropdownMenuItem(text = { Text("Hôm nay") }, onClick = { viewModel.setTimeFilter(TimeFilter.TODAY); timeExpanded = false })
                         DropdownMenuItem(text = { Text("Tuần này") }, onClick = { viewModel.setTimeFilter(TimeFilter.THIS_WEEK); timeExpanded = false })
                         DropdownMenuItem(text = { Text("Tháng này") }, onClick = { viewModel.setTimeFilter(TimeFilter.THIS_MONTH); timeExpanded = false })
-                        DropdownMenuItem(text = { Text("Khác (Chọn ngày)") }, onClick = {
-                            timeExpanded = false
-                            showDateRangePicker()
-                        })
+                        DropdownMenuItem(text = { Text("Khác (Chọn ngày)") }, onClick = { timeExpanded = false; showDateRangePicker() })
                     }
                 }
-
                 VerticalDivider(modifier = Modifier.fillMaxHeight().width(1.dp), color = Color.LightGray.copy(alpha = 0.5f))
-
-                // --- BÊN PHẢI: TRẠNG THÁI ---
                 Box(modifier = Modifier.weight(1f)) {
                     val statusText = if (statusFilter == StatusFilter.DELETED) "Đã xóa" else "Tất cả"
                     FilterButtonContent(text = statusText, modifier = Modifier.fillMaxSize().clickable { statusExpanded = true })
-
                     DropdownMenu(expanded = statusExpanded, onDismissRequest = { statusExpanded = false }) {
                         DropdownMenuItem(text = { Text("Tất cả (Đơn hàng)") }, onClick = { viewModel.setStatusFilter(StatusFilter.ALL); statusExpanded = false })
                         DropdownMenuItem(text = { Text("Hóa đơn đã xóa") }, onClick = { viewModel.setStatusFilter(StatusFilter.DELETED); statusExpanded = false })

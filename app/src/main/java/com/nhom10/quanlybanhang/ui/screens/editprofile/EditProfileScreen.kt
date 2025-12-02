@@ -69,7 +69,6 @@ fun EditProfileScreen(
         if (uri != null) {
             val base64String = uriToBase64(context, uri)
             viewModel.updateAvatar(base64String)
-
             navController.previousBackStackEntry?.savedStateHandle?.set("profile_updated", true)
         }
     }
@@ -78,11 +77,7 @@ fun EditProfileScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(
-                        "Chỉnh sửa thông tin cá nhân",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Text("Chỉnh sửa thông tin cá nhân", fontWeight = FontWeight.Bold, color = Color.White)
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -99,7 +94,8 @@ fun EditProfileScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(MaterialTheme.colorScheme.background)
+                    // Quay lại nền xám nhạt cố định
+                    .background(Color(0xFFF0F2F5))
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -167,17 +163,14 @@ fun EditProfileScreen(
                         else Toast.makeText(context, "Tài khoản Google không thể đổi tên", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text(
-                        uiState.userName,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(uiState.userName, color = Color.Gray)
                     if (!uiState.isGoogleLogin)
                         Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
                 }
 
                 // Email
                 EditProfileItem(title = "Email", onClick = { }) {
-                    Text(uiState.email, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(uiState.email, color = Color.Gray)
                 }
 
                 // Giới tính
@@ -185,7 +178,7 @@ fun EditProfileScreen(
                     title = "Giới tính",
                     onClick = { showGenderDialog = true }
                 ) {
-                    Text(uiState.gender, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(uiState.gender, color = Color.Gray)
                     Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
                 }
 
@@ -203,9 +196,8 @@ fun EditProfileScreen(
                             }
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
+                    // Quay lại nền trắng cố định
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
@@ -218,7 +210,7 @@ fun EditProfileScreen(
                     ) {
                         Text(
                             "Đăng xuất",
-                            color = MaterialTheme.colorScheme.onSurface,   // ⭐ TỰ ĐỔI THEO DARK MODE
+                            color = Color.Black, // Quay lại chữ đen cố định
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -245,7 +237,8 @@ fun EditProfileScreen(
         Dialog(onDismissRequest = { showGenderDialog = false }) {
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                // Quay lại nền trắng
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
                 Column(
@@ -257,14 +250,15 @@ fun EditProfileScreen(
                             onClick = { showGenderDialog = false },
                             modifier = Modifier.align(Alignment.CenterStart)
                         ) {
-                            Icon(Icons.Default.Close, null)
+                            Icon(Icons.Default.Close, null, tint = Color.Black)
                         }
 
                         Text(
                             "Giới tính",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.Center)
+                            modifier = Modifier.align(Alignment.Center),
+                            color = Color.Black
                         )
                     }
 
@@ -296,7 +290,8 @@ fun EditProfileScreen(
                         modifier = Modifier.clickable {
                             viewModel.updateGender("Không tiết lộ")
                             showGenderDialog = false
-                        }
+                        },
+                        color = Color.Gray
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -352,20 +347,19 @@ private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
 fun NameEditDialog(initialName: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
     var name by remember { mutableStateOf(initialName) }
     val maxLength = 50
+    val appBlueColor = Color(0xFF0088FF)
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
+            colors = CardDefaults.cardColors(containerColor = Color.White), // Quay lại trắng
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Tên nick", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Tên nick", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -373,13 +367,16 @@ fun NameEditDialog(initialName: String, onDismiss: () -> Unit, onSave: (String) 
                     value = name,
                     onValueChange = { if (it.length <= maxLength) name = it },
                     modifier = Modifier.fillMaxWidth(),
+                    // Quay lại màu mặc định
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        focusedContainerColor = Color(0xFFEEEEEE),
+                        unfocusedContainerColor = Color(0xFFEEEEEE),
+                        disabledContainerColor = Color(0xFFEEEEEE),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
+                        disabledIndicatorColor = Color.Transparent,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     ),
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true,
@@ -387,7 +384,8 @@ fun NameEditDialog(initialName: String, onDismiss: () -> Unit, onSave: (String) 
                         Text(
                             "${name.length}/$maxLength",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.Gray,
+                            modifier = Modifier.padding(end = 8.dp)
                         )
                     }
                 )
@@ -401,7 +399,7 @@ fun NameEditDialog(initialName: String, onDismiss: () -> Unit, onSave: (String) 
                     Button(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f).height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088FF)),
+                        colors = ButtonDefaults.buttonColors(containerColor = appBlueColor),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(Icons.Default.Close, "Hủy", tint = Color.White)
@@ -412,7 +410,7 @@ fun NameEditDialog(initialName: String, onDismiss: () -> Unit, onSave: (String) 
                     Button(
                         onClick = { onSave(name) },
                         modifier = Modifier.weight(1f).height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088FF)),
+                        colors = ButtonDefaults.buttonColors(containerColor = appBlueColor),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(Icons.Default.Check, "Lưu", tint = Color.White)
@@ -448,7 +446,8 @@ private fun EditProfileItem(
             .height(70.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        // Quay lại nền trắng
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -458,7 +457,7 @@ private fun EditProfileItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,   // ⭐ TỰ ĐỔI LIGHT/DARK
+                color = Color.Black, // Quay lại chữ đen
                 modifier = Modifier.weight(1f)
             )
 
