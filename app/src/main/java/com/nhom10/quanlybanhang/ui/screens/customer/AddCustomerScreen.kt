@@ -21,6 +21,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -32,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import java.io.ByteArrayOutputStream
@@ -76,6 +79,12 @@ fun AddCustomerScreen(
                         // SỬA: Logic nút Lưu
                         if (tenKhachHang.isBlank() || email.isBlank()) {
                             Toast.makeText(context, "Tên và SĐT là bắt buộc", Toast.LENGTH_SHORT).show()
+                            return@TextButton
+                        }
+                        // Kiểm tra định dạng số điện thoại (Chỉ chứa số, độ dài 10-11 số)
+                        val phoneRegex = "^[0-9]{10,11}$".toRegex()
+                        if (!email.matches(phoneRegex)) {
+                            Toast.makeText(context, "Số điện thoại không hợp lệ (phải là 10-11 số)", Toast.LENGTH_SHORT).show()
                             return@TextButton
                         }
                         val avatarString = if (imageUri != null) {
@@ -160,15 +169,31 @@ fun AddCustomerScreen(
                 // --- Khối 2: Các trường thông tin ---
                 CustomTextField(
                     value = tenKhachHang,
-                    onValueChange = { tenKhachHang = it },
+                    onValueChange = { newValue ->
+                        // LOGIC MỚI: Chỉ chấp nhận chuỗi nếu KHÔNG chứa số
+                        if (newValue.none { it.isDigit() }) {
+                            tenKhachHang = newValue
+                        }
+                    },
                     placeholder = "Tên khách hàng",
-                    backgroundColor = textFieldBgColor
+                    backgroundColor = textFieldBgColor,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text
+                    )
                 )
                 CustomTextField(
                     value = email,
-                    onValueChange = { email = it },
-                    placeholder = "Số điện thoại", // SỬA: Đổi placeholder
-                    backgroundColor = textFieldBgColor
+                    onValueChange = { newValue ->
+                        // Chỉ cho phép nhập số
+                        if (newValue.all { it.isDigit() }) {
+                            email = newValue
+                        }
+                    },
+                    placeholder = "Số điện thoại",
+                    backgroundColor = textFieldBgColor,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Phone // Hiện bàn phím số
+                    )
                 )
                 CustomTextField(
                     value = diaChi,
@@ -211,7 +236,8 @@ private fun CustomTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     backgroundColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     TextField(
         value = value,
@@ -227,7 +253,8 @@ private fun CustomTextField(
             disabledIndicatorColor = Color.Transparent
         ),
         shape = RoundedCornerShape(12.dp),
-        singleLine = false // Cho phép nhiều dòng (cho Ghi chú)
+        singleLine = false, // Cho phép nhiều dòng (cho Ghi chú)
+        keyboardOptions = keyboardOptions
     )
 }
 
