@@ -68,7 +68,7 @@ fun EditOrderItemScreen(
 
     // Chiết khấu % (Lấy từ item, mặc định 0)
     var discountStr by remember { mutableStateOf(formatter.format(selectedItem.chietKhau)) }
-
+    var showDeleteDialog by remember { mutableStateOf(false) }
     // [INIT] Tính toán % chiết khấu ban đầu khi mở màn hình
     LaunchedEffect(Unit) {
         if (originalPrice > 0) {
@@ -118,8 +118,8 @@ fun EditOrderItemScreen(
         bottomBar = {
             Button(
                 onClick = {
-                    orderViewModel.removeProductFromCart(selectedItem.productId)
-                    navController.popBackStack()
+                    // 2. SỬA SỰ KIỆN CLICK: Thay vì xóa ngay, hãy hiện dialog
+                    showDeleteDialog = true
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -230,6 +230,31 @@ fun EditOrderItemScreen(
                 modifier = Modifier.padding(top = 8.dp).align(Alignment.End)
             )
         }
+    }
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(text = "Xác nhận xóa") },
+            text = { Text(text = "Bạn có chắc muốn xóa sản phẩm này khỏi đơn hàng không?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Thực hiện xóa khi bấm "Đồng ý"
+                        orderViewModel.removeProductFromCart(selectedItem.productId)
+                        showDeleteDialog = false
+                        navController.popBackStack()
+                    }
+                ) {
+                    Text("Đồng ý", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Hủy", color = Color.Gray)
+                }
+            },
+            containerColor = Color.White // Hoặc màu theo theme
+        )
     }
 }
 
