@@ -1,8 +1,11 @@
 package com.nhom10.quanlybanhang
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,6 +28,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+
         val auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
         val startDestination = if (currentUser != null) Routes.HOME else Routes.LOGIN
@@ -32,6 +36,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             // 1. Khởi tạo ViewModel Cỡ chữ
             val fontSizeViewModel: FontSizeViewModel = viewModel()
+            val launcher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission(),
+                onResult = { isGranted ->
+                    if (isGranted) {
+                        Log.d("FCM", "Người dùng đã cấp quyền thông báo")
+                    } else {
+                        Log.d("FCM", "Người dùng từ chối quyền thông báo")
+                    }
+                }
+            )
 
             // 2. Truyền vào Theme để áp dụng toàn app (nếu Theme bạn hỗ trợ)
             QuanLyBanHangTheme(
