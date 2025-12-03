@@ -102,9 +102,7 @@ class ReportViewModel : ViewModel() {
                 order.status == "Đã xóa"
             } else {
                 order.status != "Đã xóa" // Mặc định là hiện đơn chưa xóa (Active)
-                // Nếu bạn muốn "Tất cả" bao gồm cả đã xóa thì bỏ điều kiện này,
-                // nhưng thường báo cáo mặc định chỉ tính đơn thành công.
-                // Ở đây tôi làm: Bên phải chọn "Tất cả" (hiện đơn active) hoặc "Đã xóa" (hiện đơn xóa).
+
             }
             inTimeRange && inStatus
         }

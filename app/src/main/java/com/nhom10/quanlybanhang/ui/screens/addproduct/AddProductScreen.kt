@@ -41,28 +41,28 @@ private fun uriToBase64(context: Context, uri: Uri): String {
 @Composable
 fun AddProductScreen(
     navController: NavController,
-    productViewModel: ProductViewModel // Sửa: Nhận ViewModel
+    productViewModel: ProductViewModel
 ) {
     val context = LocalContext.current
 
     // --- 1. STATE ẢNH CỤC BỘ (Dùng Uri để chọn, sau đó chuyển Base64 trong onSave) ---
-    // Vì BaseProductScreen mới nhận Base64, chúng ta cần state Base64 cho nó
+
     var currentImageData by remember { mutableStateOf("") }
 
 
-    // BaseProductScreen(navController: NavController) cũ đã bị loại bỏ,
+
     // sử dụng hàm chính với ViewModel.
 
     // Sử dụng BaseProductScreen mới
     BaseProductScreen(
         navController = navController,
         screenTitle = "Thêm mặt hàng",
-        initialProductData = null, // Thêm mới, không có dữ liệu ban đầu
+        initialProductData = null,
 
-        // Không truyền onDelete vì đây là màn hình Thêm mới
+
         onDelete = null,
 
-        // --- 2. TRUYỀN THAM SỐ XỬ LÝ ẢNH MỚI VÀO BASEPRODUCTSCREEN ---
+
         imageData = currentImageData, // Truyền Base64 hiện tại (ban đầu là rỗng)
 
         // Khi người dùng chọn ảnh mới, cập nhật state 'currentImageData'
@@ -77,9 +77,9 @@ fun AddProductScreen(
         // -----------------------------------------------------------------
 
 
-        // 3. Logic khi nhấn nút LƯU (Thêm sản phẩm)
+
         onSave = { newProduct ->
-            // --- BẮT ĐẦU LOGIC KIỂM TRA & LƯU ---
+
 
             // 3a. Chuẩn hóa dữ liệu
             val tenMatHang = newProduct.tenMatHang
@@ -88,19 +88,19 @@ fun AddProductScreen(
             val giaBanStr = newProduct.giaBan.toString().trim()
             val giaNhapStr = newProduct.giaNhap.toString().trim()
 
-            // 3b. KIỂM TRA RỖNG (Sử dụng dữ liệu từ newProduct)
+            // KIỂM TRA RỖNG (Sử dụng dữ liệu từ newProduct)
             if (tenMatHang.isBlank() || maMatHang.isBlank() || soLuongStr == "0.0" || giaBanStr == "0.0" || giaNhapStr == "0.0") {
                 Toast.makeText(context, "Vui lòng nhập đủ thông tin (Tên, Mã, Số lượng, Giá)", Toast.LENGTH_SHORT).show()
                 return@BaseProductScreen
             }
 
-            // 3c. KIỂM TRA ĐỊNH DẠNG SỐ & SỐ ÂM (Hàm BaseProductScreen đã chuyển sang Double, kiểm tra số âm)
+            // KIỂM TRA ĐỊNH DẠNG SỐ & SỐ ÂM (Hàm BaseProductScreen đã chuyển sang Double, kiểm tra số âm)
             if (newProduct.soLuong < 0 || newProduct.giaBan < 0 || newProduct.giaNhap < 0) {
                 Toast.makeText(context, "Số lượng và Giá không được âm!", Toast.LENGTH_SHORT).show()
                 return@BaseProductScreen
             }
 
-            // 3d. Xử lý ảnh (Đã được cập nhật Base64 từ state 'currentImageData')
+            //  Xử lý ảnh (Đã được cập nhật Base64 từ state 'currentImageData')
             val imageDataString = currentImageData
 
             // Kiểm tra nếu Base64 quá lớn (Cảnh báo)
@@ -108,13 +108,13 @@ fun AddProductScreen(
                 Toast.makeText(context, "Cảnh báo: Ảnh quá lớn!", Toast.LENGTH_LONG).show()
             }
 
-            // 3e. Tạo đối tượng Product cuối cùng
+            //  Tạo đối tượng Product cuối cùng
             // (Đảm bảo BaseProductScreen đã xử lý việc lấy giá trị số Double)
             val finalProduct = newProduct.copy(
                 imageData = imageDataString
             )
 
-            // 3f. Gọi ViewModel để lưu
+            // Gọi ViewModel để lưu
             productViewModel.addProduct(
                 product = finalProduct,
                 onSuccess = {

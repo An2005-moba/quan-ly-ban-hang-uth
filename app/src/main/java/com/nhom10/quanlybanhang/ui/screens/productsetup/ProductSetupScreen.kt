@@ -9,7 +9,7 @@ import androidx.compose.material.icons.Icons
 // Import các icon bạn cần
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Fastfood // Dùng icon này cho "Cá"
+import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.Routes
-import com.nhom10.quanlybanhang.viewmodel.ProductViewModel // Thêm import
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Image
@@ -44,19 +44,17 @@ fun ProductSetupScreen(
     var searchQuery by remember { mutableStateOf("") }
     val lightGrayBorder = Color.Black.copy(alpha = 0.2f)
 
-    // Sửa: Lấy danh sách từ ViewModel
     val productList by productViewModel.products.collectAsState()
 
-    // Sửa: Tải dữ liệu khi màn hình khởi chạy
+
     LaunchedEffect(key1 = true) {
         productViewModel.loadProducts()
     }
 
-    // Xóa: Dữ liệu mẫu
-    // val sampleProducts = listOf(...)
+
 
     Scaffold(
-        // === 1. TOP BAR (Giữ nguyên) ===
+        // === 1. TOP BAR
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -88,7 +86,7 @@ fun ProductSetupScreen(
                     .padding(paddingValues)
                     .background(Color(0xFFF0F2F5))
             ) {
-                // Thanh tìm kiếm (Giữ nguyên)
+                // Thanh tìm kiếm
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -194,7 +192,7 @@ private fun ProductListItem(
     )
 }
 
-// === THÊM HÀM NÀY (COPY TỪ HOME) ===
+
 private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
     if (base64String.isEmpty()) return null
     return try {

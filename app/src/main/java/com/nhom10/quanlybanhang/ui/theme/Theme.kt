@@ -40,7 +40,7 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun QuanLyBanHangTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = true,
     fontSizeViewModel: FontSizeViewModel? = null, // Thêm tham số
     content: @Composable () -> Unit

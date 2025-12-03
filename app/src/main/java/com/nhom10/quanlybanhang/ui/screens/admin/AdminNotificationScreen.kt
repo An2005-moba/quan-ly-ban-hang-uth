@@ -46,12 +46,12 @@ fun AdminNotificationScreen(navController: NavController) {
     var message by remember { mutableStateOf("") }
     var isSending by remember { mutableStateOf(false) }
 
-    // --- MÀU SẮC CHỦ ĐẠO CỦA APP (Lấy từ LoginScreen) ---
+
     val BluePrimary = Color(0xFF0088FF)
     val BackgroundColor = Color(0xFFF5F5F5) // Màu nền xám nhẹ cho sang
     val unfocusedBorderColor = Color.Black.copy(alpha = 0.2f)
 
-    // Cấu hình Project ID (Sửa lại nếu cần)
+    // Cấu hình Project ID
     val projectId = "quan-ly-ban-hang-uth"
 
     // Style cho TextField giống LoginScreen
@@ -216,7 +216,7 @@ fun AdminNotificationScreen(navController: NavController) {
     }
 }
 
-// --- LOGIC GỬI THÔNG BÁO (GIỮ NGUYÊN) ---
+
 fun sendFCMv1(context: Context, projectId: String, title: String, body: String, onResult: (Boolean, String?) -> Unit) {
     CoroutineScope(Dispatchers.IO).launch {
         try {

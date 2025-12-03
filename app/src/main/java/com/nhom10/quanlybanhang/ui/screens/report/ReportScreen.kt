@@ -34,19 +34,17 @@ fun ReportScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // --- CHANGED: ĐÃ XÓA FilterSection VÌ ĐÃ CHUYỂN LÊN TOP BAR ---
 
-        // --- 2. THẺ TÓM TẮT ---
         SummaryCards(uiState)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- 3. PHẦN HÓA ĐƠN ---
+
         InvoiceSection(uiState)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- 4. PHẦN THANH TOÁN ---
+
         PaymentSection(uiState)
     }
 }

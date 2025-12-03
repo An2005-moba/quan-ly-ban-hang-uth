@@ -75,7 +75,7 @@ fun HomeScreen(
 
     val reportViewModel: ReportViewModel = viewModel()
 
-    // --- XỬ LÝ TOAST NHANH ---
+
     // Biến lưu giữ Toast hiện tại để hủy nó trước khi hiện cái mới
     var currentToast by remember { mutableStateOf<Toast?>(null) }
 
@@ -209,7 +209,7 @@ fun HomeScreen(
                                 )
                             }
                         } else {
-                            // --- CẬP NHẬT: Truyền cartItems xuống để tính toán ---
+
                             ProductListForHome(
                                 products = filteredList,
                                 cartItems = cartItems, // Truyền danh sách giỏ hàng
@@ -239,7 +239,7 @@ val formatter = DecimalFormat("#,###")
 @Composable
 fun ProductListForHome(
     products: List<Product>,
-    cartItems: List<OrderItem>, // Thêm tham số này
+    cartItems: List<OrderItem>,
     onProductClick: (Product) -> Unit
 ) {
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Fastfood)
