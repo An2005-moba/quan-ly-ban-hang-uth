@@ -10,30 +10,41 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel // Import
 import com.google.firebase.auth.FirebaseAuth
 import com.nhom10.quanlybanhang.ui.theme.QuanLyBanHangTheme
-import com.nhom10.quanlybanhang.viewmodel.FontSizeViewModel
+import com.nhom10.quanlybanhang.viewmodel.FontSizeViewModel // Import
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseMessaging.getInstance().subscribeToTopic("all_users")
+            .addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    println("Đăng ký thất bại")
+                } else {
+                    println("Đăng ký thành công topic all_users")
+                }
+            }
 
         val auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
         val startDestination = if (currentUser != null) Routes.HOME else Routes.LOGIN
 
         setContent {
+            // 1. Khởi tạo ViewModel Cỡ chữ
             val fontSizeViewModel: FontSizeViewModel = viewModel()
 
+            // 2. Truyền vào Theme để áp dụng toàn app (nếu Theme bạn hỗ trợ)
             QuanLyBanHangTheme(
-                darkTheme = false,
                 fontSizeViewModel = fontSizeViewModel
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // 3. Truyền vào AppNavigation
                     AppNavigation(
                         startDestination = startDestination,
-                        fontSizeViewModel = fontSizeViewModel
+                        fontSizeViewModel = fontSizeViewModel // <-- Truyền ở đây
                     )
                 }
             }

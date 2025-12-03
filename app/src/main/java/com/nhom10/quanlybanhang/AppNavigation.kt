@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nhom10.quanlybanhang.data.repository.ProductRepositoryImpl
 import com.nhom10.quanlybanhang.data.repository.CustomerRepositoryImpl
 import com.nhom10.quanlybanhang.data.repository.OrderRepositoryImpl
+import com.nhom10.quanlybanhang.ui.screens.admin.AdminNotificationScreen
 import com.nhom10.quanlybanhang.viewmodel.CustomerViewModel
 import com.nhom10.quanlybanhang.viewmodel.CustomerViewModelFactory
 import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
@@ -63,6 +64,7 @@ object Routes {
     const val BANK_PAYMENT = "bank_payment_screen"
     const val HISTORY = "history_screen"
     const val BILL = "bill_screen"
+    const val ADMIN_NOTIFICATION = "admin_notification_screen"
     const val INVOICE = "invoice_screen" // Sửa lỗi typo dư dấu }
     fun invoiceRoute(khachTra: String, tienThua: String) = "invoice_screen/$khachTra/$tienThua"
     const val FONT_SIZE = "font_size_screen"
@@ -208,6 +210,9 @@ fun AppNavigation(
                 navController = navController,
                 fontSizeViewModel = fontSizeViewModel
             )
+        }
+        composable(Routes.ADMIN_NOTIFICATION) {
+            AdminNotificationScreen(navController = navController)
         }
 
     }

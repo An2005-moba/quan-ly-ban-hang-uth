@@ -34,6 +34,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
 import com.nhom10.quanlybanhang.R
 import com.nhom10.quanlybanhang.Routes
 import com.nhom10.quanlybanhang.viewmodel.LoginViewModel
@@ -53,6 +54,7 @@ fun LoginScreen(
     val errorColor = MaterialTheme.colorScheme.error
     val borderColor = Color(0xFF0088FF)
     val unfocusedBorderColor = Color.Black.copy(alpha = 0.2f)
+    val ADMIN_UID = "ZxTwpAPrkrd1BUiUspxK9TjrEMz2"
 
     // Cấu hình Google
     val gso = remember {
@@ -238,8 +240,17 @@ fun LoginScreen(
         uiState.loginResult?.let { message ->
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
             if (message == "Đăng nhập thành công!") {
-                navController.navigate(Routes.HOME) {
-                    popUpTo(Routes.LOGIN) { inclusive = true }
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                if (currentUser?.uid == ADMIN_UID) {
+                    // Nếu đúng là Admin -> Chuyển sang trang Admin
+                    navController.navigate(Routes.ADMIN_NOTIFICATION) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
+                } else {
+                    // Nếu là User thường -> Chuyển sang trang Home
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
                 }
             }
             loginViewModel.resetLoginResult()
