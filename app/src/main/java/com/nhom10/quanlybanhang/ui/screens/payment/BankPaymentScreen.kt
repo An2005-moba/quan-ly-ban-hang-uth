@@ -114,7 +114,7 @@ fun BankPaymentScreen(
                             OutlinedTextField(
                                 value = bankId,
                                 onValueChange = { bankId = it.uppercase() },
-                                label = { Text("Mã Ngân hàng (VD: MB, VCB)") },
+                                label = { Text("Mã Ngân hàng (VD: MB, VCB) hoặc tên Ngân hàng") },
                                 modifier = Modifier.fillMaxWidth()
                             )
                             OutlinedTextField(

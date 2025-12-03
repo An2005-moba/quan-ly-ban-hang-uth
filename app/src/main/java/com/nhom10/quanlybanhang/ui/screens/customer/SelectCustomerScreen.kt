@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.nhom10.quanlybanhang.Routes
+import java.text.Normalizer
+import java.util.regex.Pattern
 
 // XÓA: Data class mẫu (đã dùng model thật)
 // data class Customer(...)
@@ -132,14 +134,26 @@ fun SelectCustomerScreen(
                 )
 
                 // --- Danh sách khách hàng ---
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(1.dp) // Ngăn cách mỏng
-                ) {
-                    // SỬA: Lọc danh sách customers (thay vì dữ liệu mẫu)
-                    val filteredList = customers.filter {
-                        it.tenKhachHang.contains(searchQuery, ignoreCase = true) ||
-                                it.soDienThoai.contains(searchQuery, ignoreCase = true) // SỬA: dùng soDienThoai
+                LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    // --- ĐOẠN CODE LOGIC TÌM KIẾM MỚI ---
+                    val filteredList = customers.filter { customer ->
+                        // 1. Chuẩn hóa từ khóa tìm kiếm
+                        val cleanQuery = normalizeString(searchQuery)
+
+                        // 2. Chuẩn hóa tên khách hàng trong data
+                        val cleanName = normalizeString(customer.tenKhachHang)
+
+                        // 3. Chuẩn hóa số điện thoại (chỉ giữ lại số)
+                        val cleanPhone = customer.soDienThoai.replace("\\D".toRegex(), "") // Xóa mọi thứ không phải số
+                        val queryPhone = searchQuery.replace("\\D".toRegex(), "") // Xóa mọi thứ không phải số trong từ khóa
+
+                        // 4. So sánh
+                        // - Tên: So sánh chuỗi đã chuẩn hóa
+                        // - SĐT: Nếu người dùng nhập số, so sánh số
+                        val isNameMatch = cleanName.contains(cleanQuery)
+                        val isPhoneMatch = if (queryPhone.isNotEmpty()) cleanPhone.contains(queryPhone) else false
+
+                        isNameMatch || isPhoneMatch
                     }
 
                     items(filteredList) { customer ->
@@ -281,4 +295,15 @@ private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
         val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
         BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
     } catch (e: Exception) { null }
+}
+// Hàm tiện ích: Chuyển chuỗi về dạng không dấu, viết thường, xóa khoảng trắng
+fun normalizeString(input: String): String {
+    val temp = Normalizer.normalize(input, Normalizer.Form.NFD)
+    val pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+")
+    val result = pattern.matcher(temp).replaceAll("")
+        .lowercase() // Chuyển về chữ thường
+        .replace("đ", "d") // Xử lý chữ đ
+        .replace("Đ", "d") // Xử lý chữ Đ
+        .replace("\\s+".toRegex(), "") // Xóa toàn bộ khoảng trắng
+    return result
 }
