@@ -1,8 +1,7 @@
 package com.nhom10.quanlybanhang.ui.screens.home
 
 import android.app.DatePickerDialog
-import android.graphics.BitmapFactory
-import android.util.Base64
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.nhom10.quanlybanhang.Routes
+import com.nhom10.quanlybanhang.data.model.OrderItem
 import com.nhom10.quanlybanhang.data.model.Product
 import com.nhom10.quanlybanhang.ui.components.LetterAvatar
 import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
@@ -50,6 +50,9 @@ import com.nhom10.quanlybanhang.viewmodel.StatusFilter
 import com.nhom10.quanlybanhang.viewmodel.TimeFilter
 import java.text.DecimalFormat
 import java.util.Calendar
+import android.graphics.BitmapFactory
+import android.util.Base64
+import androidx.compose.ui.draw.alpha
 
 data class BottomNavItem(val label: String, val icon: ImageVector)
 
@@ -65,7 +68,23 @@ fun HomeScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val productList by productViewModel.products.collectAsState()
 
+    val context = LocalContext.current
+    val cartItems by orderViewModel.cartItems.collectAsState()
+    val cartCount = cartItems.sumOf { it.soLuong }
+
     val reportViewModel: ReportViewModel = viewModel()
+
+    // --- XỬ LÝ TOAST NHANH ---
+    // Biến lưu giữ Toast hiện tại để hủy nó trước khi hiện cái mới
+    var currentToast by remember { mutableStateOf<Toast?>(null) }
+
+    fun showFastToast(message: String) {
+        currentToast?.cancel() // Hủy Toast cũ ngay lập tức
+        val toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
+        toast.show()
+        currentToast = toast // Lưu lại Toast mới
+    }
+    // -------------------------
 
     val filteredList = remember(productList, searchQuery) {
         if (searchQuery.isBlank()) {
@@ -100,6 +119,7 @@ fun HomeScreen(
                         else -> "Bán hàng"
                     },
                     showShoppingCart = (selectedItemIndex == 0),
+                    cartCount = cartCount,
                     appBlueColor = appBlueColor,
                     navController = navController
                 )
@@ -109,13 +129,19 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate(Routes.PRODUCT_SETUP) },
-                modifier = Modifier.offset(y = 45.dp).size(60.dp),
+                modifier = Modifier
+                    .offset(y = 45.dp)
+                    .size(60.dp),
                 containerColor = appBlueColor,
                 contentColor = Color.White,
                 shape = CircleShape,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 10.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Thêm", modifier = Modifier.size(32.dp))
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Thêm",
+                    modifier = Modifier.size(32.dp)
+                )
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
@@ -126,17 +152,36 @@ fun HomeScreen(
                 containerColor = Color.White,
                 tonalElevation = 8.dp
             ) {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         bottomNavItems.take(2).forEachIndexed { index, item ->
-                            BottomBarItem(item, selectedItemIndex == index, appBlueColor) { selectedItemIndex = index }
+                            BottomBarItem(
+                                item,
+                                selectedItemIndex == index,
+                                appBlueColor
+                            ) { selectedItemIndex = index }
                         }
                     }
                     Spacer(modifier = Modifier.width(70.dp))
-                    Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         bottomNavItems.drop(2).forEachIndexed { idx, item ->
                             val index = idx + 2
-                            BottomBarItem(item, selectedItemIndex == index, appBlueColor) { selectedItemIndex = index }
+                            BottomBarItem(
+                                item,
+                                selectedItemIndex == index,
+                                appBlueColor
+                            ) { selectedItemIndex = index }
                         }
                     }
                 }
@@ -161,7 +206,20 @@ fun HomeScreen(
                                 )
                             }
                         } else {
-                            ProductListForHome(products = filteredList, onProductClick = { })
+                            // --- CẬP NHẬT: Truyền cartItems xuống để tính toán ---
+                            ProductListForHome(
+                                products = filteredList,
+                                cartItems = cartItems, // Truyền danh sách giỏ hàng
+                                onProductClick = { product ->
+                                    val isAdded = orderViewModel.addProductToCart(product)
+                                    if (isAdded) {
+                                        // Không cần Toast mỗi lần thêm thành công cho đỡ rối, hoặc dùng showFastToast nếu thích
+                                        // showFastToast("Đã thêm ${product.tenMatHang}")
+                                    } else {
+                                        showFastToast("Đã hết mặt hàng này!")
+                                    }
+                                }
+                            )
                         }
                     }
                     1 -> ReportScreen(viewModel = reportViewModel)
@@ -176,29 +234,94 @@ fun HomeScreen(
 val formatter = DecimalFormat("#,###")
 
 @Composable
-fun ProductListForHome(products: List<Product>, onProductClick: (Product) -> Unit) {
+fun ProductListForHome(
+    products: List<Product>,
+    cartItems: List<OrderItem>, // Thêm tham số này
+    onProductClick: (Product) -> Unit
+) {
     val placeholderPainter = rememberVectorPainter(image = Icons.Default.Fastfood)
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         items(products) { product ->
-            Card(modifier = Modifier.fillMaxWidth().height(90.dp).clickable { onProductClick(product) }, elevation = CardDefaults.cardElevation(2.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                Row(modifier = Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            // --- LOGIC TRỪ LÙI SỐ LƯỢNG HIỂN THỊ ---
+            val itemInCart = cartItems.find { it.productId == product.documentId }
+            val quantityInCart = itemInCart?.soLuong ?: 0
+            val displayStock = product.soLuong - quantityInCart
+            // ----------------------------------------
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+                    .clickable { onProductClick(product) },
+                elevation = CardDefaults.cardElevation(2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     val imageBitmap = remember(product.imageData) { base64ToImageBitmap(product.imageData) }
-                    Box(modifier = Modifier.aspectRatio(1f).fillMaxHeight().clip(RoundedCornerShape(8.dp)).background(Color.LightGray.copy(alpha = 0.3f)), contentAlignment = Alignment.Center) {
+
+                    // Box ảnh (làm mờ nếu hết hàng hiển thị)
+                    Box(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.LightGray.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         if (imageBitmap != null) {
-                            Image(bitmap = imageBitmap, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                            Image(
+                                bitmap = imageBitmap,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize().run {
+                                    if (displayStock <= 0) alpha(0.5f) else this // Mờ ảnh nếu hết
+                                },
+                                contentScale = ContentScale.Crop
+                            )
                         } else {
                             Icon(painter = placeholderPainter, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))
                         }
                     }
+
                     Spacer(modifier = Modifier.width(12.dp))
+
                     Column(modifier = Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
-                        Text(product.tenMatHang, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                        Text("Còn: ${formatter.format(product.soLuong)} ${product.donViTinh}", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            product.tenMatHang,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            color = if (displayStock <= 0) Color.Gray else Color.Black
+                        )
+
+                        // Hiển thị số lượng đã trừ lùi
+                        if (displayStock > 0) {
+                            Text(
+                                "Còn: ${formatter.format(displayStock)} ${product.donViTinh}",
+                                color = Color.Gray,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        } else {
+                            Text(
+                                "Hết hàng",
+                                color = Color.Red,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
+
                     Text(
                         text = "${formatter.format(product.giaBan)} đ",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0088FF)
+                        color = if (displayStock > 0) Color(0xFF0088FF) else Color.Gray
                     )
                 }
             }
@@ -340,10 +463,22 @@ private fun FilterButtonContent(text: String, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DefaultTopBar(title: String, showShoppingCart: Boolean, appBlueColor: Color, navController: NavController) {
+private fun DefaultTopBar(title: String, showShoppingCart: Boolean, cartCount: Int, appBlueColor: Color, navController: NavController) {
     CenterAlignedTopAppBar(
         title = { Text(title, fontWeight = FontWeight.Bold) },
-        actions = { if (showShoppingCart) IconButton(onClick = { navController.navigate(Routes.CART) }) { Icon(Icons.Default.ShoppingCart, null, tint = Color.White) } },
+        actions = {
+            if (showShoppingCart) {
+                IconButton(onClick = { navController.navigate(Routes.CART) }) {
+                    BadgedBox(badge = {
+                        if (cartCount > 0) {
+                            Badge(containerColor = Color.Red, contentColor = Color.White) { Text(cartCount.toString()) }
+                        }
+                    }) {
+                        Icon(Icons.Default.ShoppingCart, null, tint = Color.White)
+                    }
+                }
+            }
+        },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = appBlueColor, titleContentColor = Color.White, actionIconContentColor = Color.White)
     )
 }
