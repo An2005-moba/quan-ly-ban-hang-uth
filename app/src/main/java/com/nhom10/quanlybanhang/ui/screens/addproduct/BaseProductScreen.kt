@@ -4,11 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape // Thêm
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Delete // Import biểu tượng Delete
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,7 +20,48 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.nhom10.quanlybanhang.data.model.Product
+import com.nhom10.quanlybanhang.data.model.Product // Đảm bảo đã import Product
+import android.net.Uri // Thêm
+import androidx.activity.compose.rememberLauncherForActivityResult // Thêm
+import androidx.activity.result.contract.ActivityResultContracts // Thêm
+import androidx.compose.ui.layout.ContentScale // Thêm
+import coil.compose.AsyncImage // Thêm
+import android.util.Base64 // Thêm
+import androidx.compose.ui.platform.LocalContext // Thêm
+import android.content.Context // Thêm
+import java.io.ByteArrayOutputStream // Thêm
+import androidx.compose.ui.unit.sp // Thêm
+import android.graphics.BitmapFactory // <--- THÊM
+import android.graphics.Bitmap
+
+/**
+ * Hàm chuyển đổi Uri ảnh thành chuỗi Base64
+ */
+private fun uriToBase64(context: Context, uri: Uri): String {
+    return try {
+        // 1. Lấy InputStream từ Uri
+        val inputStream = context.contentResolver.openInputStream(uri)
+
+        // 2. Decode InputStream thành Bitmap (để có thể nén)
+        val bitmap = BitmapFactory.decodeStream(inputStream)
+        inputStream?.close()
+
+        if (bitmap == null) return ""
+
+        val outputStream = ByteArrayOutputStream()
+
+        // 3. NÉN ẢNH: Nén Bitmap thành JPEG với chất lượng 70%
+        // (Đây là bước giải quyết lỗi crash do OOM)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+
+        // 4. Chuyển đổi mảng byte đã nén sang Base64
+        return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        ""
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,12 +70,17 @@ fun BaseProductScreen(
     screenTitle: String,
     initialProductData: Product? = null,
     onSave: (Product) -> Unit,
-    // THÊM: Tham số tùy chọn cho hành động xóa. Chỉ dùng cho màn hình Chỉnh sửa.
-    onDelete: (() -> Unit)? = null
+    onDelete: (() -> Unit)? = null,
+
+    // --- CÁC THAM SỐ XỬ LÝ ẢNH ĐƯỢC THÊM VÀO ---
+    imageData: String, // Chuỗi Base64 hiện tại (ảnh cũ hoặc mới)
+    onImageSelected: (String) -> Unit, // Hàm được gọi khi chọn ảnh mới (trả về Base64)
+    onImageRemove: () -> Unit // Hàm được gọi khi muốn xóa ảnh
 ) {
     val appBlueColor = Color(0xFF0088FF)
+    val context = LocalContext.current
 
-    // State các trường
+    // State các trường (CHÚ Ý: ĐÃ XÓA 'var imageData' Ở ĐÂY)
     var tenMatHang by remember { mutableStateOf(initialProductData?.tenMatHang.orEmpty()) }
     var maMatHang by remember { mutableStateOf(initialProductData?.maMatHang.orEmpty()) }
     var soLuong by remember { mutableStateOf(initialProductData?.soLuong?.toString() ?: "0") }
@@ -42,11 +89,20 @@ fun BaseProductScreen(
     var donViTinh by remember { mutableStateOf(initialProductData?.donViTinh ?: "Kg") }
     var apDungThue by remember { mutableStateOf(initialProductData?.apDungThue ?: true) }
     var ghiChu by remember { mutableStateOf(initialProductData?.ghiChu.orEmpty()) }
-    var imageData by remember { mutableStateOf(initialProductData?.imageData.orEmpty()) }
 
     // Dropdown
     val donViOptions = listOf("Cái", "Chai", "Đôi", "Hộp", "Kg", "Lọ", "Thùng")
     var donViExpanded by remember { mutableStateOf(false) }
+
+    // --- LAUNCHER CHỌN ẢNH ---
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val base64 = uriToBase64(context, uri)
+            onImageSelected(base64) // GỌI CALLBACK ĐỂ CẬP NHẬT ẢNH MỚI
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -61,8 +117,7 @@ fun BaseProductScreen(
                     }
                 },
                 actions = {
-                    // THÊM NÚT XÓA Ở ĐÂY
-                    // Nút xóa chỉ hiển thị nếu có hành động onDelete được truyền vào (dùng cho EditProductScreen)
+                    // Nút XÓA
                     onDelete?.let {
                         IconButton(onClick = it) {
                             Icon(
@@ -85,7 +140,7 @@ fun BaseProductScreen(
                             donViTinh = donViTinh,
                             apDungThue = apDungThue,
                             ghiChu = ghiChu,
-                            imageData = imageData
+                            imageData = imageData // <--- SỬ DỤNG 'imageData' ĐƯỢC TRUYỀN VÀO
                         )
                         onSave(product)
                     }) {
@@ -108,33 +163,32 @@ fun BaseProductScreen(
                     .background(Color(0xFFF0F2F5))
                     .verticalScroll(rememberScrollState())
             ) {
-                // Ảnh sơ bộ (placeholder)
+                // --- VÙNG HIỂN THỊ VÀ CHỌN ẢNH (SỬ DỤNG COMPOSABLE PHỤ TRỢ MỚI) ---
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(Color.LightGray.copy(alpha = 0.5f))
-                            .clickable { /* TODO: chọn ảnh */ },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.Image,
-                            contentDescription = "Thêm ảnh",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
+                    ProductImageUploader(
+                        imageData = imageData, // Truyền dữ liệu ảnh hiện tại
+                        onImageClick = {
+                            // Mở trình chọn ảnh khi click
+                            imagePickerLauncher.launch(
+                                androidx.activity.result.PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
+                        },
+                        onImageRemove = onImageRemove // Truyền hàm xóa ảnh
+                    )
                 }
 
+                // ... (Các trường thông tin khác giữ nguyên)
                 Column(
                     modifier = Modifier
                         .background(Color.White)
                         .padding(horizontal = 16.dp)
                 ) {
+                    // ... (Các InfoTextField giữ nguyên)
                     InfoTextField("Tên mặt hàng", tenMatHang) { tenMatHang = it }
                     Divider()
                     InfoTextField("Mã mặt hàng", maMatHang) { maMatHang = it }
@@ -159,7 +213,7 @@ fun BaseProductScreen(
                     InfoRowWithSwitch("Áp dụng thuế", apDungThue) { apDungThue = it }
                 }
 
-                // Ghi chú
+                // Ghi chú (giữ nguyên)
                 Spacer(modifier = Modifier.height(16.dp))
                 TextField(
                     value = ghiChu,
@@ -181,6 +235,56 @@ fun BaseProductScreen(
     )
 }
 
+// --- COMPOSABLE PHỤ TRỢ MỚI: HIỂN THỊ VÀ XỬ LÝ ẢNH ---
+@Composable
+fun ProductImageUploader(
+    imageData: String,
+    onImageClick: () -> Unit,
+    onImageRemove: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(120.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.LightGray.copy(alpha = 0.5f))
+            .clickable(onClick = onImageClick), // Click để chọn/thay ảnh
+        contentAlignment = Alignment.Center
+    ) {
+        if (imageData.isEmpty()) {
+            // Trường hợp không có ảnh
+            Icon(
+                imageVector = Icons.Default.Image,
+                contentDescription = "Thêm ảnh",
+                tint = Color.Gray,
+                modifier = Modifier.size(40.dp)
+            )
+        } else {
+            // Trường hợp có ảnh, hiển thị Base64
+            // Chú ý: Coil/AsyncImage có thể load Base64 string hoặc ByteArray sau khi decode
+            AsyncImage(
+                model = Base64.decode(imageData, Base64.DEFAULT),
+                contentDescription = "Ảnh sản phẩm",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            // Nút Xóa ảnh
+            IconButton(
+                onClick = onImageRemove,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(percent = 50))
+                    .size(24.dp)
+            ) {
+                Text("X", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+
+// --- CÁC HÀM COMPOSABLE PHỤ TRỢ CŨ (GIỮ NGUYÊN) ---
 @Composable
 private fun InfoTextField(label: String, value: String, onValueChange: (String) -> Unit) {
     TextField(

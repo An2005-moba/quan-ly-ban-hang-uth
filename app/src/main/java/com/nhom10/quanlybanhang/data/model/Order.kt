@@ -14,6 +14,7 @@ data class OrderItem(
     val giaBan: Double = 0.0,
     val giaVon: Double = 0.0, // THÊM: Lưu giá vốn tại thời điểm bán để tính lãi chính xác
     val soLuong: Int = 1,
+    val thue: Double = 0.0,
     val donViTinh: String = "Cái",
     val chietKhau: Double = 0.0,
     val apDungThue: Boolean = false

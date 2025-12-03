@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.data.model.Order
 import com.nhom10.quanlybanhang.data.model.OrderItem
-import com.nhom10.quanlybanhang.viewmodel.OrderViewModel // Cần import ViewModel
+import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,12 +28,11 @@ import java.util.*
 @Composable
 fun BillDetailScreen(
     navController: NavController,
-    orderViewModel: OrderViewModel // ĐÃ THÊM: Truyền OrderViewModel vào
+    orderViewModel: OrderViewModel
 ) {
     val appBlue = Color(0xFF3388FF)
     val grayBackground = Color(0xFFF0F2F5)
 
-    // Lấy đối tượng Order từ savedStateHandle
     val order = navController.previousBackStackEntry?.savedStateHandle?.get<Order>("order")
 
     if (order == null) {
@@ -51,12 +50,8 @@ fun BillDetailScreen(
         sdf.format(Date(order.date))
     }
 
-    // Hàm xử lý khi nhấn nút Xóa
     val onDeleteClick: () -> Unit = {
-        // 1. Gọi hàm xóa Order từ ViewModel
         orderViewModel.deleteOrder(order.id)
-
-        // 2. Quay lại màn hình lịch sử sau khi xóa
         navController.popBackStack()
     }
 
@@ -75,7 +70,7 @@ fun BillDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onDeleteClick) { // ĐÃ SỬA: Gán hàm onDeleteClick
+                    IconButton(onClick = onDeleteClick) {
                         Icon(Icons.Default.Delete, contentDescription = "Xóa hóa đơn", tint = Color.White)
                     }
                 }
@@ -108,6 +103,7 @@ fun BillDetailScreen(
                 ) {
                     Text("Danh sách món", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
                     order.items.forEach { item ->
+                        // Sử dụng logic tính toán dựa trên % chiết khấu
                         ProductDetailRow(item)
                         HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 4.dp))
                     }
@@ -117,13 +113,24 @@ fun BillDetailScreen(
             // 3. Tổng kết tiền
             item {
                 Spacer(Modifier.height(8.dp))
+
+                // [CẬP NHẬT] Tính toán SubTotal (Tổng tiền hàng hóa) dựa trên % chiết khấu
+                val subTotalAmount = remember(order.items) {
+                    order.items.sumOf { item ->
+                        val itemDiscountRate = item.chietKhau / 100.0
+                        val finalPrice = item.giaBan * (1 - itemDiscountRate)
+                        finalPrice * item.soLuong
+                    }
+                }
+
                 BillSummaryCard(
                     totalAmount = order.tongTien,
                     receivedAmount = order.khachTra,
                     changeAmount = order.tienThua,
                     discount = order.chietKhau,
                     surcharge = order.phuPhi,
-                    appBlue = appBlue
+                    appBlue = appBlue,
+                    subTotal = subTotalAmount
                 )
             }
         }
@@ -152,6 +159,14 @@ fun BillInfoCard(orderId: String, dateTime: String, customer: String) {
 
 @Composable
 fun ProductDetailRow(item: OrderItem) {
+    // [CẬP NHẬT] Tính toán dựa trên % chiết khấu
+    val itemDiscountRate = item.chietKhau / 100.0 // Chiết khấu % (ví dụ: 10.0 -> 0.1)
+    val discountedPrice = item.giaBan * (1 - itemDiscountRate) // Giá sau chiết khấu cho 1 đơn vị
+    val total = discountedPrice * item.soLuong // Thành tiền
+
+    // Số tiền chiết khấu thực tế cho 1 đơn vị
+    val discountAmountPerUnit = item.giaBan * itemDiscountRate
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,33 +175,42 @@ fun ProductDetailRow(item: OrderItem) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(item.tenMatHang, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+
+            // Hiển thị cấu trúc (Giá gốc - Chiết khấu Tiền) x Số lượng ĐVT
             Text(
-                "${item.giaBan.formatVND()} x ${item.soLuong} ${item.donViTinh}",
+                "(${item.giaBan.formatVND()} - ${discountAmountPerUnit.formatVND()}) x ${item.soLuong} ${item.donViTinh}",
                 color = Color.Gray,
                 fontSize = 13.sp
             )
         }
+
+        // Hiển thị THÀNH TIỀN
         Text(
-            (item.giaBan * item.soLuong).formatVND(),
+            total.formatVND(),
             fontWeight = FontWeight.Medium,
             color = Color.Black
         )
     }
 }
 
+
 @Composable
 fun BillSummaryCard(
     totalAmount: Double,
     receivedAmount: Double,
     changeAmount: Double,
-    discount: Double,
-    surcharge: Double,
-    appBlue: Color
+    discount: Double, // Chiết khấu toàn đơn (%)
+    surcharge: Double, // Phụ phí (số tiền)
+    appBlue: Color,
+    subTotal: Double // TỔNG TIỀN HÀNG HÓA (Đã tính lại)
 ) {
+    // 1. Tính toán Thuế (10% trên SubTotal)
+    val taxRate = 0.10
+    val taxAmount = subTotal * taxRate
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            // [ĐÃ SỬA] Tách padding horizontal và bottom ra
             .padding(horizontal = 16.dp)
             .padding(bottom = 24.dp),
         shape = RoundedCornerShape(12.dp),
@@ -194,18 +218,32 @@ fun BillSummaryCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            if (discount > 0) {
-                SummaryRow("Giảm giá", "$discount%")
-            }
-            if (surcharge > 0) {
-                SummaryRow("Phụ phí", surcharge.formatVND())
+
+            // HIỂN THỊ CÁC MỤC BỔ SUNG
+            SummaryRow("Thuế (${(taxRate * 100).toInt()}%)", taxAmount.formatVND())
+            SummaryRow("Phụ phí", surcharge.formatVND())
+            SummaryRow("Chiết khấu", "${discount.toInt()}%")
+
+            // Ghi chú
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Ghi chú", color = Color.Gray)
+                Checkbox(checked = false, onCheckedChange = { /* Do nothing */ }, enabled = false)
             }
 
+
+            HorizontalDivider(Modifier.padding(vertical = 12.dp))
+
+            // HIỂN THỊ: Khách trả và Tiền thừa
             SummaryRow("Khách trả", receivedAmount.formatVND())
             SummaryRow("Tiền thừa", changeAmount.formatVND())
 
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
 
+            // TỔNG TIỀN CUỐI CÙNG
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("TỔNG TIỀN", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Text(totalAmount.formatVND(), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = appBlue)

@@ -1,313 +1,25 @@
 package com.nhom10.quanlybanhang.ui.screens.addproduct
 
-
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Image // Icon giữ chỗ cho ảnh
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
-import android.net.Uri // <-- Thêm
-import androidx.activity.compose.rememberLauncherForActivityResult // <-- Thêm
-import androidx.activity.result.contract.ActivityResultContracts // <-- Thêm
-import androidx.compose.ui.layout.ContentScale // <-- Thêm
-import coil.compose.AsyncImage
-import android.util.Base64
-import android.widget.Toast
-
-import androidx.compose.ui.platform.LocalContext // Thêm import
-import com.nhom10.quanlybanhang.data.model.Product // Thêm import
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.navigation.NavController
+import com.nhom10.quanlybanhang.data.model.Product
+import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
+
+import android.net.Uri // Thêm
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import android.content.Context
-
 import java.io.ByteArrayOutputStream
+import android.util.Base64
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AddProductScreen(
-    navController: NavController,
-    productViewModel: ProductViewModel // Sửa: Nhận ViewModel
-) {
-    val appBlueColor = Color(0xFF0088FF)
-    val context = LocalContext.current // Thêm: Để dùng Toast
-
-    // Biến state cho các trường
-    var tenMatHang by remember { mutableStateOf("") }
-    var maMatHang by remember { mutableStateOf("") }
-    var soLuong by remember { mutableStateOf("") }
-    var giaBan by remember { mutableStateOf("") }
-    var giaNhap by remember { mutableStateOf("") }
-    var donViTinh by remember { mutableStateOf("Kg") }
-    var apDungThue by remember { mutableStateOf(true) }
-    var ghiChu by remember { mutableStateOf("") }
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var donViExpanded by remember { mutableStateOf(false) }
-    val donViOptions = listOf("Cái", "Chai", "Đôi", "Hộp", "Kg", "Lọ", "Thùng")
-
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        imageUri = uri
-    }
-
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text("Thêm mặt hàng", fontWeight = FontWeight.Bold)
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, "Quay lại")
-                    }
-                },
-                actions = {
-                    TextButton(
-                        onClick = {
-                            // === THAY ĐỔI LOGIC LƯU TẠI ĐÂY ===
-
-                            // 1. Chuyển đổi Uri sang Base64
-                            val cleanGiaBan = giaBan.replace(".", "").replace(",", "").trim()
-                            val cleanGiaNhap = giaNhap.replace(".", "").replace(",", "").trim()
-                            val cleanSoLuong = soLuong.trim()
-
-                            // --- 2. KIỂM TRA RỖNG (Bắt buộc nhập) ---
-                            if (tenMatHang.isBlank() || maMatHang.isBlank() || cleanSoLuong.isBlank() || cleanGiaBan.isBlank() || cleanGiaNhap.isBlank()) {
-                                Toast.makeText(context, "Vui lòng nhập đủ thông tin (Tên, Mã, Số lượng, Giá)", Toast.LENGTH_SHORT).show()
-                                return@TextButton
-                            }
-
-                            // --- 3. KIỂM TRA ĐỊNH DẠNG SỐ & SỐ ÂM ---
-                            val sl = cleanSoLuong.toDoubleOrNull()
-                            val gb = cleanGiaBan.toDoubleOrNull()
-                            val gn = cleanGiaNhap.toDoubleOrNull()
-
-                            if (sl == null || gb == null || gn == null) {
-                                Toast.makeText(context, "Số lượng và Giá phải là số hợp lệ!", Toast.LENGTH_SHORT).show()
-                                return@TextButton
-                            }
-
-                            if (sl < 0 || gb < 0 || gn < 0) {
-                                Toast.makeText(context, "Số lượng và Giá không được âm!", Toast.LENGTH_SHORT).show()
-                                return@TextButton
-                            }
-
-                            // --- 4. XỬ LÝ ẢNH & LƯU (Code cũ giữ nguyên) ---
-                            val imageDataString = if (imageUri != null) {
-                                uriToBase64(context, imageUri!!)
-                            } else {
-                                ""
-                            }
-
-                            // Kiểm tra nếu Base64 quá lớn (Cảnh báo)
-                            if (imageDataString.length * 2 > 800_000) { // Ước tính ~800KB
-                                Toast.makeText(context, "Cảnh báo: Ảnh quá lớn!", Toast.LENGTH_LONG).show()
-                                // Bạn có thể return@TextButton ở đây nếu muốn chặn
-                            }
-
-                            // 2. Chuyển đổi kiểu dữ liệu
-                            val soLuongDouble = soLuong.toDoubleOrNull() ?: 0.0
-                            val giaBanDouble = giaBan.replace(".", "").toDoubleOrNull() ?: 0.0
-                            val giaNhapDouble = giaNhap.replace(".", "").toDoubleOrNull() ?: 0.0
-
-                            // 3. Tạo đối tượng Product với imageData
-                            val newProduct = Product(
-                                tenMatHang = tenMatHang,
-                                maMatHang = maMatHang,
-                                soLuong = sl,
-                                giaBan = gb,
-                                giaNhap = gn,
-                                donViTinh = donViTinh,
-                                apDungThue = apDungThue,
-                                ghiChu = ghiChu,
-                                imageData = imageDataString // <-- GÁN BASE64 VÀO ĐÂY
-                            )
-
-                            // 4. Gọi ViewModel để lưu (Hàm đã được đơn giản hóa)
-                            productViewModel.addProduct(
-                                product = newProduct, // Chỉ cần truyền product
-                                onSuccess = {
-                                    Toast.makeText(context, "Thêm thành công!", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
-                                },
-                                onFailure = { e ->
-                                    Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
-                                }
-                            )
-                        }) {
-                        Text("Lưu", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = appBlueColor,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
-            )
-        },
-
-        // === 2. NỘI DUNG CHÍNH (Giữ nguyên) ===
-        content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(Color(0xFFF0F2F5))
-                    .verticalScroll(rememberScrollState())
-            ) {
-                // --- Khối 1: Upload ảnh (ĐÃ SỬA) ---
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.LightGray.copy(alpha = 0.5f))
-                            .clickable {
-                                // MỞ TRÌNH CHỌN ẢNH
-                                imagePickerLauncher.launch(
-                                    androidx.activity.result.PickVisualMediaRequest(
-                                        ActivityResultContracts.PickVisualMedia.ImageOnly
-                                    )
-                                )
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // SỬA LẠI:
-                        if (imageUri == null) {
-                            // Nếu chưa chọn ảnh, hiện Icon
-                            Icon(
-                                imageVector = Icons.Default.Image,
-                                contentDescription = "Thêm ảnh",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(40.dp)
-                            )
-                        } else {
-                            // Nếu đã chọn ảnh, hiển thị ảnh
-                            AsyncImage(
-                                model = imageUri,
-                                contentDescription = "Ảnh đã chọn",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop // Cắt ảnh vừa khung
-                            )
-                        }
-                    }
-                }
-
-                // --- Khối 2: Các trường thông tin (dùng TextField) ---
-                Column(
-                    modifier = Modifier
-                        .background(Color.White)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    InfoTextField(label = "Tên mặt hàng", value = tenMatHang, onValueChange = { tenMatHang = it })
-                    Divider()
-                    InfoTextField(label = "Mã mặt hàng", value = maMatHang, onValueChange = { maMatHang = it })
-                    Divider()
-                    InfoTextField(
-                        label = "Số lượng",
-                        value = soLuong,
-                        onValueChange = { soLuong = it },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
-                    )
-                    Divider()
-                    InfoTextField(
-                        label = "Giá bán",
-                        value = giaBan,
-                        onValueChange = { giaBan = it },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
-                    )
-                    Divider()
-                    InfoTextField(
-                        label = "Giá nhập",
-                        value = giaNhap,
-                        onValueChange = { giaNhap = it },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
-                    )
-
-                    // Mục "Đơn vị tính" (có mũi tên)
-                    Box {
-                        // Đây là hàng clickable
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { donViExpanded = true } // Nhấn để MỞ
-                                .padding(vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Đơn vị tính", modifier = Modifier.weight(1f))
-                            Text(donViTinh, color = Color.Gray)
-                            Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
-                        }
-
-                        // Đây là DropdownMenu (sẽ hiện lên)
-                        DropdownMenu(
-                            expanded = donViExpanded,
-                            onDismissRequest = { donViExpanded = false } // Nhấn bên ngoài để ĐÓNG
-                        ) {
-                            donViOptions.forEach { option ->
-                                DropdownMenuItem(
-                                    text = { Text(option) },
-                                    onClick = {
-                                        donViTinh = option // Cập nhật state
-                                        donViExpanded = false // Đóng menu
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    Divider()
-
-                    // Mục "Áp dụng thuế" (có Switch)
-                    InfoRowWithSwitch(
-                        label = "Áp dụng thuế",
-                        checked = apDungThue,
-                        onCheckedChange = { apDungThue = it }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // --- Khối 3: Ghi chú ---
-                TextField(
-                    value = ghiChu,
-                    onValueChange = { ghiChu = it },
-                    placeholder = { Text("Ghi chú") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp), // Đặt chiều cao cho ô ghi chú
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        disabledContainerColor = Color.White,
-                        focusedIndicatorColor = Color.Transparent, // Tắt gạch chân
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                )
-            }
-        }
-    )
-}
+/**
+ * Hàm chuyển đổi Uri ảnh thành chuỗi Base64
+ * (Đảm bảo hàm này có sẵn trong file AddProductScreen hoặc file tiện ích)
+ */
 private fun uriToBase64(context: Context, uri: Uri): String {
     return try {
         val inputStream = context.contentResolver.openInputStream(uri)
@@ -320,84 +32,99 @@ private fun uriToBase64(context: Context, uri: Uri): String {
         Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
     } catch (e: Exception) {
         e.printStackTrace()
-        "" // Trả về rỗng nếu có lỗi
-    }
-}
-/**
- * Composable phụ trợ cho một hàng nhập liệu (TextField không viền)
- */
-@Composable
-private fun InfoTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default
-) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = Modifier.fillMaxWidth(),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            disabledContainerColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
-        ),
-        singleLine = true ,
-        keyboardOptions = keyboardOptions
-    )
-}
-
-/**
- * Composable phụ trợ cho một hàng có chữ và mũi tên (như Đơn vị tính)
- */
-
-/**
- * Composable phụ trợ cho một hàng có chữ và Switch (như Áp dụng thuế)
- */
-@Composable
-private fun InfoRowWithSwitch(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp), // Padding cho Switch
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, modifier = Modifier.weight(1f))
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color(0xFF0088FF) // Màu xanh
-            )
-        )
+        ""
     }
 }
 
+// -------------------------------------------------------------
 
-@Preview(showBackground = true)
 @Composable
-fun AddProductScreenPreview() {
-    AddProductScreen(
-        navController = rememberNavController(),
-        productViewModel = TODO(),
-    )
-}
-@Composable
-fun AddProductScreen(navController: NavController) {
+fun AddProductScreen(
+    navController: NavController,
+    productViewModel: ProductViewModel // Sửa: Nhận ViewModel
+) {
+    val context = LocalContext.current
+
+    // --- 1. STATE ẢNH CỤC BỘ (Dùng Uri để chọn, sau đó chuyển Base64 trong onSave) ---
+    // Vì BaseProductScreen mới nhận Base64, chúng ta cần state Base64 cho nó
+    var currentImageData by remember { mutableStateOf("") }
+
+
+    // BaseProductScreen(navController: NavController) cũ đã bị loại bỏ,
+    // sử dụng hàm chính với ViewModel.
+
+    // Sử dụng BaseProductScreen mới
     BaseProductScreen(
         navController = navController,
         screenTitle = "Thêm mặt hàng",
-        initialProductData = null,
-        onSave = { product ->
-            println("AddProductScreen: $product")
-            navController.popBackStack()
+        initialProductData = null, // Thêm mới, không có dữ liệu ban đầu
+
+        // Không truyền onDelete vì đây là màn hình Thêm mới
+        onDelete = null,
+
+        // --- 2. TRUYỀN THAM SỐ XỬ LÝ ẢNH MỚI VÀO BASEPRODUCTSCREEN ---
+        imageData = currentImageData, // Truyền Base64 hiện tại (ban đầu là rỗng)
+
+        // Khi người dùng chọn ảnh mới, cập nhật state 'currentImageData'
+        onImageSelected = { newBase64 ->
+            currentImageData = newBase64
+        },
+
+        // Khi người dùng nhấn nút xóa ảnh, đặt Base64 về rỗng
+        onImageRemove = {
+            currentImageData = ""
+        },
+        // -----------------------------------------------------------------
+
+
+        // 3. Logic khi nhấn nút LƯU (Thêm sản phẩm)
+        onSave = { newProduct ->
+            // --- BẮT ĐẦU LOGIC KIỂM TRA & LƯU ---
+
+            // 3a. Chuẩn hóa dữ liệu
+            val tenMatHang = newProduct.tenMatHang
+            val maMatHang = newProduct.maMatHang
+            val soLuongStr = newProduct.soLuong.toString().trim()
+            val giaBanStr = newProduct.giaBan.toString().trim()
+            val giaNhapStr = newProduct.giaNhap.toString().trim()
+
+            // 3b. KIỂM TRA RỖNG (Sử dụng dữ liệu từ newProduct)
+            if (tenMatHang.isBlank() || maMatHang.isBlank() || soLuongStr == "0.0" || giaBanStr == "0.0" || giaNhapStr == "0.0") {
+                Toast.makeText(context, "Vui lòng nhập đủ thông tin (Tên, Mã, Số lượng, Giá)", Toast.LENGTH_SHORT).show()
+                return@BaseProductScreen
+            }
+
+            // 3c. KIỂM TRA ĐỊNH DẠNG SỐ & SỐ ÂM (Hàm BaseProductScreen đã chuyển sang Double, kiểm tra số âm)
+            if (newProduct.soLuong < 0 || newProduct.giaBan < 0 || newProduct.giaNhap < 0) {
+                Toast.makeText(context, "Số lượng và Giá không được âm!", Toast.LENGTH_SHORT).show()
+                return@BaseProductScreen
+            }
+
+            // 3d. Xử lý ảnh (Đã được cập nhật Base64 từ state 'currentImageData')
+            val imageDataString = currentImageData
+
+            // Kiểm tra nếu Base64 quá lớn (Cảnh báo)
+            if (imageDataString.length * 2 > 800_000) {
+                Toast.makeText(context, "Cảnh báo: Ảnh quá lớn!", Toast.LENGTH_LONG).show()
+            }
+
+            // 3e. Tạo đối tượng Product cuối cùng
+            // (Đảm bảo BaseProductScreen đã xử lý việc lấy giá trị số Double)
+            val finalProduct = newProduct.copy(
+                imageData = imageDataString
+            )
+
+            // 3f. Gọi ViewModel để lưu
+            productViewModel.addProduct(
+                product = finalProduct,
+                onSuccess = {
+                    Toast.makeText(context, "Thêm thành công!", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack()
+                },
+                onFailure = { e ->
+                    Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            )
         }
     )
 }
