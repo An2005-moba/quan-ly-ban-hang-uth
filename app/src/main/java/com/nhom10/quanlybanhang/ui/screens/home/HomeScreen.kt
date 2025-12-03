@@ -150,13 +150,14 @@ fun HomeScreen(
 
         bottomBar = {
             BottomAppBar(
-                modifier = Modifier.height(85.dp),
                 containerColor = Color.White,
-                tonalElevation = 8.dp
+                tonalElevation = 8.dp,
+                windowInsets = BottomAppBarDefaults.windowInsets
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(85.dp)
                         .padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
