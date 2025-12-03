@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.QuanLyBanHang">
         <service
-            android:name=".service.MyFirebaseMessagingService"
+            android:name=".untils.MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

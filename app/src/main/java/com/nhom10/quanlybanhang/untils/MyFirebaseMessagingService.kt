@@ -1,4 +1,4 @@
-package com.nhom10.quanlybanhang.service
+package com.nhom10.quanlybanhang.untils
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

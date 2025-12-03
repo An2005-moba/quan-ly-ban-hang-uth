@@ -32,6 +32,7 @@ import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
 import java.io.ByteArrayOutputStream
 import android.graphics.BitmapFactory
 import android.util.Base64
+import com.nhom10.quanlybanhang.utils.SearchHelper
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -111,13 +112,12 @@ fun AddOrderItemScreen(
                     verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     val filteredList = productList.filter {
-                        it.tenMatHang.contains(searchQuery, ignoreCase = true)
+                        // SỬA ĐOẠN NÀY:
+                        SearchHelper.isMatch(it.tenMatHang, searchQuery)
                     }
 
                     items(filteredList) { product ->
-                        // --- LOGIC TÍNH TOÁN KHO HIỂN THỊ ---
 
-                        // 1. Tìm xem món này đã có bao nhiêu trong giỏ
                         val itemInCart = cartItems.find { it.productId == product.documentId }
                         val quantityInCart = itemInCart?.soLuong ?: 0
 

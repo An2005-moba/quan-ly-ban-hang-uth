@@ -42,6 +42,7 @@ import com.nhom10.quanlybanhang.ui.components.LetterAvatar
 import com.nhom10.quanlybanhang.ui.screens.account.AccountScreen
 import com.nhom10.quanlybanhang.ui.screens.history.HistoryScreen
 import com.nhom10.quanlybanhang.ui.screens.report.ReportScreen
+import com.nhom10.quanlybanhang.utils.SearchHelper
 import com.nhom10.quanlybanhang.viewmodel.AccountViewModel
 import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
@@ -91,7 +92,8 @@ fun HomeScreen(
             productList
         } else {
             productList.filter { product ->
-                product.tenMatHang.contains(searchQuery, ignoreCase = true)
+                // Sử dụng hàm tìm kiếm thông minh
+                SearchHelper.isMatch(product.tenMatHang, searchQuery)
             }
         }
     }

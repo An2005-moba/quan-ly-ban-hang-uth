@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import com.nhom10.quanlybanhang.data.model.Product
+import com.nhom10.quanlybanhang.utils.SearchHelper
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductSetupScreen(
@@ -107,11 +109,11 @@ fun ProductSetupScreen(
                 // Sửa: Dùng productList từ ViewModel
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(1.dp) // Ngăn cách mỏng
+                    verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
-
-                    val filteredList = productList.filter {
-                        it.tenMatHang.contains(searchQuery, ignoreCase = true)
+                    // --- SỬA ĐOẠN NÀY ---
+                    val filteredList = productList.filter { product ->
+                        SearchHelper.isMatch(product.tenMatHang, searchQuery)
                     }
 
                     items(filteredList) { product ->
