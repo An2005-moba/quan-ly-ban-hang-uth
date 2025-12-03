@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel // Import
 import com.google.firebase.auth.FirebaseAuth
 import com.nhom10.quanlybanhang.ui.theme.QuanLyBanHangTheme
-import com.nhom10.quanlybanhang.viewmodel.FontSizeViewModel // Import
+import com.nhom10.quanlybanhang.viewmodel.FontSizeViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,21 +21,19 @@ class MainActivity : ComponentActivity() {
         val startDestination = if (currentUser != null) Routes.HOME else Routes.LOGIN
 
         setContent {
-            // 1. Khởi tạo ViewModel Cỡ chữ
             val fontSizeViewModel: FontSizeViewModel = viewModel()
 
-            // 2. Truyền vào Theme để áp dụng toàn app (nếu Theme bạn hỗ trợ)
             QuanLyBanHangTheme(
+                darkTheme = false,
                 fontSizeViewModel = fontSizeViewModel
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // 3. Truyền vào AppNavigation
                     AppNavigation(
                         startDestination = startDestination,
-                        fontSizeViewModel = fontSizeViewModel // <-- Truyền ở đây
+                        fontSizeViewModel = fontSizeViewModel
                     )
                 }
             }
