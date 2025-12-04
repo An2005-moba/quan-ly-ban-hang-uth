@@ -37,7 +37,6 @@ fun SettingsScreen(
     val appBlueColor = Color(0xFF0088FF)
     val context = LocalContext.current
     val fontSize by fontSizeViewModel.fontSize.collectAsState()
-    // Lấy trạng thái đăng nhập
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
@@ -65,12 +64,10 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    // Vẫn dùng màu nền động của hệ thống để hỗ trợ Dark Mode cơ bản
                     .background(MaterialTheme.colorScheme.background)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Mục Mật khẩu
                 SettingsOptionItem(
                     text = "Mật khẩu",
                     onClick = {
@@ -86,10 +83,6 @@ fun SettingsScreen(
                     },
                     showArrow = !uiState.isGoogleLogin
                 )
-
-                // Đã xóa mục Chủ đề
-
-                // Mục Cỡ chữ
                 SettingsOptionItem(
                     text = "Cỡ chữ",
                     fontSize = fontSize.sp,

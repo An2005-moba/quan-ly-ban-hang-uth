@@ -103,7 +103,6 @@ class AuthRepositoryImpl : AuthRepository {
 
     override suspend fun updateAvatarBase64(userId: String, base64String: String): Result<Unit> {
         return try {
-            // Lưu chuỗi Base64 thẳng vào field "photoUrl" trong Firestore
             db.collection("users").document(userId)
                 .update("photoUrl", base64String).await()
             Result.success(Unit)
@@ -117,18 +116,12 @@ class AuthRepositoryImpl : AuthRepository {
         val email = user.email ?: return Result.failure(Exception("Không tìm thấy email"))
 
         return try {
-            // BƯỚC 1: Tạo thông tin xác thực từ mật khẩu cũ
             val credential = EmailAuthProvider.getCredential(email, currentPass)
-
-            // BƯỚC 2: Xác thực lại (Re-authenticate)
             user.reauthenticate(credential).await()
-
-            // BƯỚC 3: Nếu bước 2 ok, tiến hành đổi mật khẩu mới
             user.updatePassword(newPass).await()
 
             Result.success(Unit)
         } catch (e: Exception) {
-            // Sai mật khẩu cũ, hoặc mật khẩu mới quá yếu...
             Result.failure(e)
         }
     }

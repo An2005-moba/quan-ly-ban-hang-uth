@@ -1,6 +1,6 @@
 package com.nhom10.quanlybanhang.viewmodel
 
-import android.util.Patterns // Import trình kiểm tra email
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nhom10.quanlybanhang.data.repository.AuthRepository
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 data class LoginUiState(
     val emailError: String? = null,
     val passwordError: String? = null,
-    val loginResult: String? = null, // Cho Toast (Thành công/Thất bại)
+    val loginResult: String? = null,
     val isLoading: Boolean = false
 )
 

@@ -26,8 +26,6 @@ class AuthViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState
-
-    // --- ĐĂNG KÝ THỦ CÔNG ---
     fun registerUser(
         email: String,
         matKhau: String,
@@ -39,7 +37,6 @@ class AuthViewModel : ViewModel() {
         val cleanMatKhau = matKhau.trim()
         val cleanHoTen = hoTen.trim()
 
-        // --- BỘ LỌC (VALIDATION) ---
         val hoTenError = if (cleanHoTen.isBlank()) "Vui lòng nhập Họ Tên." else null
         val emailError = if (cleanEmail.isBlank() || !Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) "Email không hợp lệ." else null
         val ngaySinhError = if (ngaySinh.isBlank()) "Vui lòng chọn ngày sinh." else null
@@ -59,8 +56,6 @@ class AuthViewModel : ViewModel() {
             return
         }
 
-        // === HẾT BỘ LỌC ===
-
         viewModelScope.launch {
             _uiState.value = RegisterUiState(isLoading = true)
 
@@ -75,10 +70,7 @@ class AuthViewModel : ViewModel() {
                 )
 
                 userDetailsResult.onSuccess {
-                    // --- UPDATE TÊN HIỂN THỊ ---
                     authRepo.updateUserProfile(cleanHoTen)
-
-                    // --- THÔNG BÁO RIÊNG CHO THỦ CÔNG ---
                     _uiState.value = RegisterUiState(registrationResult = "Đăng ký thành công! Vui lòng đăng nhập.")
                 }
                 userDetailsResult.onFailure {
@@ -91,8 +83,6 @@ class AuthViewModel : ViewModel() {
             }
         }
     }
-
-    // --- ĐĂNG KÝ/NHẬP BẰNG GOOGLE ---
     fun registerWithGoogle(idToken: String) {
         viewModelScope.launch {
             _uiState.value = RegisterUiState(isLoading = true)
@@ -110,9 +100,6 @@ class AuthViewModel : ViewModel() {
                     email = email,
                     ngaySinh = ""
                 )
-
-                // --- THÔNG BÁO RIÊNG CHO GOOGLE ---
-                // (Dù lưu DB thành công hay thất bại, Google Auth đã xong nên cứ cho vào)
                 _uiState.value = RegisterUiState(registrationResult = "Đăng nhập Google thành công!")
             }
 

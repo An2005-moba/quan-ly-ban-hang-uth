@@ -23,7 +23,6 @@ class SettingsViewModel : ViewModel() {
     private fun checkLoginProvider() {
         val user = auth.currentUser
         if (user != null) {
-            // Kiểm tra trong danh sách nhà cung cấp xem có Google không
             val isGoogle = user.providerData.any {
                 it.providerId == GoogleAuthProvider.PROVIDER_ID
             }

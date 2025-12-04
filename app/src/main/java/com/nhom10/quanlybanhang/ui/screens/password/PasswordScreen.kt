@@ -53,7 +53,7 @@ fun PasswordScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF0F2F5)) // Quay lại màu nền cố định
+                    .background(Color(0xFFF0F2F5))
                     .padding(paddingValues)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -65,7 +65,7 @@ fun PasswordScreen(navController: NavController) {
                         .clickable { navController.navigate(Routes.CHANGE_PASSWORD) },
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White // Quay lại màu trắng
+                        containerColor = Color.White
                     ),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
@@ -79,7 +79,7 @@ fun PasswordScreen(navController: NavController) {
                         Text(
                             text = "Đổi mật khẩu",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Black.copy(alpha = 0.5f) // Màu chữ xám 50%
+                            color = Color.Black.copy(alpha = 0.5f)
                         )
                     }
                 }

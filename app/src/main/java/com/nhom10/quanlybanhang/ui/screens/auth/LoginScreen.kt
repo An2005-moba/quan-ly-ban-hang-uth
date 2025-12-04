@@ -56,7 +56,6 @@ fun LoginScreen(
     val unfocusedBorderColor = Color.Black.copy(alpha = 0.2f)
     val ADMIN_UID = "ZxTwpAPrkrd1BUiUspxK9TjrEMz2"
 
-    // Cấu hình Google
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.default_web_client_id))
@@ -107,7 +106,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Ô nhập Email
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -125,7 +123,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Ô nhập Mật khẩu
         OutlinedTextField(
             value = matKhau,
             onValueChange = { matKhau = it },
@@ -148,7 +145,6 @@ fun LoginScreen(
             }
         )
 
-        // Quên mật khẩu
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
             TextButton(
                 onClick = { navController.navigate(Routes.FORGOT_PASSWORD) },
@@ -160,7 +156,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Nút Đăng nhập (Email)
         Button(
             onClick = { loginViewModel.loginUser(email, matKhau) },
             modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -177,7 +172,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Dòng kẻ HOẶC
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -194,7 +188,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Nút Đăng nhập Google
         OutlinedButton(
             onClick = {
                 googleSignInClient.signOut().addOnCompleteListener {
@@ -242,12 +235,10 @@ fun LoginScreen(
             if (message == "Đăng nhập thành công!") {
                 val currentUser = FirebaseAuth.getInstance().currentUser
                 if (currentUser?.uid == ADMIN_UID) {
-                    // Nếu đúng là Admin -> Chuyển sang trang Admin
                     navController.navigate(Routes.ADMIN_NOTIFICATION) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 } else {
-                    // Nếu là User thường -> Chuyển sang trang Home
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }

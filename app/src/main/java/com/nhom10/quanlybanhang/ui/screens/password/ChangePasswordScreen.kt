@@ -35,12 +35,8 @@ fun ChangePasswordScreen(
     val appBlueColor = Color(0xFF0088FF)
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-
-    // Các màu cố định (không đổi theo theme)
     val labelColor = Color.Black.copy(alpha = 0.5f)
     val errorColor = MaterialTheme.colorScheme.error
-
-    // Biến state cho các ô nhập
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -48,8 +44,6 @@ fun ChangePasswordScreen(
     var showCurrent by remember { mutableStateOf(false) }
     var showNew by remember { mutableStateOf(false) }
     var showConfirm by remember { mutableStateOf(false) }
-
-    // Cấu hình màu sắc TextField (Cố định)
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedContainerColor = Color.White,
         unfocusedContainerColor = Color.White,
@@ -89,13 +83,11 @@ fun ChangePasswordScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    // Quay lại màu nền xám nhạt cố định
                     .background(Color(0xFFF0F2F5))
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // --- 1. MẬT KHẨU HIỆN TẠI ---
                 OutlinedTextField(
                     value = currentPassword,
                     onValueChange = { currentPassword = it },
@@ -122,8 +114,6 @@ fun ChangePasswordScreen(
                         }
                     }
                 )
-
-                // --- 2. MẬT KHẨU MỚI ---
                 OutlinedTextField(
                     value = newPassword,
                     onValueChange = { newPassword = it },
@@ -151,7 +141,6 @@ fun ChangePasswordScreen(
                     }
                 )
 
-                // --- 3. XÁC NHẬN MẬT KHẨU ---
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
@@ -180,8 +169,6 @@ fun ChangePasswordScreen(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
-
-                // --- NÚT XÁC NHẬN ---
                 Button(
                     onClick = {
                         viewModel.changePassword(currentPassword, newPassword, confirmPassword)
@@ -211,7 +198,6 @@ fun ChangePasswordScreen(
         }
     )
 
-    // --- LẮNG NGHE KẾT QUẢ ---
     LaunchedEffect(key1 = uiState.result) {
         uiState.result?.let { message ->
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()

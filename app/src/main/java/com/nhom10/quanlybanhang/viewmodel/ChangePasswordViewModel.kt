@@ -12,9 +12,9 @@ data class ChangePasswordUiState(
     val currentPassError: String? = null,
     val newPassError: String? = null,
     val confirmPassError: String? = null,
-    val result: String? = null, // Thông báo thành công/thất bại
+    val result: String? = null,
     val isLoading: Boolean = false,
-    val isSuccess: Boolean = false // Cờ báo hiệu để chuyển màn hình
+    val isSuccess: Boolean = false
 )
 
 class ChangePasswordViewModel : ViewModel() {
@@ -25,10 +25,7 @@ class ChangePasswordViewModel : ViewModel() {
     val uiState: StateFlow<ChangePasswordUiState> = _uiState
 
     fun changePassword(current: String, new: String, confirm: String) {
-        // Reset lỗi cũ
         _uiState.value = ChangePasswordUiState(isLoading = true)
-
-        // --- 1. VALIDATION (KIỂM TRA LUẬT) ---
         if (current.isBlank()) {
             _uiState.value = _uiState.value.copy(currentPassError = "Vui lòng nhập mật khẩu hiện tại", isLoading = false)
             return
@@ -44,8 +41,6 @@ class ChangePasswordViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(confirmPassError = "Mật khẩu xác nhận không khớp", isLoading = false)
             return
         }
-
-        // --- 2. GỌI REPOSITORY ---
         viewModelScope.launch {
             val result = authRepo.changePassword(current, new)
 
@@ -58,16 +53,13 @@ class ChangePasswordViewModel : ViewModel() {
             }
 
             result.onFailure { e ->
-                // Lỗi thường gặp: "Mật khẩu cũ không đúng"
                 _uiState.value = ChangePasswordUiState(
-                    result = "Lỗi: ${e.message}", // Có thể là sai pass cũ
+                    result = "Lỗi: ${e.message}",
                     isLoading = false
                 )
             }
         }
     }
-
-    // Hàm kiểm tra độ mạnh mật khẩu (Copy từ AuthViewModel sang)
     private fun validatePassword(password: String): String? {
         if (password.length < 8) return "Mật khẩu phải có ít nhất 8 ký tự."
         if (!password[0].isUpperCase()) return "Mật khẩu phải bắt đầu bằng chữ viết hoa."

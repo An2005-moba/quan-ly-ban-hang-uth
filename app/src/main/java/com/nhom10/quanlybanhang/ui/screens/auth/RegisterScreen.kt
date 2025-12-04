@@ -48,7 +48,6 @@ fun RegisterScreen(
     navController: NavController,
     authViewModel: AuthViewModel = viewModel()
 ) {
-    // --- State ---
     var hoTen by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var ngaySinh by rememberSaveable { mutableStateOf("") }
@@ -65,7 +64,6 @@ fun RegisterScreen(
     val borderColor = Color(0xFF0088FF)
     val unfocusedBorderColor = Color.Black.copy(alpha = 0.2f)
 
-    // Cấu hình Google
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.default_web_client_id))

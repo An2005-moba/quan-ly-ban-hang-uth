@@ -69,11 +69,9 @@ object Routes {
 @Composable
 fun AppNavigation(
     startDestination: String,
-    fontSizeViewModel: FontSizeViewModel// <-- Thêm startDestination với giá trị mặc định là LOGIN
+    fontSizeViewModel: FontSizeViewModel
 ) {
     val navController = rememberNavController()
-
-    // --- Giữ nguyên ViewModel ---
     val productRepository = ProductRepositoryImpl()
     val productViewModelFactory = ProductViewModelFactory(productRepository)
     val productViewModel: ProductViewModel = viewModel(

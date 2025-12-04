@@ -35,18 +35,13 @@ class EditProfileViewModel : ViewModel() {
     private fun loadUserProfile() {
         val user = auth.currentUser
         if (user != null) {
-            // Kiểm tra xem có phải đăng nhập bằng Google không
             val isGoogle = user.providerData.any { it.providerId == GoogleAuthProvider.PROVIDER_ID }
-
-            // Lấy thông tin cơ bản
             _uiState.value = EditProfileUiState(
                 userName = user.displayName ?: "",
                 photoUrl = user.photoUrl?.toString(),
                 email = user.email ?: "",
                 isGoogleLogin = isGoogle
             )
-
-            // Lấy thông tin chi tiết từ Firestore (Giới tính, Ảnh Base64)
             viewModelScope.launch {
                 val result = authRepo.getUserDetails(user.uid)
                 result.onSuccess { data ->
@@ -56,7 +51,6 @@ class EditProfileViewModel : ViewModel() {
 
                     _uiState.value = _uiState.value.copy(
                         gender = genderFromDb,
-                        // Ưu tiên dữ liệu từ DB hơn Auth
                         photoUrl = dbPhoto ?: _uiState.value.photoUrl,
                         userName = dbName ?: _uiState.value.userName
                     )
@@ -76,13 +70,8 @@ class EditProfileViewModel : ViewModel() {
     fun updateName(newName: String) {
         val user = auth.currentUser ?: return
         viewModelScope.launch {
-            // 1. Cập nhật Auth (để hiển thị nhanh)
             authRepo.updateUserProfile(newName)
-            // 2. Cập nhật UI State
             _uiState.value = _uiState.value.copy(userName = newName)
-
-            // LƯU Ý: Để đồng bộ hoàn toàn, bạn nên thêm hàm updateName trong Repository
-            // để lưu vào Firestore field "hoTen". Hiện tại ta cập nhật Auth Profile trước.
         }
     }
 
@@ -90,8 +79,6 @@ class EditProfileViewModel : ViewModel() {
         val userId = auth.currentUser?.uid ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isUploading = true)
-
-            // Gọi Repository để lưu chuỗi Base64 vào Firestore
             val result = authRepo.updateAvatarBase64(userId, base64String)
 
             result.onSuccess {
