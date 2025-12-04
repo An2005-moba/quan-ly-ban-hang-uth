@@ -7,7 +7,7 @@ import com.nhom10.quanlybanhang.data.repository.ProductRepository
 
 class OrderViewModelFactory(
     private val repository: OrderRepository,
-    private val productRepository: ProductRepository // <--- THÊM THAM SỐ NÀY
+    private val productRepository: ProductRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")

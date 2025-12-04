@@ -23,31 +23,22 @@ class OrderViewModel(
     // --- 1. STATE ---
     private val auth = FirebaseAuth.getInstance()
     private val currentUserId: String? get() = auth.currentUser?.uid
-
     private val _selectedCustomer = MutableStateFlow<Customer?>(null)
     val selectedCustomer = _selectedCustomer.asStateFlow()
-
     private val _cartItems = MutableStateFlow<List<OrderItem>>(emptyList())
     val cartItems = _cartItems.asStateFlow()
-
     private val _discountPercent = MutableStateFlow(0.0)
     val discountPercent = _discountPercent.asStateFlow()
-
     private val _surcharge = MutableStateFlow(0.0)
     val surcharge = _surcharge.asStateFlow()
-
     private val _note = MutableStateFlow("")
     val note = _note.asStateFlow()
-
     private val _isTaxEnabled = MutableStateFlow(false)
     val isTaxEnabled = _isTaxEnabled.asStateFlow()
-
     private val _currentOrderId = MutableStateFlow(generateOrderId())
     val currentOrderId = _currentOrderId.asStateFlow()
-
     private val _cashGiven = MutableStateFlow(0.0)
     val cashGiven = _cashGiven.asStateFlow()
-
     private val _orderHistory = MutableStateFlow<List<Order>>(emptyList())
     val orderHistory = _orderHistory.asStateFlow()
     private val _isLoading = MutableStateFlow(false)
@@ -66,7 +57,6 @@ class OrderViewModel(
                 val itemTotal = item.giaBan * item.soLuong
                 val itemDiscount = itemTotal * (item.chietKhau / 100)
                 val finalItemTotal = itemTotal - itemDiscount
-
                 finalItemTotal * 0.10 // 10% thuế trên giá thực bán
             } else {
                 0.0
@@ -88,7 +78,6 @@ class OrderViewModel(
         // 2. Tính giảm giá tổng đơn hàng (trên tổng tiền đã trừ chiết khấu món)
         // Hoặc tùy logic shop, thường là giảm trên tổng tiền hàng thực tế
         val orderDiscountAmount = itemsTotalAfterItemDiscount * (discount / 100)
-
         // 3. Công thức cuối cùng
         maxOf(0.0, itemsTotalAfterItemDiscount - orderDiscountAmount + tax + surcharge)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
@@ -186,13 +175,6 @@ class OrderViewModel(
 
     fun removeProductFromCart(productId: String) {
         _cartItems.update { it.filterNot { item -> item.productId == productId } }
-    }
-
-    fun updateProductQuantity(productId: String, newQuantity: Int) {
-        if (newQuantity <= 0) {
-            removeProductFromCart(productId); return
-        }
-        _cartItems.update { it.map { if (it.productId == productId) it.copy(soLuong = newQuantity) else it } }
     }
 
     // ĐÃ THÊM: Xử lý xóa đơn hàng

@@ -77,8 +77,6 @@ fun BankPaymentScreen(
                     onClick = {
                         // --- CHANGED: Đảm bảo set phương thức là Ngân hàng ---
                         orderViewModel.setPaymentMethod("Ngân hàng")
-                        // -----------------------------------------------------
-
                         orderViewModel.updateCashGiven(totalAmount)
                         navController.navigate(Routes.INVOICE)
                     },
@@ -179,7 +177,6 @@ fun BankPaymentScreen(
                             )
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-
                             RowInfo("Ngân hàng", bankId)
                             RowInfo("STK", accountNo)
                             RowInfo("Chủ TK", accountName)

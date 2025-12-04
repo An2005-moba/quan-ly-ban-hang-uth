@@ -33,7 +33,6 @@ fun PaymentScreen(
 
     // Lấy tổng tiền từ ViewModel
     val totalAmount by orderViewModel.totalAmount.collectAsState()
-    val paymentMethod by orderViewModel.paymentMethod.collectAsState()
     // State nhập liệu (String để dễ xử lý thêm số 0)
     var inputString by remember { mutableStateOf("") }
 
@@ -41,7 +40,6 @@ fun PaymentScreen(
     val cashGiven = inputString.toDoubleOrNull() ?: 0.0
     val remaining = totalAmount - cashGiven
     val change = cashGiven - totalAmount
-
     val formatter = DecimalFormat("#,###")
 
     Scaffold(

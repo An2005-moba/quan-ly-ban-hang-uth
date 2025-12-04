@@ -29,7 +29,6 @@ import androidx.navigation.NavController
 import com.nhom10.quanlybanhang.data.model.Product
 import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
 import com.nhom10.quanlybanhang.viewmodel.ProductViewModel
-import java.io.ByteArrayOutputStream
 import android.graphics.BitmapFactory
 import android.util.Base64
 import com.nhom10.quanlybanhang.utils.SearchHelper
@@ -112,7 +111,6 @@ fun AddOrderItemScreen(
                     verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     val filteredList = productList.filter {
-                        // SỬA ĐOẠN NÀY:
                         SearchHelper.isMatch(it.tenMatHang, searchQuery)
                     }
 
@@ -145,12 +143,7 @@ fun AddOrderItemScreen(
         }
     )
 }
-
-/**
- * Item hiển thị: Đơn giản, không có nút +/-, chỉ hiển thị thông tin
- */
 val formatter = DecimalFormat("#,###")
-
 @Composable
 private fun ProductListItem(
     product: Product,

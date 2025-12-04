@@ -1,6 +1,5 @@
 package com.nhom10.quanlybanhang.ui.screens.customer
 
-// --- CÁC IMPORT BỊ THIẾU ---
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
@@ -12,10 +11,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.ui.layout.ContentScale
-import androidx.activity.compose.rememberLauncherForActivityResult // Import này
-import androidx.activity.result.PickVisualMediaRequest // Import này
-import androidx.activity.result.contract.ActivityResultContracts // Import này
-import androidx.compose.foundation.Image // Import này
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -33,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -43,7 +40,7 @@ import java.io.ByteArrayOutputStream
 @Composable
 fun AddCustomerScreen(
     navController: NavController,
-    customerViewModel: CustomerViewModel // SỬA: Nhận ViewModel
+    customerViewModel: CustomerViewModel
 ) {
     val appBlueColor = Color(0xFF0088FF)
     val scaffoldBgColor = Color(0xFFF0F2F5) // Màu nền xám nhạt
@@ -98,7 +95,6 @@ fun AddCustomerScreen(
                             diaChi = diaChi,
                             ghiChu = ghiChu,
                             avatarUrl = avatarString
-                            // Bạn có thể thêm logic upload ảnh và lấy avatarUrl ở đây
                         )
 
                         customerViewModel.addCustomer(
@@ -216,10 +212,8 @@ private fun uriToBase64(context: Context, uri: Uri): String {
     return try {
         val inputStream = context.contentResolver.openInputStream(uri)
         val originalBitmap = BitmapFactory.decodeStream(inputStream)
-
         // Resize ảnh để tránh chuỗi quá dài gây lỗi Firebase (giới hạn ~1MB)
         val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 300, 300, true)
-
         val outputStream = ByteArrayOutputStream()
         scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream) // Nén JPEG 70%
         val bytes = outputStream.toByteArray()

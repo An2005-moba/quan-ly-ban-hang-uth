@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 class CustomerRepositoryImpl : CustomerRepository {
-
     private val db = FirebaseFirestore.getInstance()
 
     // SỬA: Lấy danh sách từ sub-collection
@@ -34,13 +33,16 @@ class CustomerRepositoryImpl : CustomerRepository {
     // SỬA: Thêm vào sub-collection
     override suspend fun addCustomer(userId: String, customer: Customer) {
         try {
-            val collectionPath = db.collection("users").document(userId).collection("customers")
+            val collectionPath = db.collection("users")
+                .document(userId)
+                .collection("customers")
             // Dùng Tasks.await hoặc .await() (kotlinx-coroutines-play-services)
             collectionPath.add(customer).await()
         } catch (e: Exception) {
             throw e
         }
     }
+
     // 1. Xóa một khách hàng
     override suspend fun deleteCustomer(userId: String, customerId: String) {
         try {

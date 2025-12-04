@@ -13,9 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class CustomerViewModel(private val repository: CustomerRepository) : ViewModel() {
-
     private val auth = FirebaseAuth.getInstance()
-
     // State chứa danh sách khách hàng
     private val _customers = MutableStateFlow<List<Customer>>(emptyList())
     val customers = _customers.asStateFlow()
@@ -88,6 +86,7 @@ class CustomerViewModel(private val repository: CustomerRepository) : ViewModel(
         super.onCleared()
         auth.removeAuthStateListener(authStateListener)
     }
+
     fun deleteCustomer(customerId: String) {
         val userId = auth.currentUser?.uid ?: return
         viewModelScope.launch {

@@ -123,6 +123,7 @@ fun EditOrderItemScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
                     .padding(16.dp)
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD9534F)),

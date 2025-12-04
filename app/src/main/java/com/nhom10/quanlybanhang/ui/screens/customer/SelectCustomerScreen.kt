@@ -1,10 +1,8 @@
 package com.nhom10.quanlybanhang.ui.screens.customer
 
-// --- THÊM CÁC IMPORT NÀY ---
 import com.nhom10.quanlybanhang.data.model.Customer
 import com.nhom10.quanlybanhang.viewmodel.CustomerViewModel
 import com.nhom10.quanlybanhang.viewmodel.OrderViewModel
-// -----------------------------
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.ui.graphics.ImageBitmap
@@ -35,13 +33,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.nhom10.quanlybanhang.Routes
 import java.text.Normalizer
 import java.util.regex.Pattern
-
-// XÓA: Data class mẫu (đã dùng model thật)
-// data class Customer(...)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +51,6 @@ fun SelectCustomerScreen(
 
     // SỬA: Lấy dữ liệu từ ViewModel
     val customersFromDb by customerViewModel.customers.collectAsState()
-
     // THÊM: Tạo danh sách khách hàng đầy đủ (bao gồm "Khách lẻ")
     val customers = remember(customersFromDb) {
         listOf(
@@ -71,13 +64,8 @@ fun SelectCustomerScreen(
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var customerToDelete by remember { mutableStateOf<Customer?>(null) }
 
-    // XÓA: Dữ liệu mẫu
-    // val customers = listOf(...)
-    // var selectedCustomerId by remember { mutableStateOf(0) }
-
     Scaffold(
         containerColor = scaffoldBgColor,
-        // === 1. TOP BAR (Giữ nguyên) ===
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -115,7 +103,7 @@ fun SelectCustomerScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // --- Thanh tìm kiếm (Giữ nguyên) ---
+                // --- Thanh tìm kiếm ---
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -134,7 +122,10 @@ fun SelectCustomerScreen(
                 )
 
                 // --- Danh sách khách hàng ---
-                LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(1.dp)
+                ) {
                     // --- ĐOẠN CODE LOGIC TÌM KIẾM MỚI ---
                     val filteredList = customers.filter { customer ->
                         // 1. Chuẩn hóa từ khóa tìm kiếm
@@ -144,14 +135,21 @@ fun SelectCustomerScreen(
                         val cleanName = normalizeString(customer.tenKhachHang)
 
                         // 3. Chuẩn hóa số điện thoại (chỉ giữ lại số)
-                        val cleanPhone = customer.soDienThoai.replace("\\D".toRegex(), "") // Xóa mọi thứ không phải số
-                        val queryPhone = searchQuery.replace("\\D".toRegex(), "") // Xóa mọi thứ không phải số trong từ khóa
+                        val cleanPhone = customer.soDienThoai.replace(
+                            "\\D".toRegex(),
+                            ""
+                        ) // Xóa mọi thứ không phải số
+                        val queryPhone = searchQuery.replace(
+                            "\\D".toRegex(),
+                            ""
+                        ) // Xóa mọi thứ không phải số trong từ khóa
 
                         // 4. So sánh
                         // - Tên: So sánh chuỗi đã chuẩn hóa
                         // - SĐT: Nếu người dùng nhập số, so sánh số
                         val isNameMatch = cleanName.contains(cleanQuery)
-                        val isPhoneMatch = if (queryPhone.isNotEmpty()) cleanPhone.contains(queryPhone) else false
+                        val isPhoneMatch =
+                            if (queryPhone.isNotEmpty()) cleanPhone.contains(queryPhone) else false
 
                         isNameMatch || isPhoneMatch
                     }
@@ -226,7 +224,6 @@ private fun CustomerListItem(
     onDelete: () -> Unit // Callback xóa
 ) {
     val appBlueColor = Color(0xFF0088FF)
-    val placeholderPainter = rememberVectorPainter(image = Icons.Default.Person)
     val imageBitmap = remember(customer.avatarUrl) {
         base64ToImageBitmap(customer.avatarUrl)
     }
@@ -294,8 +291,11 @@ private fun base64ToImageBitmap(base64String: String): ImageBitmap? {
     return try {
         val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
         BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
-    } catch (e: Exception) { null }
+    } catch (e: Exception) {
+        null
+    }
 }
+
 // Hàm tiện ích: Chuyển chuỗi về dạng không dấu, viết thường, xóa khoảng trắng
 fun normalizeString(input: String): String {
     val temp = Normalizer.normalize(input, Normalizer.Form.NFD)

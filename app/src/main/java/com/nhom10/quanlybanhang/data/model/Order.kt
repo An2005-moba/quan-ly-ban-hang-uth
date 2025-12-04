@@ -1,12 +1,11 @@
 package com.nhom10.quanlybanhang.data.model
 
-import android.os.Parcelable // Cần import cái này
+import android.os.Parcelable
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.ServerTimestamp
-import kotlinx.parcelize.Parcelize // Cần import cái này
+import kotlinx.parcelize.Parcelize
 import java.util.Date
 
-// 1. Thêm @Parcelize và : Parcelable cho OrderItem
 @Parcelize
 data class OrderItem(
     val productId: String = "",

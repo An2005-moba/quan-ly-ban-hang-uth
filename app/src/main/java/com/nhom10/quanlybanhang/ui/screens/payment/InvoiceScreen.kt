@@ -76,7 +76,6 @@ fun InvoiceScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
 
-                    // --- NÚT XONG (Đã sửa đổi) ---
                     Button(
                         onClick = {
                             orderViewModel.saveOrderToFirebase(
@@ -140,9 +139,7 @@ fun InvoiceScreen(
                     InfoRow("Đơn hàng", currentOrderId)
                     InfoRow("Thời gian", dateNow)
                     InfoRow("Khách hàng", selectedCustomer?.tenKhachHang ?: "Khách lẻ")
-
                     Divider(Modifier.padding(vertical = 16.dp))
-
                     // Danh sách món
                     cartItems.forEach { item ->
                         Row(Modifier
@@ -150,12 +147,9 @@ fun InvoiceScreen(
                             .padding(vertical = 4.dp)) {
                             Column(Modifier.weight(1f)) {
                                 Text(item.tenMatHang, fontWeight = FontWeight.Bold)
-
                                 // --- LOGIC HIỂN THỊ CHI TIẾT GIÁ ---
                                 val originalTotal = item.giaBan * item.soLuong
                                 val itemDiscountAmt = originalTotal * (item.chietKhau / 100)
-                                val finalLineTotal = originalTotal - itemDiscountAmt
-
                                 // Nếu có giảm giá món, hiển thị chi tiết như CartScreen
                                 if (item.chietKhau > 0) {
                                     Text(
@@ -172,7 +166,7 @@ fun InvoiceScreen(
                                 }
                             }
 
-                            // --- HIỂN THỊ THÀNH TIỀN CỦA DÒNG ĐÓ (Đã trừ chiết khấu món) ---
+                            // --- HIỂN THỊ THÀNH TIỀN CỦA DÒNG ĐÓ (Đã trừ chiết khấu món)
                             val finalLinePrice =
                                 (item.giaBan * item.soLuong) * (1 - item.chietKhau / 100)
                             Text(formatter.format(finalLinePrice))

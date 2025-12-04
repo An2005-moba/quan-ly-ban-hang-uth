@@ -1,14 +1,11 @@
 package com.nhom10.quanlybanhang
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nhom10.quanlybanhang.ui.screens.font.FontSizeScreen
 import com.nhom10.quanlybanhang.viewmodel.FontSizeViewModel
-
-import androidx.navigation.navArgument
 import com.nhom10.quanlybanhang.ui.screens.auth.LoginScreen
 import com.nhom10.quanlybanhang.ui.screens.auth.RegisterScreen
 import com.nhom10.quanlybanhang.ui.screens.auth.ForgotPasswordScreen
@@ -65,8 +62,7 @@ object Routes {
     const val HISTORY = "history_screen"
     const val BILL = "bill_screen"
     const val ADMIN_NOTIFICATION = "admin_notification_screen"
-    const val INVOICE = "invoice_screen" // Sửa lỗi typo dư dấu }
-    fun invoiceRoute(khachTra: String, tienThua: String) = "invoice_screen/$khachTra/$tienThua"
+    const val INVOICE = "invoice_screen"
     const val FONT_SIZE = "font_size_screen"
 }
 
@@ -95,7 +91,6 @@ fun AppNavigation(
     val orderViewModel: OrderViewModel = viewModel(
         factory = orderViewModelFactory
     )
-    // ----------------------------------------------------
 
     NavHost(navController = navController, startDestination = startDestination) {
 
@@ -172,7 +167,7 @@ fun AppNavigation(
             EditOrderItemScreen(
                 navController = navController,
                 orderViewModel = orderViewModel,
-                productViewModel = productViewModel // <--- 1. THÊM DÒNG NÀY
+                productViewModel = productViewModel
             )
         }
         composable(Routes.PAYMENT) {
@@ -190,7 +185,7 @@ fun AppNavigation(
         composable(Routes.BANK_PAYMENT) {
             BankPaymentScreen(
                 navController = navController,
-                orderViewModel = orderViewModel // <-- Thêm dòng này
+                orderViewModel = orderViewModel
             )
         }
         composable(Routes.HISTORY) {
