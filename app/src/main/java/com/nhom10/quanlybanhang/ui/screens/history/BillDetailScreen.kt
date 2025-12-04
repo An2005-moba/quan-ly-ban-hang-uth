@@ -224,16 +224,6 @@ fun BillSummaryCard(
             SummaryRow("Phụ phí", surcharge.formatVND())
             SummaryRow("Chiết khấu", "${discount.toInt()}%")
 
-            // Ghi chú
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Ghi chú", color = Color.Gray)
-                Checkbox(checked = false, onCheckedChange = { /* Do nothing */ }, enabled = false)
-            }
-
 
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
 

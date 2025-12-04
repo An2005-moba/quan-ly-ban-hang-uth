@@ -61,7 +61,7 @@ fun EditProductScreen(
                     onFailure = { e ->
                         // In lỗi ra console nếu cập nhật thất bại
                         println("Cập nhật thất bại: $e")
-                        // TODO: Hiển thị thông báo lỗi (ví dụ: Toast/Snackbar) cho người dùng
+
                     }
                 )
             },
@@ -76,7 +76,6 @@ fun EditProductScreen(
                     },
                     onFailure = { e: Exception -> // Khai báo kiểu cho 'e'
                         println("Xóa thất bại: $e")
-                        // TODO: Hiển thị thông báo lỗi cho người dùng
                     }
                 )
             }
