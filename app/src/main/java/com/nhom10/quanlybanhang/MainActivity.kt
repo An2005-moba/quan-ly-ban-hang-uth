@@ -1,5 +1,7 @@
 package com.nhom10.quanlybanhang
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -9,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -45,6 +48,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             )
+            LaunchedEffect(Unit) {
+                // Chỉ xin quyền với Android 13 (Tiramisu - SDK 33) trở lên
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
 
             QuanLyBanHangTheme(
                 fontSizeViewModel = fontSizeViewModel
