@@ -125,7 +125,7 @@ class OrderViewModel(
         _isTaxEnabled.value = isEnabled
     }
 
-    // SỬA: Hàm thêm trả về Boolean và kiểm tra tồn kho
+    //  Hàm thêm trả về Boolean và kiểm tra tồn kho
     fun addProductToCart(product: Product): Boolean {
         val existing = _cartItems.value.find { it.productId == product.documentId }
         val currentQtyInCart = existing?.soLuong ?: 0
@@ -155,7 +155,7 @@ class OrderViewModel(
         return true
     }
 
-    // THÊM: Hàm giảm số lượng
+    // Hàm giảm số lượng
     fun decreaseProductFromCart(product: Product) {
         val existing = _cartItems.value.find { it.productId == product.documentId } ?: return
 
@@ -177,7 +177,7 @@ class OrderViewModel(
         _cartItems.update { it.filterNot { item -> item.productId == productId } }
     }
 
-    // ĐÃ THÊM: Xử lý xóa đơn hàng
+    //  Xử lý xóa đơn hàng
     fun deleteOrder(
         orderId: String,
         onSuccess: () -> Unit = {},

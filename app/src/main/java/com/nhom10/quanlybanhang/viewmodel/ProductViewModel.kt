@@ -75,7 +75,7 @@ class ProductViewModel(
         }
     }
 
-    // 3. Hàm cập nhật sản phẩm
+    //  Hàm cập nhật sản phẩm
     fun updateProduct(
         updatedProduct: Product,
         onSuccess: () -> Unit = {},
@@ -125,10 +125,10 @@ class ProductViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // 1. Xóa trên repository / Firebase
+                // . Xóa trên repository / Firebase
                 repository.deleteProduct(userId, product.documentId)
 
-                // 2. Cập nhật local StateFlow để UI tự động refresh
+                // Cập nhật local StateFlow để UI tự động refresh
                 _products.update { currentList ->
                     currentList.filter { it.documentId != product.documentId }
                 }
