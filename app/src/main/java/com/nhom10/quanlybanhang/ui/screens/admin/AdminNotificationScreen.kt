@@ -220,10 +220,10 @@ fun AdminNotificationScreen(navController: NavController) {
 fun sendFCMv1(context: Context, projectId: String, title: String, body: String, onResult: (Boolean, String?) -> Unit) {
     CoroutineScope(Dispatchers.IO).launch {
         try {
-            // Kiểm tra file JSON tồn tại không để tránh Crash
+
             val resId = R.raw.service_account
 
-            // 1. LẤY ACCESS TOKEN
+
             val inputStream = context.resources.openRawResource(resId)
             val googleCredentials = GoogleCredentials.fromStream(inputStream)
                 .createScoped(Collections.singletonList("https://www.googleapis.com/auth/firebase.messaging"))
@@ -231,7 +231,7 @@ fun sendFCMv1(context: Context, projectId: String, title: String, body: String, 
             googleCredentials.refreshIfExpired()
             val accessToken = googleCredentials.accessToken.tokenValue
 
-            // 2. TẠO JSON PAYLOAD
+
             val json = JSONObject()
             val messageObj = JSONObject()
             val notificationObj = JSONObject()
@@ -244,7 +244,7 @@ fun sendFCMv1(context: Context, projectId: String, title: String, body: String, 
 
             json.put("message", messageObj)
 
-            // 3. GỌI API
+
             val client = OkHttpClient()
             val requestBody = json.toString().toRequestBody("application/json".toMediaType())
 

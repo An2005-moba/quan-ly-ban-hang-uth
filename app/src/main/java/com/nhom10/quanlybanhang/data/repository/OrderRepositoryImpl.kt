@@ -30,7 +30,7 @@ class OrderRepositoryImpl : OrderRepository {
                 .get()
                 .await()
 
-            // SỬA: Lấy TẤT CẢ (bao gồm cả "Đã xóa") để ReportViewModel có dữ liệu tính toán
+            //  Lấy TẤT CẢ (bao gồm cả "Đã xóa") để ReportViewModel có dữ liệu tính toán
             val list = snapshot.documents.mapNotNull { document ->
                 document.toObject(Order::class.java)
             }
@@ -40,7 +40,7 @@ class OrderRepositoryImpl : OrderRepository {
         }
     }
 
-    // SỬA: Quay lại Soft Delete (Cập nhật status thay vì delete)
+    //Quay lại Soft Delete (Cập nhật status thay vì delete)
     override suspend fun deleteOrder(userId: String, orderId: String): Result<Unit> {
         return try {
             db.collection("users").document(userId)

@@ -29,7 +29,7 @@ class ProductViewModel(
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products = _products.asStateFlow()
 
-    // 1. Hàm lắng nghe (đọc) dữ liệu
+    //  Hàm lắng nghe (đọc) dữ liệu
     fun loadProducts() {
         val userId = currentUserId
         if (userId == null) {
@@ -50,7 +50,7 @@ class ProductViewModel(
         }
     }
 
-    // 2. Hàm thêm (ghi) sản phẩm mới
+    //  Hàm thêm (ghi) sản phẩm mới
     fun addProduct(
         product: Product,
         onSuccess: () -> Unit,
@@ -89,10 +89,10 @@ class ProductViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // 1. Cập nhật lên repository / Firebase
+                // Cập nhật lên repository / Firebase
                 repository.updateProduct(userId, updatedProduct)
 
-                // 2. Cập nhật local StateFlow để UI tự động refresh
+                // Cập nhật local StateFlow để UI tự động refresh
                 _products.update { currentList ->
                     currentList.map { if (it.documentId == updatedProduct.documentId) updatedProduct else it }
                 }
@@ -105,7 +105,7 @@ class ProductViewModel(
         }
     }
 
-    // 4. HÀM XÓA SẢN PHẨM (MỚI THÊM)
+    //  HÀM XÓA SẢN PHẨM (MỚI THÊM)
     fun deleteProduct(
         product: Product,
         onSuccess: () -> Unit = {},

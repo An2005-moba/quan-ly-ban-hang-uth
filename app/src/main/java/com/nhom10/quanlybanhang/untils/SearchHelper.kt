@@ -11,7 +11,7 @@ object SearchHelper {
         return pattern.matcher(temp).replaceAll("").replace('đ', 'd').replace('Đ', 'D')
     }
 
-    // Hàm kiểm tra khớp dữ liệu (CẬP NHẬT MỚI)
+    // Hàm kiểm tra khớp dữ liệu
     fun isMatch(source: String, query: String): Boolean {
         if (query.isBlank()) return true
 

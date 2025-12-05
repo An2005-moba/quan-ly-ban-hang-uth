@@ -16,25 +16,8 @@ import android.content.Context
 import java.io.ByteArrayOutputStream
 import android.util.Base64
 
-/**
- * Hàm chuyển đổi Uri ảnh thành chuỗi Base64
- * (Đảm bảo hàm này có sẵn trong file AddProductScreen hoặc file tiện ích)
- */
-private fun uriToBase64(context: Context, uri: Uri): String {
-    return try {
-        val inputStream = context.contentResolver.openInputStream(uri)
-        val outputStream = ByteArrayOutputStream()
-        inputStream?.use { input ->
-            outputStream.use { output ->
-                input.copyTo(output)
-            }
-        }
-        Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        ""
-    }
-}
+
+
 
 // -------------------------------------------------------------
 
@@ -45,7 +28,7 @@ fun AddProductScreen(
 ) {
     val context = LocalContext.current
 
-    // --- 1. STATE ẢNH CỤC BỘ (Dùng Uri để chọn, sau đó chuyển Base64 trong onSave) ---
+    //  STATE ẢNH CỤC BỘ (Dùng Uri để chọn, sau đó chuyển Base64 trong onSave) ---
 
     var currentImageData by remember { mutableStateOf("") }
 
@@ -63,7 +46,7 @@ fun AddProductScreen(
         onDelete = null,
 
 
-        imageData = currentImageData, // Truyền Base64 hiện tại (ban đầu là rỗng)
+        imageData = currentImageData, // Truyền Base64 hiện tại
 
         // Khi người dùng chọn ảnh mới, cập nhật state 'currentImageData'
         onImageSelected = { newBase64 ->
@@ -74,14 +57,13 @@ fun AddProductScreen(
         onImageRemove = {
             currentImageData = ""
         },
-        // -----------------------------------------------------------------
 
 
 
         onSave = { newProduct ->
 
 
-            // 3a. Chuẩn hóa dữ liệu
+            //  Chuẩn hóa dữ liệu
             val tenMatHang = newProduct.tenMatHang
             val maMatHang = newProduct.maMatHang
             val soLuongStr = newProduct.soLuong.toString().trim()

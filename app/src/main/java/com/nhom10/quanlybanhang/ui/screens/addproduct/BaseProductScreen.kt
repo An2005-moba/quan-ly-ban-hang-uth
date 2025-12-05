@@ -39,22 +39,13 @@ import android.graphics.Bitmap
  */
 private fun uriToBase64(context: Context, uri: Uri): String {
     return try {
-        // 1. Lấy InputStream từ Uri
-        val inputStream = context.contentResolver.openInputStream(uri)
 
-        // 2. Decode InputStream thành Bitmap (để có thể nén)
+        val inputStream = context.contentResolver.openInputStream(uri)
         val bitmap = BitmapFactory.decodeStream(inputStream)
         inputStream?.close()
-
         if (bitmap == null) return ""
-
         val outputStream = ByteArrayOutputStream()
-
-        // 3. NÉN ẢNH: Nén Bitmap thành JPEG với chất lượng 70%
-        // (Đây là bước giải quyết lỗi crash do OOM)
         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
-
-        // 4. Chuyển đổi mảng byte đã nén sang Base64
         return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
     } catch (e: Exception) {
         e.printStackTrace()
@@ -72,8 +63,7 @@ fun BaseProductScreen(
     onSave: (Product) -> Unit,
     onDelete: (() -> Unit)? = null,
 
-    // --- CÁC THAM SỐ XỬ LÝ ẢNH ĐƯỢC THÊM VÀO ---
-    imageData: String, // Chuỗi Base64 hiện tại (ảnh cũ hoặc mới)
+    imageData: String, // Chuỗi Base64 hiện tại
     onImageSelected: (String) -> Unit, // Hàm được gọi khi chọn ảnh mới (trả về Base64)
     onImageRemove: () -> Unit // Hàm được gọi khi muốn xóa ảnh
 ) {
@@ -140,7 +130,7 @@ fun BaseProductScreen(
                             donViTinh = donViTinh,
                             apDungThue = apDungThue,
                             ghiChu = ghiChu,
-                            imageData = imageData // <--- SỬ DỤNG 'imageData' ĐƯỢC TRUYỀN VÀO
+                            imageData = imageData
                         )
                         onSave(product)
                     }) {

@@ -216,8 +216,7 @@ fun HomeScreen(
                                 onProductClick = { product ->
                                     val isAdded = orderViewModel.addProductToCart(product)
                                     if (isAdded) {
-                                        // Không cần Toast mỗi lần thêm thành công cho đỡ rối, hoặc dùng showFastToast nếu thích
-                                        // showFastToast("Đã thêm ${product.tenMatHang}")
+
                                     } else {
                                         showFastToast("Đã hết mặt hàng này!")
                                     }

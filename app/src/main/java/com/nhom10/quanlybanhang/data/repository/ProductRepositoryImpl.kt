@@ -14,7 +14,7 @@ class ProductRepositoryImpl : ProductRepository {
     private val db = FirebaseFirestore.getInstance()
 
     override fun getProducts(userId: String): Flow<List<Product>> = callbackFlow {
-        // Thay vì "products", chúng ta truy cập collection con
+
         val collectionPath = db.collection("users").document(userId).collection("products")
 
         val listenerRegistration = collectionPath
@@ -38,7 +38,7 @@ class ProductRepositoryImpl : ProductRepository {
         try {
             // Thêm sản phẩm vào collection con của user
             val collectionPath = db.collection("users").document(userId).collection("products")
-            // Firestore sẽ tự động tạo ID và gán
+
             Tasks.await(collectionPath.add(product))
         } catch (e: Exception) {
             throw e
@@ -58,7 +58,7 @@ class ProductRepositoryImpl : ProductRepository {
         }
     }
 
-    // === HÀM MỚI: DELETE PRODUCT ===
+
     override suspend fun deleteProduct(userId: String, productId: String) {
         try {
             val docRef = db.collection("users")
@@ -73,13 +73,12 @@ class ProductRepositoryImpl : ProductRepository {
             throw e
         }
     }
-    // --- THÊM HÀM MỚI TẠI ĐÂY ---
+
     override suspend fun deductStock(userId: String, items: List<OrderItem>) {
         try {
             db.runTransaction { transaction ->
                 val productsRef = db.collection("users").document(userId).collection("products")
 
-                // BƯỚC 1: ĐỌC TOÀN BỘ DỮ LIỆU TRƯỚC (READ PHASE)
                 // Lưu lại snapshot và reference để dùng cho bước sau
                 val updateDataList = items.map { item ->
                     val docRef = productsRef.document(item.productId)
@@ -88,7 +87,6 @@ class ProductRepositoryImpl : ProductRepository {
                     Triple(docRef, snapshot, item.soLuong)
                 }
 
-                // BƯỚC 2: THỰC HIỆN GHI TOÀN BỘ (WRITE PHASE)
                 for ((docRef, snapshot, deductAmount) in updateDataList) {
                     if (snapshot.exists()) {
                         val currentStock = snapshot.getDouble("soLuong") ?: 0.0

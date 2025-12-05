@@ -91,10 +91,10 @@ class ReportViewModel : ViewModel() {
         val timeType = _timeFilter.value
         val statusType = _statusFilter.value
 
-        // 1. Lọc theo thời gian
+        //  Lọc theo thời gian
         val (startTime, endTime) = getTimeRange(timeType)
 
-        // 2. Lọc danh sách
+        //  Lọc danh sách
         val filteredOrders = orders.filter { order ->
             val inTimeRange = order.date in startTime..endTime
 
@@ -107,7 +107,7 @@ class ReportViewModel : ViewModel() {
             inTimeRange && inStatus
         }
 
-        // 3. Tính toán
+        //  Tính toán
         var totalRevenue = 0.0
         var totalProfit = 0.0
         var totalOrders = filteredOrders.size
