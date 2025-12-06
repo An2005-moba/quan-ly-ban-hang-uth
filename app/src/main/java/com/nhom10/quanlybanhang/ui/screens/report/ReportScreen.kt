@@ -49,7 +49,6 @@ fun ReportScreen(
     }
 }
 
-// --- CHANGED: Đã xóa FilterSection Composable ---
 
 val formatter = DecimalFormat("#,###")
 
